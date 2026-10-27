@@ -75,6 +75,11 @@ function queueWrite(key: string, write: () => Promise<void>): Promise<void> {
   return next;
 }
 
+/** Resolves once every queued write has finished (used before syncing). */
+export async function flushWrites(): Promise<void> {
+  await Promise.allSettled([...writeChains.values()]);
+}
+
 export const useWorkspaceStore = create<WorkspaceState>()((set, get) => {
   const persist = async (key: string, write: () => Promise<void>) => {
     try {

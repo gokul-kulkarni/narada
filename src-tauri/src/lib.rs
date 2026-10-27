@@ -1,4 +1,5 @@
 mod http;
+mod sync;
 mod secrets;
 mod storage;
 
@@ -11,6 +12,7 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
         .manage(http_state)
+        .manage(sync::DriveState::new())
         .setup(|app| {
             let storage = storage::StorageState::init(app.handle())?;
             app.manage(storage);
@@ -29,6 +31,11 @@ pub fn run() {
             secrets::secret_get,
             secrets::secret_set,
             secrets::secret_delete,
+            sync::drive_status,
+            sync::drive_configure,
+            sync::drive_sign_in,
+            sync::drive_sign_out,
+            sync::drive_sync,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

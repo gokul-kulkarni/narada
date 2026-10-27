@@ -3,9 +3,11 @@ import { CollectionsPanel } from "./features/collections/CollectionsPanel";
 import { EnvironmentSelector, EnvironmentsPanel } from "./features/environments/EnvironmentsPanel";
 import { HistoryList } from "./features/history/HistoryList";
 import { Dialogs } from "./features/workspace/Dialogs";
+import { syncNow } from "./features/settings/sync-now";
 import { MainView } from "./features/workspace/MainView";
 import { Notices } from "./features/workspace/Notices";
 import { useBootstrap } from "./hooks/use-bootstrap";
+import { driveAvailable } from "./lib/drive-api";
 import { useUiStore } from "./state/ui-store";
 import { useWorkspaceStore } from "./state/workspace-store";
 
@@ -31,6 +33,11 @@ function App() {
             Free Postman
           </button>
         </h1>
+        {driveAvailable() && (
+          <Button title="Sync with Google Drive" onClick={() => void syncNow()}>
+            ⟳ Sync
+          </Button>
+        )}
         <Button onClick={() => openDialog({ kind: "import" })}>Import</Button>
         <EnvironmentSelector />
         <Button aria-label="Settings" onClick={() => show({ kind: "settings" })}>
