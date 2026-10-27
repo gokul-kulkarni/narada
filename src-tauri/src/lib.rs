@@ -1,12 +1,35 @@
 mod http;
+mod secrets;
+mod storage;
+
+use tauri::Manager;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let http_state = http::HttpState::new().expect("failed to initialise HTTP client");
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_dialog::init())
         .manage(http_state)
-        .invoke_handler(tauri::generate_handler![http::send_request])
+        .setup(|app| {
+            let storage = storage::StorageState::init(app.handle())?;
+            app.manage(storage);
+            Ok(())
+        })
+        .invoke_handler(tauri::generate_handler![
+            http::send_request,
+            storage::get_storage_dir,
+            storage::set_storage_dir,
+            storage::list_documents,
+            storage::write_document,
+            storage::delete_document,
+            storage::read_local,
+            storage::write_local,
+            storage::export_file,
+            secrets::secret_get,
+            secrets::secret_set,
+            secrets::secret_delete,
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

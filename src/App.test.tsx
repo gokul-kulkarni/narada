@@ -1,13 +1,12 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import App from "./App";
-import { useHistoryStore } from "./state/history-store";
 import { useTabsStore } from "./state/tabs-store";
+import { resetStores } from "./test/reset-stores";
 
 describe("App", () => {
   beforeEach(() => {
-    useTabsStore.setState({ tabs: [], activeTabId: null });
-    useHistoryStore.setState({ entries: [] });
+    resetStores();
     vi.restoreAllMocks();
   });
 
@@ -19,6 +18,7 @@ describe("App", () => {
       }),
     );
     render(<App />);
+    await screen.findByRole("heading", { name: "Free Postman" });
     fireEvent.click(screen.getByRole("button", { name: "New request tab" }));
     fireEvent.change(screen.getByLabelText("URL"), {
       target: { value: "https://api.dev/users?page=2" },
@@ -36,8 +36,9 @@ describe("App", () => {
     );
   });
 
-  it("edits query params, headers, body and auth", () => {
+  it("edits query params, headers, body and auth", async () => {
     render(<App />);
+    await screen.findByRole("heading", { name: "Free Postman" });
     fireEvent.click(screen.getByRole("button", { name: "New request tab" }));
     fireEvent.change(screen.getByLabelText("URL"), { target: { value: "https://a.dev?x=1" } });
     expect(screen.getByLabelText("Key 1")).toHaveValue("x");
@@ -70,6 +71,7 @@ describe("App", () => {
   it("shows request errors", async () => {
     vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("Failed to fetch"));
     render(<App />);
+    await screen.findByRole("heading", { name: "Free Postman" });
     fireEvent.click(screen.getByRole("button", { name: "New request tab" }));
     fireEvent.change(screen.getByLabelText("URL"), { target: { value: "https://down.dev" } });
     fireEvent.click(screen.getByRole("button", { name: "Send" }));

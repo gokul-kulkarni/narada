@@ -24,6 +24,8 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 tokio = { version = "1.54.1", features = ["macros", "rt-multi-thread", "net", "io-util", "time"] }
 reqwest = { version = "0.13", default-features = false, features = ["rustls", "multipart", "cookies", "gzip", "brotli", "deflate", "json", "form", "query"] }
+keyring = { version = "3", features = ["apple-native", "windows-native", "sync-secret-service"] }
+tauri-plugin-dialog = "2"
 
 
 # Read the optimization guideline for more details: https://tauri.app/concept/size/#cargo-configuration
@@ -35,4 +37,5 @@ panic = "abort"
 strip = true
 
 [dev-dependencies]
+tempfile = "3.27.0"
 tokio = { version = "1.54.1", features = ["macros", "rt-multi-thread"] }

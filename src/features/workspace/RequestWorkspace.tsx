@@ -1,20 +1,31 @@
-import { EmptyState } from "../../components/ui";
+import { useEffect } from "react";
+import { Button, EmptyState } from "../../components/ui";
 import { sendHttp } from "../../lib/http-client";
 import { useHistoryStore } from "../../state/history-store";
 import { selectActiveTab, useTabsStore } from "../../state/tabs-store";
+import { useUiStore } from "../../state/ui-store";
 import { RequestEditor } from "../request/RequestEditor";
 import { sendTab } from "../request/send-request";
 import { ResponseViewer } from "../response/ResponseViewer";
 import { TabBar } from "../tabs/TabBar";
-
-const EMPTY_CONTEXT = {
-  scopes: { global: {}, collection: {}, environment: {}, data: {}, local: {} },
-  authChain: [],
-};
+import { contextForTab } from "./context";
+import { saveTab } from "./save-tab";
 
 export function RequestWorkspace() {
   const tab = useTabsStore(selectActiveTab);
   const { updateRequest, patchTab } = useTabsStore.getState();
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "s") {
+        e.preventDefault();
+        const active = selectActiveTab(useTabsStore.getState());
+        if (active) void saveTab(active);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
@@ -29,10 +40,20 @@ export function RequestWorkspace() {
             onSend={() =>
               sendTab(tab, {
                 send: sendHttp,
-                getContext: () => EMPTY_CONTEXT,
+                getContext: contextForTab,
                 patchTab,
                 addHistory: useHistoryStore.getState().add,
               })
+            }
+            toolbar={
+              <>
+                <Button
+                  onClick={() => useUiStore.getState().openDialog({ kind: "code", tabId: tab.id })}
+                >
+                  Code
+                </Button>
+                <Button onClick={() => void saveTab(tab)}>Save</Button>
+              </>
             }
           />
           <ResponseViewer response={tab.response} error={tab.error} loading={tab.loading} />
