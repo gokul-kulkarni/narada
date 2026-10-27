@@ -1,20 +1,28 @@
 import { EmptyState, TextArea, TextInput } from "../../components/ui";
 import type { Collection } from "../../lib/model";
-import { useWorkspaceStore } from "../../state/workspace-store";
+import { buildScopes } from "../../lib/request-context";
+import { selectActiveEnvironment, useWorkspaceStore } from "../../state/workspace-store";
 import { AuthEditor } from "../request/AuthEditor";
 import { KeyValueEditor } from "../request/KeyValueEditor";
+import { OAuthTokenButton } from "../request/OAuthTokenButton";
+import { ScriptsEditor } from "../scripts/ScriptsEditor";
 
-export function CollectionSettings({
-  id,
-  scriptsEditor,
-}: {
-  id: string;
-  scriptsEditor?: (collection: Collection, update: (c: Collection) => void) => React.ReactNode;
-}) {
+export function CollectionSettings({ id }: { id: string }) {
   const collection = useWorkspaceStore((s) => s.collections.find((c) => c.id === id));
   if (!collection) return <EmptyState>This collection no longer exists.</EmptyState>;
   const update = (change: (c: Collection) => Collection) =>
     void useWorkspaceStore.getState().updateCollection(id, change);
+  const { auth } = collection;
+
+  const scopes = () => {
+    const workspace = useWorkspaceStore.getState();
+    return buildScopes({
+      requestId: null,
+      collection,
+      environment: selectActiveEnvironment(workspace),
+      globals: workspace.globals,
+    });
+  };
 
   return (
     <div className="space-y-4 overflow-auto p-4">
@@ -43,17 +51,31 @@ export function CollectionSettings({
         <h3 className="text-sm font-semibold">Authorization</h3>
         <p className="text-xs text-neutral-500">Requests and folders set to “Inherit” use this.</p>
         <AuthEditor
-          auth={collection.auth}
+          auth={auth}
           allowInherit={false}
-          onChange={(auth) => update((c) => ({ ...c, auth }))}
+          onChange={(next) => update((c) => ({ ...c, auth: next }))}
+          oauthActions={
+            auth.type === "oauth2" && (
+              <OAuthTokenButton
+                auth={auth}
+                scopes={scopes()}
+                onToken={(accessToken) => update((c) => ({ ...c, auth: { ...auth, accessToken } }))}
+              />
+            )
+          }
         />
       </section>
-      {scriptsEditor && (
-        <section className="space-y-2">
-          <h3 className="text-sm font-semibold">Scripts</h3>
-          {scriptsEditor(collection, (next) => update(() => next))}
-        </section>
-      )}
+      <section className="space-y-2">
+        <h3 className="text-sm font-semibold">Scripts</h3>
+        <p className="text-xs text-neutral-500">
+          Run before / after every request in this collection.
+        </p>
+        <ScriptsEditor
+          preRequestScript={collection.preRequestScript}
+          testScript={collection.testScript}
+          onChange={(scripts) => update((c) => ({ ...c, ...scripts }))}
+        />
+      </section>
     </div>
   );
 }

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { InlineRename } from "../../components/InlineRename";
 import type { Collection, CollectionItem } from "../../lib/model";
 import { useTabsStore } from "../../state/tabs-store";
+import { useUiStore } from "../../state/ui-store";
 import {
   addFolder,
   addRequest,
@@ -103,6 +104,13 @@ function TreeItem({
           actions={[
             { label: "Add request", onSelect: () => addRequest(collection.id, id) },
             { label: "Add folder", onSelect: () => addFolder(collection.id, id) },
+            {
+              label: "Run folder",
+              onSelect: () =>
+                useUiStore
+                  .getState()
+                  .show({ kind: "runner", collectionId: collection.id, folderId: id }),
+            },
             { label: "Rename", onSelect: () => setRenaming(true) },
             {
               label: "Delete",

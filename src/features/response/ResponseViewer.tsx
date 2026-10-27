@@ -18,18 +18,17 @@ interface Props {
 
 export function ResponseViewer({ response, error, loading, testResults, testSummary }: Props) {
   const [view, setView] = useState<View>("pretty");
+  const alert = error && (
+    <div
+      role="alert"
+      className="m-3 rounded border border-red-300 bg-red-50 p-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-300"
+    >
+      {error}
+    </div>
+  );
 
   if (loading) return <EmptyState>Sending request…</EmptyState>;
-  if (error)
-    return (
-      <div
-        role="alert"
-        className="m-3 rounded border border-red-300 bg-red-50 p-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-300"
-      >
-        {error}
-      </div>
-    );
-  if (!response) return <EmptyState>Send a request to see the response.</EmptyState>;
+  if (!response) return alert || <EmptyState>Send a request to see the response.</EmptyState>;
 
   const contentType = findHeader(response.headers, "content-type") ?? "";
   const views: { id: View; label: string }[] = [
@@ -41,6 +40,7 @@ export function ResponseViewer({ response, error, loading, testResults, testSumm
 
   return (
     <section aria-label="Response" className="flex min-h-0 flex-1 flex-col gap-2 p-3">
+      {alert}
       <div className="flex gap-4 text-sm">
         <span className={statusColor(response.status)} data-testid="response-status">
           {response.status} {response.statusText}

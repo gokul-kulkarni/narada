@@ -1,16 +1,21 @@
-import { errorMessage } from "../../lib/format";
 import { newId } from "../../lib/ids";
 import type { HistoryEntry, HttpResponse } from "../../lib/model";
-import {
-  prepareRequest,
-  type PrepareContext,
-  type PreparedRequest,
-} from "../../lib/prepare-request";
+import type { PreparedRequest } from "../../lib/prepare-request";
+import { runPipeline, type PipelineInput } from "../../lib/scripts/pipeline";
+import type { ExecuteScript } from "../../lib/scripts/script-runner";
+import type { VariableScopes } from "../../lib/variables";
 import type { RequestTab } from "../../state/tabs-store";
 
 export interface SendDeps {
   readonly send: (request: PreparedRequest) => Promise<HttpResponse>;
-  readonly getContext: (tab: RequestTab) => PrepareContext;
+  readonly execute: ExecuteScript;
+  /** Everything but the request itself: scopes, auth chain and collection scripts. */
+  readonly getInput: (tab: RequestTab) => Omit<PipelineInput, "request">;
+  readonly applyScopes: (
+    tab: RequestTab,
+    before: VariableScopes,
+    after: VariableScopes,
+  ) => Promise<void>;
   readonly patchTab: (tabId: string, patch: Partial<Omit<RequestTab, "id">>) => void;
   readonly addHistory: (entry: HistoryEntry) => void;
   readonly now?: () => Date;
@@ -18,28 +23,25 @@ export interface SendDeps {
 
 export async function sendTab(tab: RequestTab, deps: SendDeps): Promise<void> {
   const now = deps.now ?? (() => new Date());
-  deps.patchTab(tab.id, { loading: true, error: null });
-  try {
-    const prepared = prepareRequest(tab.request, deps.getContext(tab));
-    if (!prepared.url) throw new Error("Enter a URL to send the request.");
-    const response = await deps.send(prepared);
-    deps.patchTab(tab.id, { loading: false, response });
-    deps.addHistory({
-      id: newId(),
-      sentAt: now().toISOString(),
-      request: tab.request,
-      status: response.status,
-      timeMs: response.timeMs,
-    });
-  } catch (error) {
-    const message = errorMessage(error);
-    deps.patchTab(tab.id, { loading: false, response: null, error: message });
-    deps.addHistory({
-      id: newId(),
-      sentAt: now().toISOString(),
-      request: tab.request,
-      status: null,
-      timeMs: null,
-    });
-  }
+  deps.patchTab(tab.id, { loading: true, error: null, tests: [], logs: [] });
+  const input = deps.getInput(tab);
+  const result = await runPipeline(
+    { ...input, request: tab.request },
+    { send: deps.send, execute: deps.execute },
+  );
+  await deps.applyScopes(tab, input.scopes, result.scopes);
+  deps.patchTab(tab.id, {
+    loading: false,
+    response: result.response,
+    error: result.error,
+    tests: result.tests,
+    logs: result.logs,
+  });
+  deps.addHistory({
+    id: newId(),
+    sentAt: now().toISOString(),
+    request: tab.request,
+    status: result.response?.status ?? null,
+    timeMs: result.response?.timeMs ?? null,
+  });
 }

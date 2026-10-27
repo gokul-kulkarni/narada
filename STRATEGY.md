@@ -69,6 +69,10 @@ Name: `free-postman`, each containing `Collections/` and `Environments/`.
 - **Scripting** (Phase 4): run `pm.*` scripts in a sandboxed JS runtime (QuickJS via
   `rquickjs` in Rust, or a sandboxed iframe/Web Worker), with `chai` for assertions.
 
+## Status (2026-10-27)
+
+Phases 0–4 are implemented; see README.md for features and known limitations.
+
 ## Phased roadmap
 
 - **Phase 0 – Setup**: folders (Step 1), scaffold Tauri + React + TS, lint/test tooling

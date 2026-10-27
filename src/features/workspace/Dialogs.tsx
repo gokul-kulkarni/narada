@@ -1,4 +1,5 @@
 import { useUiStore } from "../../state/ui-store";
+import { CodeDialog } from "../codegen/CodeDialog";
 import { SaveRequestDialog } from "../collections/SaveRequestDialog";
 import { ImportDialog } from "../import/ImportDialog";
 
@@ -12,6 +13,6 @@ export function Dialogs() {
     case "save":
       return <SaveRequestDialog tabId={dialog.tabId} onClose={close} />;
     case "code":
-      return null;
+      return <CodeDialog tabId={dialog.tabId} onClose={close} />;
   }
 }

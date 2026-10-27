@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { newRequest } from "../lib/factories";
 import { newId } from "../lib/ids";
 import type { HttpResponse, RequestDef } from "../lib/model";
+import type { TestResult } from "../lib/scripts/types";
 
 export interface RequestSource {
   readonly collectionId: string;
@@ -16,6 +17,8 @@ export interface RequestTab {
   readonly loading: boolean;
   readonly response: HttpResponse | null;
   readonly error: string | null;
+  readonly tests: readonly TestResult[];
+  readonly logs: readonly string[];
 }
 
 interface TabsState {
@@ -37,6 +40,8 @@ const createTab = (request: RequestDef, source: RequestSource | null): RequestTa
   loading: false,
   response: null,
   error: null,
+  tests: [],
+  logs: [],
 });
 
 const mapTab = (
