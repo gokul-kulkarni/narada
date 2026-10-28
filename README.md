@@ -103,3 +103,7 @@ e2e/              Playwright tests
 - Only these HTTP methods are supported; custom methods are imported as GET.
 - OAuth 2.0 supports the client-credentials grant only.
 - Scripts can make network calls (`fetch`) from their Worker; only run scripts you trust.
+
+## License
+
+MIT. See [LICENSE](LICENSE).

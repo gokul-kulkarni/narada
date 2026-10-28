@@ -11,9 +11,9 @@ user's own Google Drive as free cloud storage/sync** (no backend server, no host
 Decisions made: Tauri desktop app; Drive is the app's storage/sync; create the Drive
 folder structure both via the Drive API and locally.
 
-The project dir `/Users/gokulkulkarni/MyDrive/ideas/ai/free-postman` is empty (greenfield).
-Note: `/Users/gokulkulkarni/MyDrive` is a plain folder, not the Google Drive for Desktop
-mount (that lives at `~/Library/CloudStorage/GoogleDrive-gokul.cs5@gmail.com/`), so the
+The project dir `~/MyDrive/ideas/ai/free-postman` is empty (greenfield).
+Note: `~/MyDrive` is a plain folder, not the Google Drive for Desktop
+mount (that lives at `~/Library/CloudStorage/GoogleDrive-<your-email>/`), so the
 local copy only syncs if that folder is backed up by Drive for Desktop.
 
 ## Step 1 — Create the folders (first thing after approval)
