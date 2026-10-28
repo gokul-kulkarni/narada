@@ -9,6 +9,7 @@ import { resetStores } from "../../test/reset-stores";
 
 let documents: DocumentStore;
 
+const deliverTo = () => screen.getByRole("group", { name: "Deliver to" });
 const sidebar = () => screen.getByRole("complementary", { name: "Workspace" });
 const menuItem = (owner: string, label: string) => {
   fireEvent.click(screen.getByRole("button", { name: `Actions for ${owner}` }));
@@ -37,12 +38,10 @@ describe("collections and environments", () => {
     expect(screen.getByRole("status")).toHaveTextContent('Imported collection "Pet Store"');
     await importText(JSON.stringify(POSTMAN_ENVIRONMENT));
 
-    fireEvent.change(screen.getByLabelText("Active environment"), {
-      target: { value: POSTMAN_ENVIRONMENT.id },
-    });
+    fireEvent.click(within(deliverTo()).getByRole("button", { name: POSTMAN_ENVIRONMENT.name }));
     expect(within(sidebar()).getByRole("button", { name: /^▾\s*Pet Store$/ })).toBeInTheDocument(); // imported collections open expanded
     fireEvent.click(within(sidebar()).getByRole("button", { name: /^POST\s*Create pet$/ }));
-    fireEvent.click(screen.getByRole("button", { name: "Send" }));
+    fireEvent.click(screen.getByRole("button", { name: "Dispatch" }));
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalled());
     const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
@@ -135,7 +134,10 @@ describe("collections and environments", () => {
     fireEvent.click(screen.getByLabelText("secret"));
     fireEvent.change(screen.getByLabelText("Value 1"), { target: { value: "hunter2" } });
     fireEvent.click(screen.getByRole("button", { name: "Set active" }));
-    expect(screen.getByLabelText("Active environment")).toHaveDisplayValue("Prod");
+    expect(within(deliverTo()).getByRole("button", { name: "Prod" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
     await waitFor(async () => {
       const [doc] = await documents.list("environments");
       expect(JSON.parse(doc.content).values[0]).toMatchObject({

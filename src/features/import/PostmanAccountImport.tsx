@@ -24,7 +24,7 @@ function EntryList({
   return (
     <fieldset className="space-y-1">
       <legend className="font-medium">{title}</legend>
-      {entries.length === 0 && <p className="text-neutral-500">None in this workspace.</p>}
+      {entries.length === 0 && <p className="text-muted">None in this workspace.</p>}
       {entries.map((entry) => (
         <label key={entry.uid} className="flex items-center gap-2">
           <input
@@ -45,7 +45,7 @@ export function PostmanAccountImport({ onClose }: { onClose: () => void }) {
 
   return (
     <div className="space-y-3">
-      <p className="text-neutral-500">
+      <p className="text-muted">
         Import straight from your Postman account. Create an API key in Postman under Settings → API
         keys. It is only used to read your collections and environments, and is stored in this
         machine's keychain if you choose to remember it.
@@ -84,7 +84,7 @@ export function PostmanAccountImport({ onClose }: { onClose: () => void }) {
           ))}
         </Select>
       )}
-      {account.busy && <p className="text-neutral-500">Talking to Postman…</p>}
+      {account.busy && <p className="text-muted">Talking to Postman…</p>}
       {contents && (
         <div className="grid grid-cols-2 gap-3">
           <EntryList
@@ -104,7 +104,7 @@ export function PostmanAccountImport({ onClose }: { onClose: () => void }) {
         </div>
       )}
       {account.error && (
-        <p role="alert" className="text-red-600">
+        <p role="alert" className="text-err">
           {account.error}
         </p>
       )}

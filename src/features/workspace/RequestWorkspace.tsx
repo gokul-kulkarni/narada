@@ -1,10 +1,13 @@
 import { useEffect } from "react";
-import { Button, EmptyState } from "../../components/ui";
+import { Button } from "../../components/ui";
 import { sendHttp } from "../../lib/http-client";
 import { executeScript } from "../../lib/scripts/script-runner";
 import { useHistoryStore } from "../../state/history-store";
 import { selectActiveTab, useTabsStore, type RequestTab } from "../../state/tabs-store";
 import { useUiStore } from "../../state/ui-store";
+import { selectActiveEnvironment, useWorkspaceStore } from "../../state/workspace-store";
+import { DeliveryLog } from "../delivery/DeliveryLog";
+import { RecentDeliveries } from "../delivery/RecentDeliveries";
 import { OAuthTokenButton } from "../request/OAuthTokenButton";
 import { RequestEditor } from "../request/RequestEditor";
 import { sendTab } from "../request/send-request";
@@ -15,6 +18,9 @@ import { TabBar } from "../tabs/TabBar";
 import { applyScopes, inputForTab } from "./context";
 import { saveTab } from "./save-tab";
 
+const activeEnvironmentName = () =>
+  selectActiveEnvironment(useWorkspaceStore.getState())?.name ?? null;
+
 function send(tab: RequestTab) {
   return sendTab(tab, {
     send: sendHttp,
@@ -22,7 +28,8 @@ function send(tab: RequestTab) {
     getInput: inputForTab,
     applyScopes: (t, before, after) => applyScopes(t.source?.collectionId ?? null, before, after),
     patchTab: useTabsStore.getState().patchTab,
-    addHistory: useHistoryStore.getState().add,
+    addHistory: (entry) =>
+      useHistoryStore.getState().add({ ...entry, environment: activeEnvironmentName() }),
   });
 }
 
@@ -42,6 +49,7 @@ function useSaveShortcut() {
 
 export function RequestWorkspace() {
   const tab = useTabsStore(selectActiveTab);
+  const environment = useWorkspaceStore((s) => selectActiveEnvironment(s)?.name ?? null);
   const { updateRequest } = useTabsStore.getState();
   useSaveShortcut();
 
@@ -49,7 +57,7 @@ export function RequestWorkspace() {
     return (
       <div className="flex min-h-0 flex-1 flex-col">
         <TabBar />
-        <EmptyState>Open or create a request to get started.</EmptyState>
+        <RecentDeliveries />
       </div>
     );
   }
@@ -60,49 +68,60 @@ export function RequestWorkspace() {
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <TabBar />
-      <div className="grid min-h-0 flex-1 grid-rows-2 divide-y divide-neutral-200 dark:divide-neutral-800">
-        <RequestEditor
-          key={tab.id}
-          request={tab.request}
-          loading={tab.loading}
-          onChange={(update) => updateRequest(tab.id, update)}
-          onSend={() => void send(tab)}
-          toolbar={
-            <>
-              <Button
-                onClick={() => useUiStore.getState().openDialog({ kind: "code", tabId: tab.id })}
-              >
-                Code
-              </Button>
-              <Button onClick={() => void saveTab(tab)}>Save</Button>
-            </>
-          }
-          oauthActions={
-            auth.type === "oauth2" && (
-              <OAuthTokenButton
-                auth={auth}
-                scopes={inputForTab(tab).scopes}
-                onToken={(accessToken) =>
-                  updateRequest(tab.id, (r) => ({ ...r, auth: { ...auth, accessToken } }))
-                }
+      <div className="min-h-0 flex-1 overflow-y-auto">
+        <div className="mx-auto flex max-w-5xl flex-col gap-6 px-8 py-6">
+          <RequestEditor
+            key={tab.id}
+            request={tab.request}
+            loading={tab.loading}
+            onChange={(update) => updateRequest(tab.id, update)}
+            onSend={() => void send(tab)}
+            toolbar={
+              <>
+                <Button
+                  onClick={() => useUiStore.getState().openDialog({ kind: "code", tabId: tab.id })}
+                >
+                  Code
+                </Button>
+                <Button onClick={() => void saveTab(tab)}>Save</Button>
+              </>
+            }
+            oauthActions={
+              auth.type === "oauth2" && (
+                <OAuthTokenButton
+                  auth={auth}
+                  scopes={inputForTab(tab).scopes}
+                  onToken={(accessToken) =>
+                    updateRequest(tab.id, (r) => ({ ...r, auth: { ...auth, accessToken } }))
+                  }
+                />
+              )
+            }
+            scriptsEditor={
+              <ScriptsEditor
+                preRequestScript={tab.request.preRequestScript}
+                testScript={tab.request.testScript}
+                onChange={(scripts) => updateRequest(tab.id, (r) => ({ ...r, ...scripts }))}
               />
-            )
-          }
-          scriptsEditor={
-            <ScriptsEditor
-              preRequestScript={tab.request.preRequestScript}
-              testScript={tab.request.testScript}
-              onChange={(scripts) => updateRequest(tab.id, (r) => ({ ...r, ...scripts }))}
-            />
-          }
-        />
-        <ResponseViewer
-          response={tab.response}
-          error={tab.error}
-          loading={tab.loading}
-          testResults={ranScripts ? <TestResults tests={tab.tests} logs={tab.logs} /> : undefined}
-          testSummary={testSummary(tab.tests)}
-        />
+            }
+          />
+          <DeliveryLog
+            tab={tab}
+            environment={environment}
+            responseView={
+              tab.response && (
+                <ResponseViewer
+                  key={tab.id}
+                  response={tab.response}
+                  testResults={
+                    ranScripts ? <TestResults tests={tab.tests} logs={tab.logs} /> : undefined
+                  }
+                  testSummary={testSummary(tab.tests)}
+                />
+              )
+            }
+          />
+        </div>
       </div>
     </div>
   );

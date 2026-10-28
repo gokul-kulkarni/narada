@@ -29,8 +29,8 @@ test("import an exported Postman file from the empty sidebar", async ({ page }) 
 
   await expect(page.getByRole("button", { name: /^▾\s*Exported API$/ })).toBeVisible();
   await page.getByRole("button", { name: /^GET\s*Ping$/ }).click();
-  await page.getByRole("button", { name: "Send" }).click();
-  await expect(page.getByTestId("response-status")).toHaveText("200 OK");
+  await page.getByRole("button", { name: "Dispatch" }).click();
+  await expect(page.getByTestId("response-status")).toContainText("200 OK");
 });
 
 test("dropping a file on the window opens the import preview", async ({ page }) => {

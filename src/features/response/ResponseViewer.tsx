@@ -1,35 +1,19 @@
 import { useState, type ReactNode } from "react";
-import { EmptyState, TabStrip, TextArea } from "../../components/ui";
-import { findHeader, formatBytes, formatDuration, prettyBody } from "../../lib/format";
+import { TabStrip, TextArea } from "../../components/ui";
+import { findHeader, prettyBody } from "../../lib/format";
 import type { HttpResponse } from "../../lib/model";
 
 type View = "pretty" | "raw" | "headers" | "tests";
 
-const statusColor = (status: number) =>
-  status < 300 ? "text-green-600" : status < 400 ? "text-amber-600" : "text-red-600";
-
 interface Props {
-  readonly response: HttpResponse | null;
-  readonly error: string | null;
-  readonly loading: boolean;
+  readonly response: HttpResponse;
   readonly testResults?: ReactNode;
   readonly testSummary?: string;
 }
 
-export function ResponseViewer({ response, error, loading, testResults, testSummary }: Props) {
+/** Body, headers and tests of one response; status and timing are shown by the delivery log. */
+export function ResponseViewer({ response, testResults, testSummary }: Props) {
   const [view, setView] = useState<View>("pretty");
-  const alert = error && (
-    <div
-      role="alert"
-      className="m-3 rounded border border-red-300 bg-red-50 p-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-300"
-    >
-      {error}
-    </div>
-  );
-
-  if (loading) return <EmptyState>Sending request…</EmptyState>;
-  if (!response) return alert || <EmptyState>Send a request to see the response.</EmptyState>;
-
   const contentType = findHeader(response.headers, "content-type") ?? "";
   const views: { id: View; label: string }[] = [
     { id: "pretty", label: "Pretty" },
@@ -39,18 +23,10 @@ export function ResponseViewer({ response, error, loading, testResults, testSumm
   ];
 
   return (
-    <section aria-label="Response" className="flex min-h-0 flex-1 flex-col gap-2 p-3">
-      {alert}
-      <div className="flex gap-4 text-sm">
-        <span className={statusColor(response.status)} data-testid="response-status">
-          {response.status} {response.statusText}
-        </span>
-        <span>{formatDuration(response.timeMs)}</span>
-        <span>{formatBytes(response.sizeBytes)}</span>
-      </div>
+    <section aria-label="Response" className="flex min-h-0 flex-col gap-2 p-4 pt-2">
       <TabStrip label="Response views" tabs={views} active={view} onChange={setView} />
       {response.isBinary && view !== "headers" && (
-        <p className="text-sm text-neutral-500">
+        <p className="text-sm text-muted">
           Binary response ({contentType || "unknown type"}); shown as lossy text.
         </p>
       )}
@@ -58,7 +34,7 @@ export function ResponseViewer({ response, error, loading, testResults, testSumm
         <TextArea
           aria-label="Response body"
           readOnly
-          className="min-h-48 w-full flex-1"
+          className="min-h-64 w-full border-transparent bg-surface-2 leading-relaxed"
           value={view === "pretty" ? prettyBody(response.body, contentType) : response.body}
         />
       )}
@@ -66,11 +42,8 @@ export function ResponseViewer({ response, error, loading, testResults, testSumm
         <table className="text-sm">
           <tbody>
             {response.headers.map(([key, value], index) => (
-              <tr
-                key={`${key}-${index}`}
-                className="border-b border-neutral-100 dark:border-neutral-900"
-              >
-                <td className="py-1 pr-4 font-medium">{key}</td>
+              <tr key={`${key}-${index}`} className="border-b border-line-soft">
+                <td className="py-1 pr-4 font-semibold">{key}</td>
                 <td className="py-1 font-mono break-all">{value}</td>
               </tr>
             ))}

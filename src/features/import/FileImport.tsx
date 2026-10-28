@@ -15,7 +15,7 @@ async function previewFiles(files: readonly File[]): Promise<ImportPreview[]> {
 
 function ExportHelp() {
   return (
-    <details className="text-xs text-neutral-500">
+    <details className="text-xs text-muted">
       <summary className="cursor-pointer">How do I export from Postman?</summary>
       <ol className="mt-1 list-decimal space-y-0.5 pl-5">
         <li>
@@ -83,7 +83,7 @@ export function FileImport({
       <ExportHelp />
       <PreviewList previews={previews} onRemove={remove} />
       <label className="block space-y-1">
-        <span className="text-xs text-neutral-500">Or paste collection JSON or a cURL command</span>
+        <span className="text-xs text-muted">Or paste collection JSON or a cURL command</span>
         <TextArea
           aria-label="Import text"
           className="h-24 w-full font-mono text-xs"
@@ -93,7 +93,7 @@ export function FileImport({
         />
       </label>
       {error && (
-        <p role="alert" className="text-red-600">
+        <p role="alert" className="text-err">
           {error}
         </p>
       )}

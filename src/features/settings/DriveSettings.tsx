@@ -46,10 +46,10 @@ export function DriveSettings() {
     <section className="space-y-2" aria-label="Google Drive sync">
       <h3 className="text-sm font-semibold">Google Drive sync</h3>
       {!driveAvailable() ? (
-        <p className="text-xs text-neutral-500">Drive sync is available in the desktop app.</p>
+        <p className="text-xs text-muted">Drive sync is available in the desktop app.</p>
       ) : (
         <>
-          <p className="text-xs text-neutral-500">
+          <p className="text-xs text-muted">
             Syncs Collections/ and Environments/ with a <code>narada</code> folder in your Drive,
             using the limited <code>drive.file</code> scope (the app can only see files it created).
             Create a free OAuth client of type “Desktop app” in Google Cloud Console and paste it
@@ -108,7 +108,7 @@ export function DriveSettings() {
         </>
       )}
       {error && (
-        <p role="alert" className="text-sm text-red-600">
+        <p role="alert" className="text-sm text-err">
           {error}
         </p>
       )}

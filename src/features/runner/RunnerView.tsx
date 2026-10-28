@@ -73,7 +73,7 @@ export function RunnerView({
   return (
     <div className="space-y-4 overflow-auto p-4">
       <h2 className="text-base font-medium">Run “{title}”</h2>
-      <p className="text-sm text-neutral-500">
+      <p className="text-sm text-muted">
         {requests.length} request(s) in order, using the active environment. Variable changes made
         by scripts are saved when the run finishes.
       </p>
@@ -129,25 +129,24 @@ export function RunnerView({
         )}
       </div>
       {data && (
-        <p className="text-xs text-neutral-500">
+        <p className="text-xs text-muted">
           {data.name}: {data.rows.length} row(s)
         </p>
       )}
       {error && (
-        <p role="alert" className="text-sm text-red-600">
+        <p role="alert" className="text-sm text-err">
           {error}
         </p>
       )}
       {rows.length > 0 && (
         <>
           <p className="text-sm" data-testid="run-summary">
-            {summary.requests} requests ·{" "}
-            <span className="text-green-600">{summary.passed} passed</span> ·{" "}
-            <span className="text-red-600">{summary.failed} failed</span>
+            {summary.requests} requests · <span className="text-ok">{summary.passed} passed</span> ·{" "}
+            <span className="text-err">{summary.failed} failed</span>
             {summary.errors > 0 && ` · ${summary.errors} error(s)`}
           </p>
           <table className="w-full text-left text-sm">
-            <thead className="text-xs text-neutral-500 uppercase">
+            <thead className="text-xs text-muted uppercase">
               <tr>
                 <th>#</th>
                 <th>Request</th>
@@ -158,15 +157,14 @@ export function RunnerView({
             </thead>
             <tbody>
               {rows.map((row, index) => (
-                <tr
-                  key={index}
-                  className="border-t border-neutral-100 align-top dark:border-neutral-900"
-                >
+                <tr key={index} className="border-t border-line-soft align-top">
                   <td className="py-1 pr-2">{row.iteration + 1}</td>
                   <td className="py-1 pr-2">
-                    <span className="mr-1 text-xs font-semibold text-orange-600">{row.method}</span>
+                    <span className="mr-1 text-xs font-semibold text-accent-text">
+                      {row.method}
+                    </span>
                     {row.name}
-                    {row.error && <div className="text-xs text-red-600">{row.error}</div>}
+                    {row.error && <div className="text-xs text-err">{row.error}</div>}
                   </td>
                   <td className="py-1 pr-2">{row.status ?? "—"}</td>
                   <td className="py-1 pr-2">
@@ -174,7 +172,7 @@ export function RunnerView({
                   </td>
                   <td className="py-1">
                     {row.tests.map((t, i) => (
-                      <div key={i} className={t.passed ? "text-green-600" : "text-red-600"}>
+                      <div key={i} className={t.passed ? "text-ok" : "text-err"}>
                         {t.passed ? "✓" : "✗"} {t.name}
                       </div>
                     ))}

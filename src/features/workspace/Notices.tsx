@@ -11,10 +11,7 @@ export function Notices() {
   return (
     <>
       {lastError && (
-        <div
-          role="alert"
-          className={`${BAR} bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300`}
-        >
+        <div role="alert" className={`${BAR} bg-err-soft text-err`}>
           {lastError}
           <button
             type="button"
@@ -26,19 +23,13 @@ export function Notices() {
         </div>
       )}
       {loadErrors.length > 0 && (
-        <div
-          role="alert"
-          className={`${BAR} bg-amber-50 text-amber-800 dark:bg-amber-950 dark:text-amber-200`}
-        >
+        <div role="alert" className={`${BAR} bg-warn-soft text-warn`}>
           Skipped {loadErrors.length} unreadable file(s):{" "}
           {loadErrors.map((e) => e.fileName).join(", ")}
         </div>
       )}
       {notice && (
-        <div
-          role="status"
-          className={`${BAR} bg-green-50 text-green-800 dark:bg-green-950 dark:text-green-200`}
-        >
+        <div role="status" className={`${BAR} bg-ok-soft text-ok`}>
           {notice}
           <button
             type="button"

@@ -17,14 +17,14 @@ export function Modal({
 
   return (
     <div
-      className="fixed inset-0 z-10 flex items-center justify-center bg-black/40 p-4"
+      className="fixed inset-0 z-10 flex items-center justify-center bg-backdrop p-4"
       onClick={onClose}
     >
       <div
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className="max-h-full w-full max-w-2xl overflow-auto rounded-lg bg-white p-4 shadow-xl dark:bg-neutral-900"
+        className="max-h-full w-full max-w-2xl overflow-auto rounded-lg bg-surface p-4 shadow-xl"
         onClick={(e) => e.stopPropagation()}
       >
         <h2 className="mb-3 font-semibold">{title}</h2>

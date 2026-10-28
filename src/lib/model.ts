@@ -102,4 +102,6 @@ export interface HistoryEntry {
   readonly request: RequestDef;
   readonly status: number | null;
   readonly timeMs: number | null;
+  /** Name of the environment the request was sent to; missing in history from older versions. */
+  readonly environment?: string | null;
 }

@@ -57,9 +57,7 @@ export function BodyEditor({
           </Select>
         )}
       </div>
-      {body.mode === "none" && (
-        <p className="text-sm text-neutral-500">This request has no body.</p>
-      )}
+      {body.mode === "none" && <p className="text-sm text-muted">This request has no body.</p>}
       {body.mode === "raw" && (
         <TextArea
           aria-label="Raw body"

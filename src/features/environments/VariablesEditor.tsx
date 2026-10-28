@@ -17,7 +17,7 @@ export function VariablesEditor({
       createRow={() => ({ id: newId(), key: "", value: "", enabled: true, secret: false })}
       extraColumn={(row, update) => (
         <label
-          className="flex items-center gap-1 text-xs text-neutral-500"
+          className="flex items-center gap-1 text-xs text-muted"
           title="Secret values are kept in the OS keychain and never synced"
         >
           <input

@@ -6,7 +6,7 @@ async function requestWithTestScript(page: Page, script: string) {
   await page.getByLabel("URL").fill("http://localhost:1420/index.html");
   await page.getByRole("tab", { name: "Scripts" }).click();
   await page.getByLabel("Test script").fill(script);
-  await page.getByRole("button", { name: "Send" }).click();
+  await page.getByRole("button", { name: "Dispatch" }).click();
 }
 
 test("test scripts run in a Web Worker and report results", async ({ page }) => {
@@ -26,5 +26,5 @@ test("runaway scripts are stopped by the timeout", async ({ page }) => {
   await expect(page.getByRole("alert")).toHaveText("Test script error: Script timed out after 5s", {
     timeout: 10_000,
   });
-  await expect(page.getByTestId("response-status")).toHaveText("200 OK");
+  await expect(page.getByTestId("response-status")).toContainText("200 OK");
 });

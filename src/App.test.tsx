@@ -23,13 +23,14 @@ describe("App", () => {
     fireEvent.change(screen.getByLabelText("URL"), {
       target: { value: "https://api.dev/users?page=2" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Send" }));
+    fireEvent.click(screen.getByRole("button", { name: "Dispatch" }));
 
     await waitFor(() => expect(screen.getByTestId("response-status")).toHaveTextContent("200"));
     expect(screen.getByLabelText("Response body")).toHaveValue('{\n  "hello": "world"\n}');
-    expect(screen.getByRole("region", { name: "History" })).toHaveTextContent(
-      "https://api.dev/users?page=2",
+    expect(screen.getByRole("article", { name: "Latest delivery" })).toHaveTextContent(
+      "GET /users?page=2→ no environment",
     );
+    expect(screen.getByTestId("response-status")).toHaveTextContent(/^Delivered · 200 · \d+ ms/);
     expect(fetch).toHaveBeenCalledWith(
       "https://api.dev/users?page=2",
       expect.objectContaining({ method: "GET" }),
@@ -74,7 +75,7 @@ describe("App", () => {
     await screen.findByRole("heading", { name: "Narada" });
     fireEvent.click(screen.getByRole("button", { name: "New request tab" }));
     fireEvent.change(screen.getByLabelText("URL"), { target: { value: "https://down.dev" } });
-    fireEvent.click(screen.getByRole("button", { name: "Send" }));
+    fireEvent.click(screen.getByRole("button", { name: "Dispatch" }));
     await waitFor(() => expect(screen.getByRole("alert")).toHaveTextContent("Failed to fetch"));
   });
 });

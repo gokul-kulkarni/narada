@@ -39,7 +39,7 @@ export function CodeDialog({ tabId, onClose }: { tabId: string; onClose: () => v
               </option>
             ))}
           </Select>
-          <span className="text-xs text-neutral-500">
+          <span className="text-xs text-muted">
             Variables are resolved with the active environment. Scripts are not included.
           </span>
         </div>

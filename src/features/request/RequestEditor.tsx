@@ -42,18 +42,21 @@ export function RequestEditor({
   ];
 
   return (
-    <div className="flex min-h-0 flex-col gap-2 p-3">
+    <section
+      aria-label="Compose request"
+      className="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-4 shadow-[0_8px_28px_rgb(31_27_46/0.06)]"
+    >
       <div className="flex items-center gap-2">
         <TextInput
           aria-label="Request name"
-          className="flex-1 border-transparent font-medium"
+          className="flex-1 border-transparent px-1 font-display text-xl font-semibold hover:border-line"
           value={request.name}
           onChange={(e) => onChange((r) => ({ ...r, name: e.target.value }))}
         />
         {toolbar}
       </div>
       <form
-        className="flex gap-2"
+        className="flex items-center gap-2 rounded-xl border border-line p-1 focus-within:border-accent"
         onSubmit={(e) => {
           e.preventDefault();
           onSend();
@@ -61,7 +64,7 @@ export function RequestEditor({
       >
         <Select
           aria-label="HTTP method"
-          className="font-semibold"
+          className="border-transparent bg-accent-soft font-mono font-semibold text-accent-soft-ink"
           value={request.method}
           onChange={(e) => onChange((r) => ({ ...r, method: e.target.value as HttpMethod }))}
         >
@@ -71,17 +74,23 @@ export function RequestEditor({
         </Select>
         <TextInput
           aria-label="URL"
-          className="flex-1 font-mono"
+          className="flex-1 border-transparent font-mono focus:border-transparent"
           placeholder="https://api.example.com/resource or {{baseUrl}}/resource"
           value={request.url}
           onChange={(e) => onChange((r) => ({ ...r, url: e.target.value }))}
         />
-        <Button type="submit" variant="primary" disabled={loading}>
-          {loading ? "Sending…" : "Send"}
+        <Button type="submit" variant="primary" className="px-5 py-2" disabled={loading}>
+          {loading ? "Dispatching…" : "Dispatch"}
         </Button>
       </form>
-      <TabStrip label="Request sections" tabs={sections} active={section} onChange={setSection} />
-      <div className="min-h-0 overflow-auto">
+      <TabStrip
+        label="Request sections"
+        variant="chips"
+        tabs={sections}
+        active={section}
+        onChange={setSection}
+      />
+      <div className="max-h-80 min-h-0 overflow-auto border-t border-line-soft pt-3">
         {section === "params" && (
           <ParamsEditor url={request.url} onUrlChange={(url) => onChange((r) => ({ ...r, url }))} />
         )}
@@ -104,6 +113,6 @@ export function RequestEditor({
         )}
         {section === "scripts" && scriptsEditor}
       </div>
-    </div>
+    </section>
   );
 }

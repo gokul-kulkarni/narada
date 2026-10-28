@@ -9,12 +9,12 @@ export function TabBar() {
     <div
       role="tablist"
       aria-label="Open requests"
-      className="flex items-stretch overflow-x-auto border-b border-neutral-200 text-sm dark:border-neutral-800"
+      className="flex items-stretch overflow-x-auto border-b border-line text-sm"
     >
       {tabs.map((tab) => (
         <div
           key={tab.id}
-          className={`flex items-center gap-2 border-r border-neutral-200 px-3 py-1.5 dark:border-neutral-800 ${tab.id === activeTabId ? "bg-neutral-100 dark:bg-neutral-900" : ""}`}
+          className={`flex items-center gap-2 border-r border-line px-3 py-1.5 ${tab.id === activeTabId ? "bg-surface-2" : ""}`}
         >
           <button
             type="button"
@@ -23,7 +23,9 @@ export function TabBar() {
             onClick={() => activate(tab.id)}
             className="max-w-48 truncate"
           >
-            <span className="mr-1 text-xs font-semibold text-orange-600">{tab.request.method}</span>
+            <span className="mr-1 text-xs font-semibold text-accent-text">
+              {tab.request.method}
+            </span>
             {tab.request.name}
             {tab.dirty && <span aria-label="unsaved"> •</span>}
           </button>
@@ -31,7 +33,7 @@ export function TabBar() {
             type="button"
             aria-label={`Close ${tab.request.name}`}
             onClick={() => close(tab.id)}
-            className="text-neutral-400 hover:text-neutral-700"
+            className="text-muted hover:text-ink"
           >
             ✕
           </button>
@@ -41,7 +43,7 @@ export function TabBar() {
         type="button"
         aria-label="New request tab"
         onClick={openNew}
-        className="px-3 hover:bg-neutral-100 dark:hover:bg-neutral-900"
+        className="px-3 hover:bg-surface-2"
       >
         +
       </button>

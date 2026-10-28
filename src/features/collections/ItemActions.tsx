@@ -27,7 +27,7 @@ export function ItemActions({ name, actions }: { name: string; actions: readonly
         type="button"
         aria-label={`Actions for ${name}`}
         aria-expanded={open}
-        className="rounded px-1 text-neutral-400 hover:bg-neutral-200 hover:text-neutral-700 dark:hover:bg-neutral-800"
+        className="rounded px-1 text-muted hover:bg-line-soft hover:text-ink"
         onClick={(e) => {
           e.stopPropagation();
           setOpen(!open);
@@ -39,14 +39,14 @@ export function ItemActions({ name, actions }: { name: string; actions: readonly
       {open && (
         <ul
           role="menu"
-          className="absolute right-0 z-20 mt-1 w-44 rounded border border-neutral-200 bg-white py-1 text-sm shadow-lg dark:border-neutral-700 dark:bg-neutral-900"
+          className="absolute right-0 z-20 mt-1 w-44 rounded border border-line bg-surface py-1 text-sm shadow-lg"
         >
           {actions.map((action) => (
             <li key={action.label}>
               <button
                 type="button"
                 role="menuitem"
-                className={`w-full px-3 py-1 text-left hover:bg-neutral-100 dark:hover:bg-neutral-800 ${action.danger ? "text-red-600" : ""}`}
+                className={`w-full px-3 py-1 text-left hover:bg-surface-2 ${action.danger ? "text-err" : ""}`}
                 onClick={(e) => {
                   e.stopPropagation();
                   select(action);

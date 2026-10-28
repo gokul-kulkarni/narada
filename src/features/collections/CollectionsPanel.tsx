@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { InlineRename } from "../../components/InlineRename";
-import { Button, EmptyState } from "../../components/ui";
+import { Button, EmptyState, SectionHeading } from "../../components/ui";
 import { errorMessage } from "../../lib/format";
 import { exportTextFile, safeExportName } from "../../lib/export-file";
 import type { Collection } from "../../lib/model";
@@ -34,7 +34,7 @@ function CollectionNode({ collection }: { collection: Collection }) {
 
   return (
     <li>
-      <div className="group flex items-center gap-1 rounded px-1 py-0.5 hover:bg-neutral-100 dark:hover:bg-neutral-900">
+      <div className="group flex items-center gap-1 rounded-lg px-1 py-1 hover:bg-surface-2">
         {renaming ? (
           <InlineRename
             value={collection.name}
@@ -51,7 +51,7 @@ function CollectionNode({ collection }: { collection: Collection }) {
             className="flex min-w-0 flex-1 gap-1 text-left font-medium"
             onClick={() => setOpen(!open)}
           >
-            <span className="w-3 text-neutral-400">{open ? "▾" : "▸"}</span>
+            <span className="w-3 text-muted">{open ? "▾" : "▸"}</span>
             <span className="truncate">{collection.name}</span>
           </button>
         )}
@@ -81,7 +81,7 @@ function CollectionNode({ collection }: { collection: Collection }) {
         (collection.items.length > 0 ? (
           <TreeItems collection={collection} items={collection.items} depth={1} parentId={null} />
         ) : (
-          <p className="py-1 pl-6 text-xs text-neutral-500">Empty collection</p>
+          <p className="py-1 pl-6 text-xs text-muted">Empty collection</p>
         ))}
     </li>
   );
@@ -94,9 +94,7 @@ export function CollectionsPanel() {
   return (
     <section aria-label="Collections">
       <div className="mb-1 flex items-center justify-between">
-        <h2 className="text-xs font-semibold tracking-wide text-neutral-500 uppercase">
-          Collections
-        </h2>
+        <SectionHeading>Collections</SectionHeading>
         <div className="flex">
           <Button
             variant="ghost"

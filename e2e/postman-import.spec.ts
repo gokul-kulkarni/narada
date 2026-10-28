@@ -30,13 +30,13 @@ test("import a collection from a Postman account and send a request from it", as
   await page.getByRole("button", { name: "Import", exact: true }).click();
   await page.getByRole("tab", { name: "Postman account" }).click();
   await page.getByLabel("Postman API key").fill("PMAK-test");
-  await page.getByRole("button", { name: "Connect" }).click();
+  await page.getByRole("button", { name: "Connect", exact: true }).click();
   await page.getByRole("checkbox", { name: "Remote API" }).check();
   await page.getByRole("button", { name: "Import selected" }).click();
   await expect(page.getByRole("status")).toContainText("Imported 1 item(s) from Postman.");
 
   await expect(page.getByRole("button", { name: /^▾\s*Remote API$/ })).toBeVisible();
   await page.getByRole("button", { name: /^GET\s*Ping$/ }).click();
-  await page.getByRole("button", { name: "Send" }).click();
-  await expect(page.getByTestId("response-status")).toHaveText("200 OK");
+  await page.getByRole("button", { name: "Dispatch" }).click();
+  await expect(page.getByTestId("response-status")).toContainText("200 OK");
 });

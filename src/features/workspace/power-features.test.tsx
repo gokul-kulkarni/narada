@@ -33,7 +33,7 @@ describe("scripts, runner, code generation and OAuth", () => {
     expect((screen.getByLabelText("Test script") as HTMLTextAreaElement).value).toContain(
       'pm.environment.set("token"',
     );
-    fireEvent.click(screen.getByRole("button", { name: "Send" }));
+    fireEvent.click(screen.getByRole("button", { name: "Dispatch" }));
 
     fireEvent.click(await screen.findByRole("tab", { name: "Tests (1/1)" }));
     expect(screen.getByRole("region", { name: "Response" })).toHaveTextContent(
@@ -52,7 +52,7 @@ describe("scripts, runner, code generation and OAuth", () => {
     useTabsStore
       .getState()
       .openRequest(newRequest({ url: "https://a.dev", testScript: "nope()" }), null);
-    fireEvent.click(await screen.findByRole("button", { name: "Send" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Dispatch" }));
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "Test script error: nope is not defined",
     );

@@ -30,14 +30,11 @@ export function StorageSettings() {
   return (
     <section className="space-y-2">
       <h3 className="text-sm font-semibold">Storage folder</h3>
-      <p className="text-xs text-neutral-500">
+      <p className="text-xs text-muted">
         Collections and Environments are saved as Postman JSON files here. Choose a folder inside
         Google Drive for Desktop (e.g. My Drive/narada) and Google syncs it for free.
       </p>
-      <code
-        className="block rounded bg-neutral-100 p-2 text-xs break-all dark:bg-neutral-900"
-        data-testid="storage-dir"
-      >
+      <code className="block rounded bg-surface-2 p-2 text-xs break-all" data-testid="storage-dir">
         {dir}
       </code>
       {canUseNativeStorage() && (
@@ -56,7 +53,7 @@ export function StorageSettings() {
         </div>
       )}
       {error && (
-        <p role="alert" className="text-sm text-red-600">
+        <p role="alert" className="text-sm text-err">
           {error}
         </p>
       )}

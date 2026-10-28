@@ -13,8 +13,7 @@ import {
 } from "./collection-actions";
 import { ItemActions } from "./ItemActions";
 
-const ROW =
-  "group flex items-center gap-1 rounded px-1 py-0.5 hover:bg-neutral-100 dark:hover:bg-neutral-900";
+const ROW = "group flex items-center gap-1 rounded-lg px-1 py-1 hover:bg-surface-2";
 
 function TreeItem({
   collection,
@@ -50,7 +49,7 @@ function TreeItem({
     return (
       <li>
         <div
-          className={`${ROW} ${activeRequestId === id ? "bg-neutral-100 dark:bg-neutral-900" : ""}`}
+          className={`${ROW} ${activeRequestId === id ? "bg-accent-soft font-semibold text-accent-soft-ink" : ""}`}
           style={indent}
         >
           {rename || (
@@ -59,7 +58,7 @@ function TreeItem({
               className="flex min-w-0 flex-1 gap-2 text-left"
               onClick={() => openSavedRequest(collection.id, item.request)}
             >
-              <span className="w-12 shrink-0 text-xs font-semibold text-orange-600">
+              <span className="w-12 shrink-0 font-mono text-[11px] font-semibold text-accent-text">
                 {item.request.method}
               </span>
               <span className="truncate">{name}</span>
@@ -95,7 +94,7 @@ function TreeItem({
             className="flex min-w-0 flex-1 gap-1 text-left"
             onClick={() => setOpen(!open)}
           >
-            <span className="w-3 text-neutral-400">{open ? "▾" : "▸"}</span>
+            <span className="w-3 text-muted">{open ? "▾" : "▸"}</span>
             <span className="truncate">📁 {name}</span>
           </button>
         )}

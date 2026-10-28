@@ -41,7 +41,7 @@ export function ScriptsEditor({ preRequestScript, testScript, onChange }: Props)
           onChange={(e) => set(e.target.value)}
         />
         <div className="flex w-44 flex-col gap-1">
-          <span className="text-xs text-neutral-500">Snippets</span>
+          <span className="text-xs text-muted">Snippets</span>
           {snippets.map((snippet) => (
             <Button
               key={snippet.label}

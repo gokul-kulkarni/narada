@@ -26,13 +26,11 @@ export function DropZone({ onFiles }: { onFiles: (files: File[]) => void }) {
       onDragLeave={() => setOver(false)}
       onDrop={onDrop}
       className={`flex flex-col items-center gap-2 rounded-lg border-2 border-dashed px-4 py-6 text-center ${
-        over
-          ? "border-orange-500 bg-orange-50 dark:bg-orange-950/30"
-          : "border-neutral-300 dark:border-neutral-700"
+        over ? "border-accent bg-accent-soft" : "border-line"
       }`}
     >
       <p className="font-medium">Drop Postman export files here</p>
-      <p className="text-xs text-neutral-500">
+      <p className="text-xs text-muted">
         Collections (<code>*.postman_collection.json</code>) and environments (
         <code>*.postman_environment.json</code>) — several at once is fine.
       </p>

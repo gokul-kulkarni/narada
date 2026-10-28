@@ -39,7 +39,7 @@ function Field({
 }) {
   return (
     <label className="flex items-center gap-2 text-sm">
-      <span className="w-32 text-neutral-500">{label}</span>
+      <span className="w-32 text-muted">{label}</span>
       <TextInput
         aria-label={label}
         type={type}
@@ -147,7 +147,7 @@ export function AuthEditor({ auth, onChange, allowInherit = true, oauthActions }
           {oauthActions}
         </>
       )}
-      <p className="text-xs text-neutral-500">{"Values can use {{variables}}."}</p>
+      <p className="text-xs text-muted">{"Values can use {{variables}}."}</p>
     </div>
   );
 }

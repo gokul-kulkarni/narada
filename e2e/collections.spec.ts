@@ -14,6 +14,6 @@ test("create a collection, save a request into it, and find it after reload", as
   await page.reload();
   await page.getByRole("button", { name: /^▸\s*New Collection$/ }).click();
   await page.getByRole("button", { name: /^GET\s*Home page$/ }).click();
-  await page.getByRole("button", { name: "Send" }).click();
-  await expect(page.getByTestId("response-status")).toHaveText("200 OK");
+  await page.getByRole("button", { name: "Dispatch" }).click();
+  await expect(page.getByTestId("response-status")).toContainText("200 OK");
 });

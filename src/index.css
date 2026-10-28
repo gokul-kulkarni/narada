@@ -1,1 +1,135 @@
 @import "tailwindcss";
+
+/*
+ * Narada "Delivery log" theme. Components use the semantic colours below (bg-surface,
+ * text-muted, bg-send…) and never raw palette colours, so light and dark come from here alone.
+ * Dark follows the OS unless the user picks a theme (html[data-theme]).
+ */
+@theme inline {
+  --font-sans: "Manrope Variable", system-ui, sans-serif;
+  --font-display: "Fraunces Variable", Georgia, serif;
+  --font-mono: "JetBrains Mono Variable", ui-monospace, monospace;
+
+  --color-canvas: var(--n-canvas);
+  --color-surface: var(--n-surface);
+  --color-surface-2: var(--n-surface-2);
+  --color-line: var(--n-line);
+  --color-line-soft: var(--n-line-soft);
+  --color-ink: var(--n-ink);
+  --color-muted: var(--n-muted);
+  --color-accent: var(--n-accent);
+  --color-accent-text: var(--n-accent-text);
+  --color-accent-ink: var(--n-accent-ink);
+  --color-accent-soft: var(--n-accent-soft);
+  --color-accent-soft-ink: var(--n-accent-soft-ink);
+  --color-send: var(--n-send);
+  --color-send-hover: var(--n-send-hover);
+  --color-send-ink: var(--n-send-ink);
+  --color-ok: var(--n-ok);
+  --color-ok-soft: var(--n-ok-soft);
+  --color-warn: var(--n-warn);
+  --color-warn-soft: var(--n-warn-soft);
+  --color-err: var(--n-err);
+  --color-err-soft: var(--n-err-soft);
+  --color-backdrop: var(--n-backdrop);
+}
+
+:root {
+  color-scheme: light;
+  --n-canvas: #faf7f2;
+  --n-surface: #ffffff;
+  --n-surface-2: #f5f0e8;
+  --n-line: #e7dfd3;
+  --n-line-soft: #f0eae0;
+  --n-ink: #1f1b2e;
+  --n-muted: #5b5568;
+  --n-accent: #4338ca;
+  --n-accent-text: #4338ca;
+  --n-accent-ink: #ffffff;
+  --n-accent-soft: #eef0ff;
+  --n-accent-soft-ink: #3730a3;
+  --n-send: #c2410c;
+  --n-send-hover: #9a3412;
+  --n-send-ink: #ffffff;
+  --n-ok: #15803d;
+  --n-ok-soft: #dcfce7;
+  --n-warn: #a16207;
+  --n-warn-soft: #fef3c7;
+  --n-err: #b91c1c;
+  --n-err-soft: #fee2e2;
+  --n-backdrop: rgb(31 27 46 / 0.4);
+}
+
+/* The dark palette appears twice: once for "follow the OS", once for an explicit choice. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --n-canvas: #14121c;
+    --n-surface: #1c1a27;
+    --n-surface-2: #221f2f;
+    --n-line: #2e2a3d;
+    --n-line-soft: #262334;
+    --n-ink: #edeaf5;
+    --n-muted: #a7a2b8;
+    --n-accent: #818cf8;
+    --n-accent-text: #a5b4fc;
+    --n-accent-ink: #1e1b4b;
+    --n-accent-soft: #262650;
+    --n-accent-soft-ink: #c7d2fe;
+    --n-send: #fb923c;
+    --n-send-hover: #fdba74;
+    --n-send-ink: #431407;
+    --n-ok: #4ade80;
+    --n-ok-soft: #143323;
+    --n-warn: #fcd34d;
+    --n-warn-soft: #3a2e0b;
+    --n-err: #f87171;
+    --n-err-soft: #3b1414;
+    --n-backdrop: rgb(0 0 0 / 0.6);
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --n-canvas: #14121c;
+  --n-surface: #1c1a27;
+  --n-surface-2: #221f2f;
+  --n-line: #2e2a3d;
+  --n-line-soft: #262334;
+  --n-ink: #edeaf5;
+  --n-muted: #a7a2b8;
+  --n-accent: #818cf8;
+  --n-accent-text: #a5b4fc;
+  --n-accent-ink: #1e1b4b;
+  --n-accent-soft: #262650;
+  --n-accent-soft-ink: #c7d2fe;
+  --n-send: #fb923c;
+  --n-send-hover: #fdba74;
+  --n-send-ink: #431407;
+  --n-ok: #4ade80;
+  --n-ok-soft: #143323;
+  --n-warn: #fcd34d;
+  --n-warn-soft: #3a2e0b;
+  --n-err: #f87171;
+  --n-err-soft: #3b1414;
+  --n-backdrop: rgb(0 0 0 / 0.6);
+}
+
+body {
+  margin: 0;
+  background: var(--n-canvas);
+  color: var(--n-ink);
+  font-family: var(--font-sans);
+}
+
+:focus-visible {
+  outline: 2px solid var(--n-accent);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
+}

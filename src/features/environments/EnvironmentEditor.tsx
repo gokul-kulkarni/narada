@@ -60,7 +60,7 @@ export function EnvironmentEditor({ id }: { id: string }) {
         rows={environment.variables}
         onChange={(variables) => void updateEnvironment(id, (env) => ({ ...env, variables }))}
       />
-      <p className="text-xs text-neutral-500">
+      <p className="text-xs text-muted">
         Changes save automatically. Use variables in requests as {"{{name}}"}.
       </p>
     </div>
@@ -72,7 +72,7 @@ export function GlobalsEditor() {
   return (
     <div className="space-y-3 p-4">
       <h2 className="text-base font-medium">Globals</h2>
-      <p className="text-xs text-neutral-500">
+      <p className="text-xs text-muted">
         Available in every request. Stored on this machine only (not synced).
       </p>
       <KeyValueEditor

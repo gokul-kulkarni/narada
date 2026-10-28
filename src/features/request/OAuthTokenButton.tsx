@@ -47,7 +47,7 @@ export function OAuthTokenButton({
         {busy ? "Requesting…" : "Get new access token"}
       </Button>
       {error && (
-        <span role="alert" className="text-sm text-red-600">
+        <span role="alert" className="text-sm text-err">
           {error}
         </span>
       )}

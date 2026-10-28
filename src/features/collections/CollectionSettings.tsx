@@ -49,7 +49,7 @@ export function CollectionSettings({ id }: { id: string }) {
       </section>
       <section className="space-y-2">
         <h3 className="text-sm font-semibold">Authorization</h3>
-        <p className="text-xs text-neutral-500">Requests and folders set to “Inherit” use this.</p>
+        <p className="text-xs text-muted">Requests and folders set to “Inherit” use this.</p>
         <AuthEditor
           auth={auth}
           allowInherit={false}
@@ -67,9 +67,7 @@ export function CollectionSettings({ id }: { id: string }) {
       </section>
       <section className="space-y-2">
         <h3 className="text-sm font-semibold">Scripts</h3>
-        <p className="text-xs text-neutral-500">
-          Run before / after every request in this collection.
-        </p>
+        <p className="text-xs text-muted">Run before / after every request in this collection.</p>
         <ScriptsEditor
           preRequestScript={collection.preRequestScript}
           testScript={collection.testScript}
