@@ -13,6 +13,10 @@ Google Drive. See [STRATEGY.md](STRATEGY.md) for the plan and roadmap.
   "Get new access token"; requests and folders can inherit auth from their folder or collection.
 - **Collections**: folders, rename/duplicate/delete, collection variables, auth and scripts,
   Save / ⌘S, import & export in Postman v2.0/v2.1 format.
+- **Import from Postman**: pick one or many exported collection/environment files, paste JSON,
+  or connect your Postman account with an API key (Postman → Settings → API keys), browse its
+  workspaces and import the collections and environments you tick. The key is read-only in use
+  and is kept in the OS keychain only if you choose "Remember".
 - **Environments & globals**: `{{variable}}` substitution with Postman's precedence
   (local > data > environment > collection > global). Secret variables live in the OS keychain
   and are never written to the synced folder.
