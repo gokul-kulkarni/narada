@@ -49,7 +49,7 @@ export function RequestEditor({
       <div className="flex items-center gap-2">
         <TextInput
           aria-label="Request name"
-          className="flex-1 border-transparent px-1 font-display text-xl font-semibold hover:border-line"
+          className="flex-1 border-transparent px-1 font-display text-xl! font-semibold hover:border-line"
           value={request.name}
           onChange={(e) => onChange((r) => ({ ...r, name: e.target.value }))}
         />

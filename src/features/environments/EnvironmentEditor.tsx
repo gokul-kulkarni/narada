@@ -1,3 +1,4 @@
+import { Card, Page, PAGE_TITLE, TITLE_INPUT } from "../../components/page";
 import { Button, EmptyState, TextInput } from "../../components/ui";
 import { errorMessage } from "../../lib/format";
 import { exportTextFile, safeExportName } from "../../lib/export-file";
@@ -33,53 +34,83 @@ export function EnvironmentEditor({ id }: { id: string }) {
     useWorkspaceStore.getState();
   if (!environment) return <EmptyState>This environment no longer exists.</EmptyState>;
 
+  const active = activeId === id;
+
   return (
-    <div className="space-y-3 p-4">
-      <div className="flex items-center gap-2">
+    <Page
+      eyebrow={
+        <>
+          Environment
+          {active && (
+            <span className="ml-2 rounded-full bg-ok-soft px-2 py-0.5 text-ok">
+              Delivering here
+            </span>
+          )}
+        </>
+      }
+      title={
         <TextInput
           aria-label="Environment name"
-          className="flex-1 text-base font-medium"
+          className={TITLE_INPUT}
           value={environment.name}
           onChange={(e) => void updateEnvironment(id, (env) => ({ ...env, name: e.target.value }))}
         />
-        <Button onClick={() => setActiveEnvironment(activeId === id ? null : id)}>
-          {activeId === id ? "Deactivate" : "Set active"}
-        </Button>
-        <Button onClick={() => void exportEnvironment(environment)}>Export</Button>
-        <Button
-          variant="danger"
-          onClick={() => {
-            useUiStore.getState().show({ kind: "requests" });
-            void deleteEnvironment(id);
-          }}
-        >
-          Delete
-        </Button>
-      </div>
-      <VariablesEditor
-        rows={environment.variables}
-        onChange={(variables) => void updateEnvironment(id, (env) => ({ ...env, variables }))}
-      />
-      <p className="text-xs text-muted">
-        Changes save automatically. Use variables in requests as {"{{name}}"}.
-      </p>
-    </div>
+      }
+      actions={
+        <>
+          <Button
+            variant={active ? "secondary" : "primary"}
+            onClick={() => setActiveEnvironment(active ? null : id)}
+          >
+            {active ? "Deactivate" : "Set active"}
+          </Button>
+          <Button onClick={() => void exportEnvironment(environment)}>Export</Button>
+          <Button
+            variant="danger"
+            onClick={() => {
+              useUiStore.getState().show({ kind: "requests" });
+              void deleteEnvironment(id);
+            }}
+          >
+            Delete
+          </Button>
+        </>
+      }
+    >
+      <Card
+        label="Variables"
+        title="Variables"
+        description={
+          <>
+            Use them in requests as {"{{name}}"}. Secret values stay in your system keychain and are
+            never synced. Changes save automatically.
+          </>
+        }
+      >
+        <VariablesEditor
+          rows={environment.variables}
+          onChange={(variables) => void updateEnvironment(id, (env) => ({ ...env, variables }))}
+        />
+      </Card>
+    </Page>
   );
 }
 
 export function GlobalsEditor() {
   const globals = useWorkspaceStore((s) => s.globals);
   return (
-    <div className="space-y-3 p-4">
-      <h2 className="text-base font-medium">Globals</h2>
-      <p className="text-xs text-muted">
-        Available in every request. Stored on this machine only (not synced).
-      </p>
-      <KeyValueEditor
+    <Page eyebrow="Everywhere" title={<h2 className={PAGE_TITLE}>Globals</h2>}>
+      <Card
         label="Global variables"
-        rows={globals}
-        onChange={(rows) => void useWorkspaceStore.getState().setGlobals(rows)}
-      />
-    </div>
+        title="Variables"
+        description="Available in every request. Stored on this machine only (not synced)."
+      >
+        <KeyValueEditor
+          label="Global variables"
+          rows={globals}
+          onChange={(rows) => void useWorkspaceStore.getState().setGlobals(rows)}
+        />
+      </Card>
+    </Page>
   );
 }

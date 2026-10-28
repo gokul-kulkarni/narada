@@ -1,3 +1,4 @@
+import { ErrorText } from "../../components/page";
 import { useEffect, useState } from "react";
 import { Button, TextArea } from "../../components/ui";
 import { errorMessage } from "../../lib/format";
@@ -92,11 +93,7 @@ export function FileImport({
           onChange={(e) => setText(e.target.value)}
         />
       </label>
-      {error && (
-        <p role="alert" className="text-err">
-          {error}
-        </p>
-      )}
+      {error && <ErrorText>{error}</ErrorText>}
       <div className="flex justify-end gap-2">
         <Button onClick={onClose}>Cancel</Button>
         <Button variant="primary" disabled={busy || ready === 0} onClick={() => void submit()}>

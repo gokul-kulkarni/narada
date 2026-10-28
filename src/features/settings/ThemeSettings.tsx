@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Card } from "../../components/page";
 import { join } from "../../components/ui";
 import {
   applyTheme,
@@ -23,8 +24,7 @@ export function ThemeSettings() {
   };
 
   return (
-    <section aria-label="Appearance" className="space-y-2">
-      <h3 className="font-semibold">Appearance</h3>
+    <Card label="Appearance" title="Appearance" description="Light, dark, or follow your system.">
       <div role="radiogroup" aria-label="Theme" className="flex gap-2">
         {THEME_OPTIONS.map((option) => (
           <button
@@ -44,6 +44,6 @@ export function ThemeSettings() {
           </button>
         ))}
       </div>
-    </section>
+    </Card>
   );
 }

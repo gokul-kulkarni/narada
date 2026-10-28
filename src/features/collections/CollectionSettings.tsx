@@ -1,6 +1,9 @@
-import { EmptyState, TextArea, TextInput } from "../../components/ui";
+import { Card, Page, TITLE_INPUT } from "../../components/page";
+import { Button, EmptyState, TextArea, TextInput } from "../../components/ui";
+import { flattenRequests } from "../../lib/collection-tree";
 import type { Collection } from "../../lib/model";
 import { buildScopes } from "../../lib/request-context";
+import { useUiStore } from "../../state/ui-store";
 import { selectActiveEnvironment, useWorkspaceStore } from "../../state/workspace-store";
 import { AuthEditor } from "../request/AuthEditor";
 import { KeyValueEditor } from "../request/KeyValueEditor";
@@ -24,32 +27,54 @@ export function CollectionSettings({ id }: { id: string }) {
     });
   };
 
+  const requestCount = flattenRequests(collection.items).length;
+
   return (
-    <div className="space-y-4 overflow-auto p-4">
-      <TextInput
-        aria-label="Collection name"
-        className="w-full text-base font-medium"
-        value={collection.name}
-        onChange={(e) => update((c) => ({ ...c, name: e.target.value }))}
-      />
+    <Page
+      eyebrow={`Collection · ${requestCount} ${requestCount === 1 ? "request" : "requests"}`}
+      title={
+        <TextInput
+          aria-label="Collection name"
+          className={TITLE_INPUT}
+          value={collection.name}
+          onChange={(e) => update((c) => ({ ...c, name: e.target.value }))}
+        />
+      }
+      actions={
+        <Button
+          variant="primary"
+          disabled={requestCount === 0}
+          onClick={() =>
+            useUiStore.getState().show({ kind: "runner", collectionId: id, folderId: null })
+          }
+        >
+          Run collection
+        </Button>
+      }
+    >
       <TextArea
         aria-label="Description"
         className="h-20 w-full font-sans"
-        placeholder="Description"
+        placeholder="What is this collection for?"
         value={collection.description}
         onChange={(e) => update((c) => ({ ...c, description: e.target.value }))}
       />
-      <section className="space-y-2">
-        <h3 className="text-sm font-semibold">Variables</h3>
+      <Card
+        label="Variables"
+        title="Variables"
+        description="Shared by every request here. Environments override them."
+      >
         <KeyValueEditor
           label="Collection variables"
           rows={collection.variables}
           onChange={(variables) => update((c) => ({ ...c, variables }))}
         />
-      </section>
-      <section className="space-y-2">
-        <h3 className="text-sm font-semibold">Authorization</h3>
-        <p className="text-xs text-muted">Requests and folders set to “Inherit” use this.</p>
+      </Card>
+      <Card
+        label="Authorization"
+        title="Authorization"
+        description="Requests and folders set to “Inherit” use this."
+      >
         <AuthEditor
           auth={auth}
           allowInherit={false}
@@ -64,16 +89,18 @@ export function CollectionSettings({ id }: { id: string }) {
             )
           }
         />
-      </section>
-      <section className="space-y-2">
-        <h3 className="text-sm font-semibold">Scripts</h3>
-        <p className="text-xs text-muted">Run before / after every request in this collection.</p>
+      </Card>
+      <Card
+        label="Scripts"
+        title="Scripts"
+        description="Run before / after every request in this collection."
+      >
         <ScriptsEditor
           preRequestScript={collection.preRequestScript}
           testScript={collection.testScript}
           onChange={(scripts) => update((c) => ({ ...c, ...scripts }))}
         />
-      </section>
-    </div>
+      </Card>
+    </Page>
   );
 }

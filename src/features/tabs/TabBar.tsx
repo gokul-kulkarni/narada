@@ -9,12 +9,16 @@ export function TabBar() {
     <div
       role="tablist"
       aria-label="Open requests"
-      className="flex items-stretch overflow-x-auto border-b border-line text-sm"
+      className="flex items-stretch overflow-x-auto border-b border-line bg-surface text-sm"
     >
       {tabs.map((tab) => (
         <div
           key={tab.id}
-          className={`flex items-center gap-2 border-r border-line px-3 py-1.5 ${tab.id === activeTabId ? "bg-surface-2" : ""}`}
+          className={`group flex items-center gap-2 border-r border-b-2 border-r-line-soft px-4 py-2 ${
+            tab.id === activeTabId
+              ? "border-b-accent font-semibold text-ink"
+              : "border-b-transparent text-muted hover:text-ink"
+          }`}
         >
           <button
             type="button"
@@ -23,17 +27,22 @@ export function TabBar() {
             onClick={() => activate(tab.id)}
             className="max-w-48 truncate"
           >
-            <span className="mr-1 text-xs font-semibold text-accent-text">
+            <span className="mr-1.5 font-mono text-[11px] font-semibold text-accent-text">
               {tab.request.method}
             </span>
             {tab.request.name}
-            {tab.dirty && <span aria-label="unsaved"> •</span>}
+            {tab.dirty && (
+              <span aria-label="unsaved" className="text-send">
+                {" "}
+                •
+              </span>
+            )}
           </button>
           <button
             type="button"
             aria-label={`Close ${tab.request.name}`}
             onClick={() => close(tab.id)}
-            className="text-muted hover:text-ink"
+            className="rounded px-1 text-muted opacity-60 group-hover:opacity-100 hover:bg-surface-2 hover:text-ink"
           >
             ✕
           </button>
@@ -43,7 +52,7 @@ export function TabBar() {
         type="button"
         aria-label="New request tab"
         onClick={openNew}
-        className="px-3 hover:bg-surface-2"
+        className="px-4 text-lg text-muted hover:bg-surface-2 hover:text-ink"
       >
         +
       </button>

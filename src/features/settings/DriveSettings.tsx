@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { Card, ErrorText } from "../../components/page";
 import { Button, TextInput } from "../../components/ui";
 import {
   configureDrive,
@@ -43,13 +44,12 @@ export function DriveSettings() {
   };
 
   return (
-    <section className="space-y-2" aria-label="Google Drive sync">
-      <h3 className="text-sm font-semibold">Google Drive sync</h3>
+    <Card label="Google Drive sync" title="Google Drive sync">
       {!driveAvailable() ? (
-        <p className="text-xs text-muted">Drive sync is available in the desktop app.</p>
+        <p className="text-sm text-muted">Drive sync is available in the desktop app.</p>
       ) : (
         <>
-          <p className="text-xs text-muted">
+          <p className="text-sm text-muted">
             Syncs Collections/ and Environments/ with a <code>narada</code> folder in your Drive,
             using the limited <code>drive.file</code> scope (the app can only see files it created).
             Create a free OAuth client of type “Desktop app” in Google Cloud Console and paste it
@@ -81,7 +81,7 @@ export function DriveSettings() {
           <div className="flex items-center gap-2 text-sm">
             <span data-testid="drive-status">
               {status?.signedIn
-                ? "✅ Signed in"
+                ? "● Signed in"
                 : status?.configured
                   ? "Not signed in"
                   : "Not configured"}
@@ -107,11 +107,7 @@ export function DriveSettings() {
           </div>
         </>
       )}
-      {error && (
-        <p role="alert" className="text-sm text-err">
-          {error}
-        </p>
-      )}
-    </section>
+      {error && <ErrorText>{error}</ErrorText>}
+    </Card>
   );
 }

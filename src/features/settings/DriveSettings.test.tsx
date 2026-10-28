@@ -50,7 +50,7 @@ describe("DriveSettings (desktop)", () => {
     );
 
     fireEvent.click(screen.getByRole("button", { name: "Sign in with Google" }));
-    expect(await screen.findByText("✅ Signed in")).toBeInTheDocument();
+    expect(await screen.findByText("● Signed in")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Sync now" }));
     await waitFor(() =>

@@ -1,7 +1,8 @@
 import { useUiStore } from "../../state/ui-store";
 import { useWorkspaceStore } from "../../state/workspace-store";
 
-const BAR = "flex items-center justify-between gap-2 px-3 py-1.5 text-sm";
+const BAR =
+  "mx-5 mt-3 flex items-center justify-between gap-2 rounded-xl px-4 py-2 text-sm font-semibold";
 
 export function Notices() {
   const notice = useUiStore((s) => s.notice);

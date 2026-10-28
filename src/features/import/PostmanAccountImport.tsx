@@ -1,3 +1,4 @@
+import { ErrorText } from "../../components/page";
 import { Button, Select, TextInput } from "../../components/ui";
 import type { PostmanEntry } from "../../lib/postman-api";
 import { useUiStore } from "../../state/ui-store";
@@ -22,13 +23,20 @@ function EntryList({
   onToggle: (key: string) => void;
 }) {
   return (
-    <fieldset className="space-y-1">
-      <legend className="font-medium">{title}</legend>
-      {entries.length === 0 && <p className="text-muted">None in this workspace.</p>}
+    <fieldset className="overflow-hidden rounded-xl border border-line">
+      <legend className="sr-only">{title}</legend>
+      <div aria-hidden="true" className="bg-surface-2 px-3 py-1.5 text-xs font-bold text-muted">
+        {title}
+      </div>
+      {entries.length === 0 && <p className="px-3 py-2 text-muted">None in this workspace.</p>}
       {entries.map((entry) => (
-        <label key={entry.uid} className="flex items-center gap-2">
+        <label
+          key={entry.uid}
+          className="flex cursor-pointer items-center gap-2 border-t border-line-soft px-3 py-2 hover:bg-surface-2 has-checked:bg-accent-soft has-checked:font-semibold has-checked:text-accent-soft-ink"
+        >
           <input
             type="checkbox"
+            className="accent-accent"
             checked={selection.has(keyOf(entry.uid))}
             onChange={() => onToggle(keyOf(entry.uid))}
           />
@@ -103,11 +111,7 @@ export function PostmanAccountImport({ onClose }: { onClose: () => void }) {
           />
         </div>
       )}
-      {account.error && (
-        <p role="alert" className="text-err">
-          {account.error}
-        </p>
-      )}
+      {account.error && <ErrorText>{account.error}</ErrorText>}
       <div className="flex justify-end gap-2">
         <Button onClick={onClose}>Cancel</Button>
         <Button

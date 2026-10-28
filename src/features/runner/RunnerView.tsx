@@ -1,13 +1,17 @@
 import { useRef, useState } from "react";
+import { Card, ErrorText, Page, PAGE_TITLE } from "../../components/page";
 import { Button, EmptyState, TextInput } from "../../components/ui";
 import { findFolder, findRequest, flattenRequests } from "../../lib/collection-tree";
 import { parseDataFile, type DataRow } from "../../lib/data-file";
-import { errorMessage, formatDuration } from "../../lib/format";
+import { errorMessage } from "../../lib/format";
 import { sendHttp } from "../../lib/http-client";
-import { iterationCount, runCollection, summarizeRun, type RunRow } from "../../lib/runner";
+import { iterationCount, runCollection, type RunRow } from "../../lib/runner";
 import { executeScript } from "../../lib/scripts/script-runner";
 import { useWorkspaceStore } from "../../state/workspace-store";
 import { applyScopes, pipelineInputFor } from "../workspace/context";
+import { RunResults } from "./RunResults";
+
+const FIELD_LABEL = "flex flex-col gap-1 text-xs font-bold text-muted";
 
 export function RunnerView({
   collectionId,
@@ -68,121 +72,85 @@ export function RunnerView({
     }
   };
 
-  const summary = summarizeRun(rows);
+  const runButton = running ? (
+    <Button variant="danger" onClick={() => (stopped.current = true)}>
+      Stop
+    </Button>
+  ) : (
+    <Button variant="primary" disabled={requests.length === 0} onClick={() => void start()}>
+      Run {iterationCount(iterations, data?.rows ?? [])} iteration(s)
+    </Button>
+  );
 
   return (
-    <div className="space-y-4 overflow-auto p-4">
-      <h2 className="text-base font-medium">Run “{title}”</h2>
-      <p className="text-sm text-muted">
-        {requests.length} request(s) in order, using the active environment. Variable changes made
-        by scripts are saved when the run finishes.
-      </p>
-      <div className="flex flex-wrap items-end gap-4 text-sm">
-        <label className="flex flex-col">
-          Iterations
-          <TextInput
-            aria-label="Iterations"
-            type="number"
-            min={1}
-            className="w-24"
-            value={iterations}
-            onChange={(e) => setIterations(Number(e.target.value))}
-          />
-        </label>
-        <label className="flex flex-col">
-          Delay (ms)
-          <TextInput
-            aria-label="Delay"
-            type="number"
-            min={0}
-            className="w-24"
-            value={delayMs}
-            onChange={(e) => setDelayMs(Number(e.target.value))}
-          />
-        </label>
-        <label className="flex flex-col">
-          Data file (CSV/JSON)
-          <input
-            type="file"
-            aria-label="Data file"
-            accept=".csv,.json"
-            onChange={async (e) => {
-              const file = e.target.files?.[0];
-              if (!file) return setData(null);
-              try {
-                setData({ name: file.name, rows: parseDataFile(await file.text(), file.name) });
-                setError(null);
-              } catch (err) {
-                setError(`Could not read ${file.name}: ${errorMessage(err)}`);
-              }
-            }}
-          />
-        </label>
-        {running ? (
-          <Button variant="danger" onClick={() => (stopped.current = true)}>
-            Stop
-          </Button>
-        ) : (
-          <Button variant="primary" disabled={requests.length === 0} onClick={() => void start()}>
-            Run {iterationCount(iterations, data?.rows ?? [])} iteration(s)
-          </Button>
-        )}
-      </div>
-      {data && (
-        <p className="text-xs text-muted">
-          {data.name}: {data.rows.length} row(s)
-        </p>
-      )}
-      {error && (
-        <p role="alert" className="text-sm text-err">
-          {error}
-        </p>
-      )}
-      {rows.length > 0 && (
-        <>
-          <p className="text-sm" data-testid="run-summary">
-            {summary.requests} requests · <span className="text-ok">{summary.passed} passed</span> ·{" "}
-            <span className="text-err">{summary.failed} failed</span>
-            {summary.errors > 0 && ` · ${summary.errors} error(s)`}
+    <Page
+      eyebrow={`Collection run · ${requests.length} request(s) in order`}
+      title={<h2 className={PAGE_TITLE}>Run “{title}”</h2>}
+      actions={runButton}
+    >
+      <Card
+        label="Run options"
+        description="Uses the active environment. Variable changes made by scripts are saved when the run finishes."
+      >
+        <div className="flex flex-wrap items-end gap-4">
+          <label className={FIELD_LABEL}>
+            Iterations
+            <TextInput
+              aria-label="Iterations"
+              type="number"
+              min={1}
+              className="w-28 font-normal text-ink"
+              value={iterations}
+              onChange={(e) => setIterations(Number(e.target.value))}
+            />
+          </label>
+          <label className={FIELD_LABEL}>
+            Delay between requests (ms)
+            <TextInput
+              aria-label="Delay"
+              type="number"
+              min={0}
+              className="w-28 font-normal text-ink"
+              value={delayMs}
+              onChange={(e) => setDelayMs(Number(e.target.value))}
+            />
+          </label>
+          <label className={FIELD_LABEL}>
+            Data file (CSV or JSON, one iteration per row)
+            <input
+              type="file"
+              aria-label="Data file"
+              accept=".csv,.json"
+              className="text-sm font-normal text-ink file:mr-3 file:rounded-lg file:border file:border-line file:bg-surface file:px-3 file:py-1.5 file:font-semibold file:text-ink"
+              onChange={async (e) => {
+                const file = e.target.files?.[0];
+                if (!file) return setData(null);
+                try {
+                  setData({ name: file.name, rows: parseDataFile(await file.text(), file.name) });
+                  setError(null);
+                } catch (err) {
+                  setError(`Could not read ${file.name}: ${errorMessage(err)}`);
+                }
+              }}
+            />
+          </label>
+        </div>
+        {data && (
+          <p className="text-xs text-muted">
+            {data.name}: {data.rows.length} row(s)
           </p>
-          <table className="w-full text-left text-sm">
-            <thead className="text-xs text-muted uppercase">
-              <tr>
-                <th>#</th>
-                <th>Request</th>
-                <th>Status</th>
-                <th>Time</th>
-                <th>Tests</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((row, index) => (
-                <tr key={index} className="border-t border-line-soft align-top">
-                  <td className="py-1 pr-2">{row.iteration + 1}</td>
-                  <td className="py-1 pr-2">
-                    <span className="mr-1 text-xs font-semibold text-accent-text">
-                      {row.method}
-                    </span>
-                    {row.name}
-                    {row.error && <div className="text-xs text-err">{row.error}</div>}
-                  </td>
-                  <td className="py-1 pr-2">{row.status ?? "—"}</td>
-                  <td className="py-1 pr-2">
-                    {row.timeMs === null ? "—" : formatDuration(row.timeMs)}
-                  </td>
-                  <td className="py-1">
-                    {row.tests.map((t, i) => (
-                      <div key={i} className={t.passed ? "text-ok" : "text-err"}>
-                        {t.passed ? "✓" : "✗"} {t.name}
-                      </div>
-                    ))}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </>
+        )}
+      </Card>
+      {error && <ErrorText>{error}</ErrorText>}
+      {rows.length > 0 ? (
+        <RunResults rows={rows} />
+      ) : (
+        !running && (
+          <p className="rounded-2xl border border-dashed border-line p-6 text-center text-sm text-muted">
+            Results appear here as each request comes back.
+          </p>
+        )
       )}
-    </div>
+    </Page>
   );
 }

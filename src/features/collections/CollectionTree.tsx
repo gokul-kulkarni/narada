@@ -58,7 +58,7 @@ function TreeItem({
               className="flex min-w-0 flex-1 gap-2 text-left"
               onClick={() => openSavedRequest(collection.id, item.request)}
             >
-              <span className="w-12 shrink-0 font-mono text-[11px] font-semibold text-accent-text">
+              <span className="w-10 shrink-0 font-mono text-[11px] font-semibold text-accent-text">
                 {item.request.method}
               </span>
               <span className="truncate">{name}</span>
@@ -95,7 +95,7 @@ function TreeItem({
             onClick={() => setOpen(!open)}
           >
             <span className="w-3 text-muted">{open ? "▾" : "▸"}</span>
-            <span className="truncate">📁 {name}</span>
+            <span className="truncate font-semibold">{name}</span>
           </button>
         )}
         <ItemActions

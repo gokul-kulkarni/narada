@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Card, ErrorText } from "../../components/page";
 import { Button } from "../../components/ui";
 import { errorMessage } from "../../lib/format";
 import {
@@ -28,13 +29,15 @@ export function StorageSettings() {
   };
 
   return (
-    <section className="space-y-2">
-      <h3 className="text-sm font-semibold">Storage folder</h3>
-      <p className="text-xs text-muted">
-        Collections and Environments are saved as Postman JSON files here. Choose a folder inside
-        Google Drive for Desktop (e.g. My Drive/narada) and Google syncs it for free.
-      </p>
-      <code className="block rounded bg-surface-2 p-2 text-xs break-all" data-testid="storage-dir">
+    <Card
+      label="Storage folder"
+      title="Storage folder"
+      description="Collections and environments are saved here as Postman JSON files. Pick a folder inside Google Drive for Desktop (e.g. My Drive/narada) and Google syncs it for free."
+    >
+      <code
+        className="block rounded-lg bg-surface-2 px-3 py-2 font-mono text-xs break-all"
+        data-testid="storage-dir"
+      >
         {dir}
       </code>
       {canUseNativeStorage() && (
@@ -52,11 +55,7 @@ export function StorageSettings() {
           </Button>
         </div>
       )}
-      {error && (
-        <p role="alert" className="text-sm text-err">
-          {error}
-        </p>
-      )}
-    </section>
+      {error && <ErrorText>{error}</ErrorText>}
+    </Card>
   );
 }

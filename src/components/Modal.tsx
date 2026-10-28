@@ -17,18 +17,28 @@ export function Modal({
 
   return (
     <div
-      className="fixed inset-0 z-10 flex items-center justify-center bg-backdrop p-4"
+      className="fixed inset-0 z-10 flex items-center justify-center bg-backdrop p-6"
       onClick={onClose}
     >
       <div
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className="max-h-full w-full max-w-2xl overflow-auto rounded-lg bg-surface p-4 shadow-xl"
+        className="flex max-h-full w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-line bg-surface shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <h2 className="mb-3 font-semibold">{title}</h2>
-        {children}
+        <header className="flex items-center justify-between border-b border-line-soft px-6 py-4">
+          <h2 className="font-display text-2xl font-semibold">{title}</h2>
+          <button
+            type="button"
+            aria-label="Close"
+            onClick={onClose}
+            className="rounded-lg px-2 py-1 text-muted hover:bg-surface-2 hover:text-ink"
+          >
+            ✕
+          </button>
+        </header>
+        <div className="overflow-auto px-6 py-5">{children}</div>
       </div>
     </div>
   );
