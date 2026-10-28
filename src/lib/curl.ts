@@ -1,5 +1,5 @@
 import { newKeyValue, newRequest } from "./factories";
-import type { Auth, HttpMethod, KeyValue, RequestBody, RequestDef } from "./model";
+import type { Auth, HttpMethod, KeyValue, RequestBody, HttpRequestDef } from "./model";
 import { HTTP_METHODS } from "./model";
 import { parseQueryParams, withQueryParams } from "./url-params";
 
@@ -152,7 +152,7 @@ function buildBody(parts: CurlParts, contentType: string): RequestBody {
   return { mode: "raw", raw: data, language: contentType.includes("xml") ? "xml" : "text" };
 }
 
-export function parseCurl(command: string): RequestDef {
+export function parseCurl(command: string): HttpRequestDef {
   const tokens = tokenizeShell(command.trim());
   if (tokens[0] !== "curl") throw new Error("Not a curl command (it should start with `curl`).");
   const parts = collect(tokens);

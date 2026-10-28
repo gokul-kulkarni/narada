@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { newRequest } from "../lib/factories";
 import { newId } from "../lib/ids";
-import type { HttpResponse, RequestDef } from "../lib/model";
+import type { Delivery, RequestDef } from "../lib/model";
 import type { TestResult } from "../lib/scripts/types";
 
 export interface RequestSource {
@@ -15,9 +15,9 @@ export interface RequestTab {
   readonly source: RequestSource | null;
   readonly dirty: boolean;
   readonly loading: boolean;
-  /** The response so far while it is still arriving. */
-  readonly partial: HttpResponse | null;
-  readonly response: HttpResponse | null;
+  /** The delivery so far while the reply is still arriving. */
+  readonly partial: Delivery | null;
+  readonly delivery: Delivery | null;
   readonly error: string | null;
   readonly tests: readonly TestResult[];
   readonly logs: readonly string[];
@@ -41,7 +41,7 @@ const createTab = (request: RequestDef, source: RequestSource | null): RequestTa
   dirty: false,
   loading: false,
   partial: null,
-  response: null,
+  delivery: null,
   error: null,
   tests: [],
   logs: [],

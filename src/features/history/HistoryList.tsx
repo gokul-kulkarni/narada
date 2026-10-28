@@ -1,6 +1,7 @@
 import { Button, EmptyState } from "../../components/ui";
-import { deliveryOutcome, formatSentAt } from "../../lib/delivery";
+import { formatSentAt } from "../../lib/delivery";
 import { newId } from "../../lib/ids";
+import { historySummary, requestAddress, requestBadge } from "../../protocols/registry";
 import { useHistoryStore } from "../../state/history-store";
 import { useTabsStore } from "../../state/tabs-store";
 import { StatusPill } from "../delivery/StatusPill";
@@ -23,17 +24,17 @@ export function HistoryList() {
               }
             >
               <span className="w-14 shrink-0 font-mono text-xs font-semibold text-accent-text">
-                {entry.request.method}
+                {requestBadge(entry.request)}
               </span>
               <span className="min-w-0 truncate font-mono text-[13px]">
-                {entry.request.url || entry.request.name}
+                {requestAddress(entry.request) || entry.request.name}
               </span>
               <span className="ml-auto shrink-0 text-xs text-muted">
                 {entry.environment && `${entry.environment} · `}
                 {formatSentAt(entry.sentAt)}
               </span>
-              <StatusPill tone={deliveryOutcome(entry.status).tone}>
-                {entry.status ?? "ERR"}
+              <StatusPill tone={historySummary(entry).tone}>
+                {historySummary(entry).code}
               </StatusPill>
             </button>
           </li>

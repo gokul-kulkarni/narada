@@ -1,13 +1,13 @@
 import { newKeyValue } from "../factories";
 import { errorMessage } from "../format";
-import type { Auth, HttpResponse, RequestDef } from "../model";
+import type { Auth, HttpResponse, HttpRequestDef } from "../model";
 import { prepareRequest, type PreparedRequest } from "../prepare-request";
 import type { VariableScopes } from "../variables";
 import type { ExecuteScript } from "./script-runner";
 import type { ScriptRequest, ScriptVariables, TestResult } from "./types";
 
 export interface PipelineInput {
-  readonly request: RequestDef;
+  readonly request: HttpRequestDef;
   readonly scopes: VariableScopes;
   readonly authChain: readonly Auth[];
   /** Collection-level scripts run before the request's own. */
@@ -45,18 +45,18 @@ const toScopes = (v: ScriptVariables): VariableScopes => ({
   local: v.local,
 });
 
-const toScriptRequest = (r: RequestDef): ScriptRequest => ({
+const toScriptRequest = (r: HttpRequestDef): ScriptRequest => ({
   method: r.method,
   url: r.url,
   headers: r.headers.filter((h) => h.enabled).map((h) => [h.key, h.value] as const),
 });
 
 /** Applies header/url/method edits made by pre-request scripts to the request definition. */
-function applyScriptRequest(request: RequestDef, edited: ScriptRequest): RequestDef {
+function applyScriptRequest(request: HttpRequestDef, edited: ScriptRequest): HttpRequestDef {
   const disabled = request.headers.filter((h) => !h.enabled);
   return {
     ...request,
-    method: (edited.method.toUpperCase() as RequestDef["method"]) || request.method,
+    method: (edited.method.toUpperCase() as HttpRequestDef["method"]) || request.method,
     url: edited.url,
     headers: [...edited.headers.map(([k, v]) => newKeyValue(k, v)), ...disabled],
   };

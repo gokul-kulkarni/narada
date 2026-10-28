@@ -1,5 +1,5 @@
 import { newId } from "./ids";
-import type { Collection, Environment, KeyValue, RequestDef } from "./model";
+import type { Collection, Environment, HttpRequestDef, KeyValue } from "./model";
 
 export const newKeyValue = (key = "", value = ""): KeyValue => ({
   id: newId(),
@@ -8,7 +8,8 @@ export const newKeyValue = (key = "", value = ""): KeyValue => ({
   enabled: true,
 });
 
-export const newRequest = (overrides: Partial<RequestDef> = {}): RequestDef => ({
+export const newRequest = (overrides: Partial<HttpRequestDef> = {}): HttpRequestDef => ({
+  protocol: "http",
   id: newId(),
   name: "New Request",
   method: "GET",

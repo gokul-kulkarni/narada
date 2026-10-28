@@ -21,7 +21,7 @@ interface Props {
 /** Every time the open request was sent, newest first, on a timeline. */
 export function DeliveryLog({ tab, environment, responseView, liveView, onStop }: Props) {
   const entries = useHistoryStore((s) => s.entries);
-  const hasCurrent = !tab.loading && (tab.response !== null || tab.error !== null);
+  const hasCurrent = !tab.loading && (tab.delivery !== null || tab.error !== null);
   // When a response is showing, the newest history entry is that same delivery.
   const all = deliveriesFor(entries, tab.request.id);
   const past = all.slice(hasCurrent ? 1 : 0);
@@ -57,10 +57,10 @@ export function DeliveryLog({ tab, environment, responseView, liveView, onStop }
         <CurrentDelivery
           request={tab.request}
           environment={sentTo}
-          response={tab.response}
+          delivery={tab.delivery}
           error={tab.error}
         >
-          {tab.response && responseView}
+          {tab.delivery && responseView}
         </CurrentDelivery>
       )}
       {shown.map((entry, index) => (

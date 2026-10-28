@@ -31,7 +31,7 @@ const tabWith = (overrides: Partial<RequestTab["request"]>): RequestTab => ({
   dirty: false,
   loading: false,
   partial: null,
-  response: null,
+  delivery: null,
   error: null,
   tests: [],
   logs: [],
@@ -54,13 +54,12 @@ function deps(send: (r: PreparedRequest) => Promise<HttpResponse>) {
 describe("sendTab", () => {
   it("sends, runs tests, applies variable changes and records history", async () => {
     const d = deps(async () => response);
-    await sendTab(
-      tabWith({
-        url: "https://{{host}}/x",
-        testScript: `pm.test("ok", () => {}); pm.environment.set("t", "1")`,
-      }),
-      d,
-    );
+    const tab = tabWith({
+      url: "https://{{host}}/x",
+      testScript: `pm.test("ok", () => {}); pm.environment.set("t", "1")`,
+    });
+    await sendTab(tab, tab.request, d);
+
     expect(d.send.mock.calls[0][0].url).toBe("https://a.dev/x");
     expect(d.patchTab).toHaveBeenNthCalledWith(1, "t1", {
       loading: true,
@@ -72,7 +71,7 @@ describe("sendTab", () => {
     expect(d.patchTab).toHaveBeenLastCalledWith("t1", {
       loading: false,
       partial: null,
-      response,
+      delivery: { protocol: "http", response },
       error: null,
       tests: [{ name: "ok", passed: true }],
       logs: [],
@@ -89,10 +88,11 @@ describe("sendTab", () => {
 
   it("reports errors on the tab and still records history", async () => {
     const d = deps(async () => Promise.reject("Could not connect"));
-    await sendTab(tabWith({ url: "https://a.dev" }), d);
+    const tab = tabWith({ url: "https://a.dev" });
+    await sendTab(tab, tab.request, d);
     expect(d.patchTab).toHaveBeenLastCalledWith(
       "t1",
-      expect.objectContaining({ response: null, error: "Could not connect" }),
+      expect.objectContaining({ delivery: null, error: "Could not connect" }),
     );
     expect(d.addHistory.mock.calls[0][0]).toMatchObject({ status: null });
   });

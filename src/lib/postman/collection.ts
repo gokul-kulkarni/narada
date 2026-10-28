@@ -7,7 +7,7 @@ import {
   type KeyValue,
   type RawLanguage,
   type RequestBody,
-  type RequestDef,
+  type HttpRequestDef,
 } from "../model";
 import { authFromPostman, authToPostman } from "./auth-convert";
 import {
@@ -118,11 +118,16 @@ const toMethod = (method: string | undefined): HttpMethod => {
   return (HTTP_METHODS as readonly string[]).includes(upper) ? (upper as HttpMethod) : "GET";
 };
 
-function requestFromPostman(item: Record<string, unknown>): RequestDef {
+function requestFromPostman(item: Record<string, unknown>): HttpRequestDef {
   const id = typeof item.id === "string" ? item.id : newId();
   const parsed = requestSchema.safeParse(item.request);
   const request = parsed.success ? parsed.data : "";
-  const base = { id, name: String(item.name ?? "Request"), ...scripts(item.event) };
+  const base = {
+    protocol: "http" as const,
+    id,
+    name: String(item.name ?? "Request"),
+    ...scripts(item.event),
+  };
   if (typeof request === "string") {
     return {
       ...base,

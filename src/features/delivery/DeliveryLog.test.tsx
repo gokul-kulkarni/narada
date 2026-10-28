@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { newRequest } from "../../lib/factories";
-import type { HistoryEntry, HttpResponse } from "../../lib/model";
+import type { Delivery, HistoryEntry, HttpResponse } from "../../lib/model";
 import { useHistoryStore } from "../../state/history-store";
 import { useTabsStore, type RequestTab } from "../../state/tabs-store";
 import { resetStores } from "../../test/reset-stores";
@@ -16,7 +16,7 @@ const tab = (overrides: Partial<RequestTab> = {}): RequestTab => ({
   dirty: false,
   loading: false,
   partial: null,
-  response: null,
+  delivery: null,
   error: null,
   tests: [],
   logs: [],
@@ -32,6 +32,8 @@ const response: HttpResponse = {
   sizeBytes: 2,
   timeMs: 42,
 };
+
+const http = (r: HttpResponse): Delivery => ({ protocol: "http", response: r });
 
 const entry = (id: string, status: number | null, environment?: string): HistoryEntry => ({
   id,
@@ -61,7 +63,7 @@ describe("DeliveryLog", () => {
     const onStop = vi.fn();
     render(
       <DeliveryLog
-        tab={tab({ loading: true, partial: { ...response, sizeBytes: 3400 } })}
+        tab={tab({ loading: true, partial: http({ ...response, sizeBytes: 3400 }) })}
         environment={null}
         onStop={onStop}
         liveView={<p>live body</p>}
@@ -78,7 +80,7 @@ describe("DeliveryLog", () => {
   it("notes a reply that ended early", () => {
     render(
       <DeliveryLog
-        tab={tab({ response: { ...response, incomplete: "Stopped." } })}
+        tab={tab({ delivery: http({ ...response, incomplete: "Stopped." }) })}
         environment={null}
       />,
     );
@@ -89,7 +91,7 @@ describe("DeliveryLog", () => {
     useHistoryStore.setState({ entries: [entry("1", 201, "prod"), entry("2", 404, "local")] });
     render(
       <DeliveryLog
-        tab={tab({ response })}
+        tab={tab({ delivery: http(response) })}
         environment="staging"
         responseView={<p>response body</p>}
       />,

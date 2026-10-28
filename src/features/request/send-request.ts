@@ -1,5 +1,5 @@
 import { newId } from "../../lib/ids";
-import type { HistoryEntry, HttpResponse } from "../../lib/model";
+import type { HistoryEntry, HttpRequestDef, HttpResponse } from "../../lib/model";
 import type { PreparedRequest } from "../../lib/prepare-request";
 import { runPipeline, type PipelineInput } from "../../lib/scripts/pipeline";
 import type { ExecuteScript } from "../../lib/scripts/script-runner";
@@ -21,19 +21,24 @@ export interface SendDeps {
   readonly now?: () => Date;
 }
 
-export async function sendTab(tab: RequestTab, deps: SendDeps): Promise<void> {
+/** Sends `request` (the tab's HTTP request) and records the result on the tab and in history. */
+export async function sendTab(
+  tab: RequestTab,
+  request: HttpRequestDef,
+  deps: SendDeps,
+): Promise<void> {
   const now = deps.now ?? (() => new Date());
   deps.patchTab(tab.id, { loading: true, partial: null, error: null, tests: [], logs: [] });
   const input = deps.getInput(tab);
   const result = await runPipeline(
-    { ...input, request: tab.request },
+    { ...input, request },
     { send: deps.send, execute: deps.execute },
   );
   await deps.applyScopes(tab, input.scopes, result.scopes);
   deps.patchTab(tab.id, {
     loading: false,
     partial: null,
-    response: result.response,
+    delivery: result.response && { protocol: "http", response: result.response },
     error: result.error,
     tests: result.tests,
     logs: result.logs,
@@ -41,7 +46,7 @@ export async function sendTab(tab: RequestTab, deps: SendDeps): Promise<void> {
   deps.addHistory({
     id: newId(),
     sentAt: now().toISOString(),
-    request: tab.request,
+    request,
     status: result.response?.status ?? null,
     timeMs: result.response?.timeMs ?? null,
   });

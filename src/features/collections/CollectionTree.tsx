@@ -1,3 +1,4 @@
+import { requestBadge } from "../../protocols/registry";
 import { useState } from "react";
 import { InlineRename } from "../../components/InlineRename";
 import type { Collection, CollectionItem } from "../../lib/model";
@@ -59,7 +60,7 @@ function TreeItem({
               onClick={() => openSavedRequest(collection.id, item.request)}
             >
               <span className="w-10 shrink-0 font-mono text-[11px] font-semibold text-accent-text">
-                {item.request.method}
+                {requestBadge(item.request)}
               </span>
               <span className="truncate">{name}</span>
             </button>

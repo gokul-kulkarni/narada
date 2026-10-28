@@ -38,7 +38,8 @@ export type Auth =
 
 export type AuthType = Auth["type"];
 
-export interface RequestDef {
+export interface HttpRequestDef {
+  readonly protocol: "http";
   readonly id: string;
   readonly name: string;
   readonly method: HttpMethod;
@@ -49,6 +50,10 @@ export interface RequestDef {
   readonly preRequestScript: string;
   readonly testScript: string;
 }
+
+/** A saved or open request of any protocol; each protocol module in src/protocols handles its own. */
+export type RequestDef = HttpRequestDef;
+export type ProtocolId = RequestDef["protocol"];
 
 export interface FolderItem {
   readonly kind: "folder";
@@ -99,6 +104,14 @@ export interface HttpResponse {
   /** Why the body stopped early (stopped, idle, size limit), if it did. */
   readonly incomplete?: string | null;
 }
+
+/** The outcome of sending a request, per protocol. Script results live on the tab. */
+export interface HttpDelivery {
+  readonly protocol: "http";
+  readonly response: HttpResponse;
+}
+
+export type Delivery = HttpDelivery;
 
 export interface StreamMark {
   readonly atMs: number;

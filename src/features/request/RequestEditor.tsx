@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from "react";
 import { Button, Select, TabStrip, TextInput } from "../../components/ui";
-import { HTTP_METHODS, type HttpMethod, type RequestDef } from "../../lib/model";
+import { HTTP_METHODS, type HttpMethod, type HttpRequestDef } from "../../lib/model";
 import { AuthEditor } from "./AuthEditor";
 import { BodyEditor } from "./BodyEditor";
 import { KeyValueEditor } from "./KeyValueEditor";
@@ -9,9 +9,9 @@ import { ParamsEditor } from "./ParamsEditor";
 type Section = "params" | "headers" | "body" | "auth" | "scripts";
 
 interface Props {
-  readonly request: RequestDef;
+  readonly request: HttpRequestDef;
   readonly loading: boolean;
-  readonly onChange: (update: (request: RequestDef) => RequestDef) => void;
+  readonly onChange: (update: (request: HttpRequestDef) => HttpRequestDef) => void;
   readonly onSend: () => void;
   readonly toolbar?: ReactNode;
   readonly oauthActions?: ReactNode;

@@ -1,3 +1,4 @@
+import { requestBadge } from "../../protocols/registry";
 import { useTabsStore } from "../../state/tabs-store";
 
 export function TabBar() {
@@ -28,7 +29,7 @@ export function TabBar() {
             className="max-w-48 truncate"
           >
             <span className="mr-1.5 font-mono text-[11px] font-semibold text-accent-text">
-              {tab.request.method}
+              {requestBadge(tab.request)}
             </span>
             {tab.request.name}
             {tab.dirty && (

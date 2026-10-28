@@ -1,5 +1,5 @@
 import { applyAuth, effectiveAuth, type HeaderPair } from "./auth";
-import type { Auth, KeyValue, RawLanguage, RequestBody, RequestDef } from "./model";
+import type { Auth, KeyValue, RawLanguage, RequestBody, HttpRequestDef } from "./model";
 import { resolveTemplate, type VariableScopes } from "./variables";
 
 export const DEFAULT_TIMEOUT_MS = 30_000;
@@ -85,7 +85,7 @@ function resolveAuth(auth: Auth, resolve: Resolve): Auth {
   return resolved as Auth;
 }
 
-export function prepareRequest(request: RequestDef, context: PrepareContext): PreparedRequest {
+export function prepareRequest(request: HttpRequestDef, context: PrepareContext): PreparedRequest {
   const resolve: Resolve = (text) => resolveTemplate(text, context.scopes);
   const userHeaders = resolvePairs(request.headers, resolve);
   const { body, contentType } = prepareBody(request.body, resolve);

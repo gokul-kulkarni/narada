@@ -1,11 +1,11 @@
 import type { DataRow } from "./data-file";
-import type { Auth, RequestDef } from "./model";
+import type { Auth, HttpRequestDef } from "./model";
 import { runPipeline, type PipelineDeps } from "./scripts/pipeline";
 import type { TestResult } from "./scripts/types";
 import type { VariableScopes } from "./variables";
 
 export interface RunStep {
-  readonly request: RequestDef;
+  readonly request: HttpRequestDef;
   readonly authChain: readonly Auth[];
 }
 

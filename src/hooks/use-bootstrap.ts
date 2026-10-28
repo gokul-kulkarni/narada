@@ -8,12 +8,18 @@ import { useWorkspaceStore } from "../state/workspace-store";
 
 const HISTORY_SAVE_DELAY_MS = 500;
 
+/** History saved before requests had a protocol holds HTTP requests only. */
+const withProtocol = (entry: HistoryEntry): HistoryEntry =>
+  entry.request.protocol ? entry : { ...entry, request: { ...entry.request, protocol: "http" } };
+
 function parseHistory(content: string | null): HistoryEntry[] {
   if (!content) return [];
   try {
     const parsed: unknown = JSON.parse(content);
     return Array.isArray(parsed)
-      ? parsed.filter((e) => typeof e?.id === "string" && typeof e?.request === "object")
+      ? parsed
+          .filter((e) => typeof e?.id === "string" && typeof e?.request === "object")
+          .map(withProtocol)
       : [];
   } catch {
     return [];
