@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import type { HistoryEntry } from "../lib/model";
 import { useHistoryStore } from "../state/history-store";
+import { useMcpStore } from "../state/mcp-store";
 import { getServices } from "../state/services";
 import { useTabsStore } from "../state/tabs-store";
 import { useUiStore } from "../state/ui-store";
@@ -9,8 +10,12 @@ import { useWorkspaceStore } from "../state/workspace-store";
 const HISTORY_SAVE_DELAY_MS = 500;
 
 /** History saved before requests had a protocol holds HTTP requests only. */
-const withProtocol = (entry: HistoryEntry): HistoryEntry =>
-  entry.request.protocol ? entry : { ...entry, request: { ...entry.request, protocol: "http" } };
+const withProtocol = (entry: HistoryEntry): HistoryEntry => {
+  const request: object = entry.request;
+  return "protocol" in request
+    ? entry
+    : { ...entry, request: { ...request, protocol: "http" } as HistoryEntry["request"] };
+};
 
 function parseHistory(content: string | null): HistoryEntry[] {
   if (!content) return [];
@@ -34,6 +39,7 @@ export function useBootstrap(): void {
     const { documents } = getServices();
 
     void useWorkspaceStore.getState().load();
+    void useMcpStore.getState().load();
     void documents.readLocal("history.json").then((content) => {
       if (!cancelled) useHistoryStore.getState().replaceAll(parseHistory(content));
     });

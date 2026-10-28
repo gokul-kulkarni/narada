@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import App from "./App";
 import { useTabsStore } from "./state/tabs-store";
 import { resetStores } from "./test/reset-stores";
+import { asHttp } from "./test/http";
 
 describe("App", () => {
   beforeEach(() => {
@@ -54,7 +55,7 @@ describe("App", () => {
     fireEvent.click(screen.getByRole("tab", { name: "Body" }));
     fireEvent.click(screen.getByLabelText("raw"));
     fireEvent.change(screen.getByLabelText("Raw body"), { target: { value: "{}" } });
-    expect(useTabsStore.getState().tabs[0].request.body).toEqual({
+    expect(asHttp(useTabsStore.getState().tabs[0].request).body).toEqual({
       mode: "raw",
       raw: "{}",
       language: "json",
@@ -63,7 +64,7 @@ describe("App", () => {
     fireEvent.click(screen.getByRole("tab", { name: "Auth" }));
     fireEvent.change(screen.getByLabelText("Auth type"), { target: { value: "bearer" } });
     fireEvent.change(screen.getByLabelText("Token"), { target: { value: "{{token}}" } });
-    expect(useTabsStore.getState().tabs[0].request.auth).toEqual({
+    expect(asHttp(useTabsStore.getState().tabs[0].request).auth).toEqual({
       type: "bearer",
       token: "{{token}}",
     });

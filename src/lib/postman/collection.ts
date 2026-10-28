@@ -9,6 +9,7 @@ import {
   type RequestBody,
   type HttpRequestDef,
 } from "../model";
+import { mcpItemFromPostman, mcpItemToPostman } from "../mcp/postman-item";
 import { authFromPostman, authToPostman } from "./auth-convert";
 import {
   bodySchema,
@@ -161,7 +162,7 @@ function itemsFromPostman(raw: unknown): CollectionItem[] {
           auth: authFromPostman(item.auth, { type: "inherit" }),
           items: itemsFromPostman(item.item),
         }
-      : { kind: "request", request: requestFromPostman(item) },
+      : { kind: "request", request: mcpItemFromPostman(item) ?? requestFromPostman(item) },
   );
 }
 
@@ -177,6 +178,7 @@ function itemsToPostman(items: readonly CollectionItem[]): object[] {
       };
     }
     const { request } = item;
+    if (request.protocol === "mcp") return mcpItemToPostman(request);
     const auth = authToPostman(request.auth);
     const body = bodyToPostman(request.body);
     return {

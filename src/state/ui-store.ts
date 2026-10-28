@@ -6,12 +6,15 @@ export type MainView =
   | { readonly kind: "environment"; readonly id: string }
   | { readonly kind: "globals" }
   | { readonly kind: "settings" }
-  | { readonly kind: "runner"; readonly collectionId: string; readonly folderId: string | null };
+  | { readonly kind: "runner"; readonly collectionId: string; readonly folderId: string | null }
+  | { readonly kind: "mcp-server"; readonly id: string };
 
 export type Dialog =
   | { readonly kind: "import"; readonly files?: readonly File[] }
   | { readonly kind: "save"; readonly tabId: string }
-  | { readonly kind: "code"; readonly tabId: string };
+  | { readonly kind: "code"; readonly tabId: string }
+  /** Confirm a local MCP server command before it first runs on this computer. */
+  | { readonly kind: "mcp-trust"; readonly serverId: string };
 
 interface UiState {
   readonly view: MainView;

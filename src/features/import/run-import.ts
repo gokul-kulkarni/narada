@@ -2,12 +2,14 @@ import { parseCurl } from "../../lib/curl";
 import { errorMessage } from "../../lib/format";
 import { detectImport } from "../../lib/import-detect";
 import type { ImportPreview } from "../../lib/import-preview";
+import { useMcpStore } from "../../state/mcp-store";
 import { useTabsStore } from "../../state/tabs-store";
 import { useUiStore } from "../../state/ui-store";
 import { useWorkspaceStore } from "../../state/workspace-store";
 
 type Imported =
-  { readonly kind: "curl" | "environment" } | { readonly kind: "collection"; readonly id: string };
+  | { readonly kind: "curl" | "environment" | "mcp" }
+  | { readonly kind: "collection"; readonly id: string };
 
 async function runImport(text: string): Promise<Imported> {
   const detected = detectImport(text);
@@ -21,6 +23,9 @@ async function runImport(text: string): Promise<Imported> {
     case "environment":
       await workspace.importEnvironment(detected.json);
       return { kind: "environment" };
+    case "mcp":
+      await useMcpStore.getState().importConfig(detected.json);
+      return { kind: "mcp" };
   }
 }
 
@@ -31,7 +36,9 @@ function summary(previews: readonly ImportPreview[], failed: readonly string[]):
     previews.length === 1 && first?.ok
       ? first.kind === "curl"
         ? "Opened the curl request in a new tab."
-        : `Imported ${first.kind} "${first.title}".`
+        : first.kind === "mcp"
+          ? `Added MCP servers: ${first.title}.`
+          : `Imported ${first.kind} "${first.title}".`
       : `Imported ${imported} of ${previews.length} items.`;
   return failed.length > 0 ? `${head} Failed: ${failed.join(" ")}` : head;
 }

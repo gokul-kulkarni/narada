@@ -1,4 +1,5 @@
 mod http;
+mod mcp;
 mod secrets;
 mod storage;
 mod sync;
@@ -13,6 +14,7 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .manage(http_state)
         .manage(sync::DriveState::new())
+        .manage(mcp::McpState::default())
         .setup(|app| {
             let storage = storage::StorageState::init(app.handle())?;
             app.manage(storage);
@@ -21,6 +23,10 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             http::send_request,
             http::cancel_request,
+            mcp::mcp_connect,
+            mcp::mcp_list,
+            mcp::mcp_run,
+            mcp::mcp_disconnect,
             storage::get_storage_dir,
             storage::set_storage_dir,
             storage::list_documents,

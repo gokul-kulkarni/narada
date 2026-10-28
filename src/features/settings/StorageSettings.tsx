@@ -8,6 +8,7 @@ import {
   pickFolder,
   setStorageDir,
 } from "../../lib/settings-api";
+import { useMcpStore } from "../../state/mcp-store";
 import { useWorkspaceStore } from "../../state/workspace-store";
 
 export function StorageSettings() {
@@ -22,7 +23,7 @@ export function StorageSettings() {
     try {
       setDir(await setStorageDir(path));
       setError(null);
-      await useWorkspaceStore.getState().load();
+      await Promise.all([useWorkspaceStore.getState().load(), useMcpStore.getState().load()]);
     } catch (e) {
       setError(errorMessage(e));
     }

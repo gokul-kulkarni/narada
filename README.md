@@ -29,6 +29,15 @@ Google Drive. See [STRATEGY.md](STRATEGY.md) for the plan and roadmap.
   (no DOM, no app bridge) and are stopped after 5 seconds.
 - **Runner**: run a collection or folder for N iterations, with a CSV/JSON data file and delay;
   per-request status, time and test results.
+- **Streaming**: responses appear as they arrive, with a Stop button. Server-sent events and JSON
+  lines get an Events view with arrival times; LLM streams (OpenAI-compatible, Anthropic, Ollama,
+  Gemini) also get the joined Text with time to first text.
+- **MCP client**: save MCP servers (a local command over stdio, or a remote Streamable HTTP URL),
+  connect, browse their tools, resources and prompts, and call them from request tabs with a form
+  built from each tool's input schema. Results land in the delivery log and history like HTTP
+  requests, and MCP requests save into collections. Import servers by pasting the `mcpServers`
+  config used by Claude Desktop, Cursor and others. A local command must be confirmed on each
+  computer before it first runs (and again if it changes), since server files can arrive by sync.
 - **Code**: generate cURL, JavaScript `fetch` and Python `requests`. Import cURL commands.
 - **Google Drive sync**: two-way sync with a `narada` folder in your Drive.
 
@@ -38,7 +47,11 @@ Google Drive. See [STRATEGY.md](STRATEGY.md) for the plan and roadmap.
 <storage folder>/
   Collections/    <id>.postman_collection.json   (Postman Collection v2.1)
   Environments/   <id>.postman_environment.json  (Postman environment)
+  MCP/            <id>.mcp.json                  (MCP server: command or URL)
 ```
+
+MCP requests are stored in collections as ordinary items with a placeholder request (so Postman
+still opens the file) and the MCP details under a `narada` field.
 
 File names come from ids, so renaming never breaks sync. The storage folder defaults to the app's
 data directory; change it under **Settings → Storage folder**. History, globals and sync state stay
@@ -89,9 +102,12 @@ Requires Node 24+, pnpm, and Rust (stable).
 ```
 src/lib/          pure logic: request pipeline, auth, variables, Postman converters, curl, codegen,
                   runner, scripts sandbox, storage repository
-src/state/        zustand stores (tabs, workspace, history, ui)
+src/protocols/    one module per protocol (http/, mcp/) plus registry.tsx, which the generic UI
+                  (tabs, history, delivery log) asks instead of reading protocol fields
+src/state/        zustand stores (tabs, workspace, history, ui, mcp)
 src/features/     UI by feature: request, response, collections, environments, scripts, runner, …
-src-tauri/src/    http/ (send), storage/ (files, settings), secrets/ (keychain), sync/ (OAuth, Drive, sync engine)
+src-tauri/src/    http/ (streaming send), mcp/ (MCP client via rmcp), storage/ (files, settings),
+                  secrets/ (keychain), sync/ (OAuth, Drive, sync engine)
 e2e/              Playwright tests
 ```
 
@@ -103,6 +119,9 @@ e2e/              Playwright tests
 - Only these HTTP methods are supported; custom methods are imported as GET.
 - OAuth 2.0 supports the client-credentials grant only.
 - Scripts can make network calls (`fetch`) from their Worker; only run scripts you trust.
+- MCP: no OAuth sign-in for remote servers yet (use a header token), no sampling, roots or
+  elicitation, and the collection runner skips MCP requests. The browser build (`pnpm dev`)
+  supports remote servers only, and only those that allow CORS.
 
 ## License
 

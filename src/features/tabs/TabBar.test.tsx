@@ -5,6 +5,7 @@ import { useHistoryStore } from "../../state/history-store";
 import { useTabsStore } from "../../state/tabs-store";
 import { HistoryList } from "../history/HistoryList";
 import { TabBar } from "./TabBar";
+import { asHttp } from "../../test/http";
 
 describe("TabBar and HistoryList", () => {
   beforeEach(() => {
@@ -32,7 +33,7 @@ describe("TabBar and HistoryList", () => {
     });
     render(<HistoryList />);
     fireEvent.click(screen.getByRole("button", { name: /https:\/\/a.dev/ }));
-    expect(useTabsStore.getState().tabs[0].request.url).toBe("https://a.dev");
+    expect(asHttp(useTabsStore.getState().tabs[0].request).url).toBe("https://a.dev");
     fireEvent.click(screen.getByRole("button", { name: "Clear history" }));
     expect(screen.getByText("No requests sent yet.")).toBeInTheDocument();
   });

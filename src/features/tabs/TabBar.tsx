@@ -1,4 +1,5 @@
 import { requestBadge } from "../../protocols/registry";
+import { openBlankMcpRequest } from "../mcp/open-request";
 import { useTabsStore } from "../../state/tabs-store";
 
 export function TabBar() {
@@ -56,6 +57,15 @@ export function TabBar() {
         className="px-4 text-lg text-muted hover:bg-surface-2 hover:text-ink"
       >
         +
+      </button>
+      <button
+        type="button"
+        aria-label="New MCP request tab"
+        title="New MCP request"
+        onClick={openBlankMcpRequest}
+        className="px-3 font-mono text-[11px] font-semibold text-muted hover:bg-surface-2 hover:text-ink"
+      >
+        + MCP
       </button>
     </div>
   );

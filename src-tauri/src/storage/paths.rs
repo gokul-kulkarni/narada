@@ -2,14 +2,21 @@ use std::path::{Path, PathBuf};
 
 pub const COLLECTIONS_DIR: &str = "Collections";
 pub const ENVIRONMENTS_DIR: &str = "Environments";
+pub const MCP_DIR: &str = "MCP";
 
 /// Local-only files (never synced) the frontend may read and write.
-pub const LOCAL_FILES: &[&str] = &["history.json", "globals.json", "sync-state.json"];
+pub const LOCAL_FILES: &[&str] = &[
+    "history.json",
+    "globals.json",
+    "sync-state.json",
+    "mcp-trust.json",
+];
 
 pub fn kind_dir(kind: &str) -> Result<&'static str, String> {
     match kind {
         "collections" => Ok(COLLECTIONS_DIR),
         "environments" => Ok(ENVIRONMENTS_DIR),
+        "mcp" => Ok(MCP_DIR),
         other => Err(format!("Unknown document kind: {other}")),
     }
 }

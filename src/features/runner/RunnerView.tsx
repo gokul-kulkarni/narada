@@ -5,6 +5,7 @@ import { findFolder, findRequest, flattenRequests } from "../../lib/collection-t
 import { parseDataFile, type DataRow } from "../../lib/data-file";
 import { errorMessage } from "../../lib/format";
 import { sendHttp } from "../../lib/http-client";
+import type { HttpRequestDef } from "../../lib/model";
 import { iterationCount, runCollection, type RunRow } from "../../lib/runner";
 import { executeScript } from "../../lib/scripts/script-runner";
 import { useWorkspaceStore } from "../../state/workspace-store";
@@ -33,7 +34,10 @@ export function RunnerView({
   const scopeItems = folderId
     ? (findFolder(collection.items, folderId)?.items ?? [])
     : collection.items;
-  const requests = flattenRequests(scopeItems);
+  const all = flattenRequests(scopeItems);
+  // The runner sends HTTP only; other protocols in the collection are skipped.
+  const requests = all.filter((r): r is HttpRequestDef => r.protocol === "http");
+  const skipped = all.length - requests.length;
   const title = folderId
     ? `${collection.name} / ${findFolder(collection.items, folderId)?.name ?? ""}`
     : collection.name;
@@ -84,7 +88,9 @@ export function RunnerView({
 
   return (
     <Page
-      eyebrow={`Collection run · ${requests.length} request(s) in order`}
+      eyebrow={`Collection run · ${requests.length} request(s) in order${
+        skipped > 0 ? ` · ${skipped} non-HTTP skipped` : ""
+      }`}
       title={<h2 className={PAGE_TITLE}>Run “{title}”</h2>}
       actions={runButton}
     >

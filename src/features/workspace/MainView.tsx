@@ -1,6 +1,7 @@
 import { useUiStore } from "../../state/ui-store";
 import { CollectionSettings } from "../collections/CollectionSettings";
 import { EnvironmentEditor, GlobalsEditor } from "../environments/EnvironmentEditor";
+import { McpServerView } from "../mcp/McpServerView";
 import { RunnerView } from "../runner/RunnerView";
 import { SettingsView } from "../settings/SettingsView";
 import { RequestWorkspace } from "./RequestWorkspace";
@@ -18,6 +19,8 @@ export function MainView() {
       return <GlobalsEditor />;
     case "settings":
       return <SettingsView />;
+    case "mcp-server":
+      return <McpServerView key={view.id} id={view.id} />;
     case "runner":
       return (
         <RunnerView

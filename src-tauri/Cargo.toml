@@ -30,6 +30,7 @@ sha2 = "0.11.1"
 base64 = "0.23.1"
 md-5 = "0.11.0"
 rand = "0.9"
+rmcp = { version = "3.8", default-features = false, features = ["base64", "client", "macros", "transport-child-process", "transport-streamable-http-client-reqwest", "reqwest"] }
 
 
 # Read the optimization guideline for more details: https://tauri.app/concept/size/#cargo-configuration
@@ -41,5 +42,6 @@ panic = "abort"
 strip = true
 
 [dev-dependencies]
+rmcp = { version = "3.8", features = ["server", "macros", "transport-streamable-http-server"] }
 tempfile = "3.27.0"
 tokio = { version = "1.54.1", features = ["macros", "rt-multi-thread"] }

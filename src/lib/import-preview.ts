@@ -3,6 +3,7 @@ import { errorMessage } from "./format";
 import { detectImport, type ImportKind } from "./import-detect";
 import type { CollectionItem } from "./model";
 import { fromPostmanCollection } from "./postman/collection";
+import { serversFromConfig } from "./mcp/server";
 import { fromPostmanEnvironment } from "./postman/environment";
 
 export type ImportPreview =
@@ -61,6 +62,14 @@ function describe(
         kind: "environment",
         title: environment.name,
         detail: `Environment · ${plural(environment.variables.length, "variable")}`,
+      };
+    }
+    case "mcp": {
+      const servers = serversFromConfig(detected.json);
+      return {
+        kind: "mcp",
+        title: servers.map((s) => s.name).join(", "),
+        detail: `MCP config · ${plural(servers.length, "server")}`,
       };
     }
   }

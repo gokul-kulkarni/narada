@@ -2,6 +2,7 @@ import { useUiStore } from "../../state/ui-store";
 import { useWorkspaceStore } from "../../state/workspace-store";
 import { CollectionsPanel } from "../collections/CollectionsPanel";
 import { EnvironmentsPanel } from "../environments/EnvironmentsPanel";
+import { McpServersPanel } from "../mcp/McpServersPanel";
 
 export function Sidebar() {
   // An empty workspace already offers import in the collections panel; don't ask twice.
@@ -13,6 +14,7 @@ export function Sidebar() {
     >
       <CollectionsPanel />
       <EnvironmentsPanel />
+      <McpServersPanel />
       {hasCollections && (
         <button
           type="button"

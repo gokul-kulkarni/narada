@@ -158,7 +158,7 @@ async fn first_sync_uploads_local_files_and_creates_folders() {
         .iter()
         .map(|(n, _, _)| n.clone())
         .collect();
-    assert_eq!(folders, ["narada", "Collections", "Environments"]);
+    assert_eq!(folders, ["narada", "Collections", "Environments", "MCP"]);
     assert_eq!(
         s.sync().await,
         SyncReport::default(),

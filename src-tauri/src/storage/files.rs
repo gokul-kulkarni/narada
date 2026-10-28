@@ -2,7 +2,7 @@ use serde::Serialize;
 use std::fs;
 use std::path::Path;
 
-use super::paths::{COLLECTIONS_DIR, ENVIRONMENTS_DIR, kind_dir, validate_file_name};
+use super::paths::{COLLECTIONS_DIR, ENVIRONMENTS_DIR, MCP_DIR, kind_dir, validate_file_name};
 
 #[derive(Debug, Serialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
@@ -12,7 +12,7 @@ pub struct StoredDocument {
 }
 
 pub fn ensure_layout(root: &Path) -> Result<(), String> {
-    for dir in [COLLECTIONS_DIR, ENVIRONMENTS_DIR] {
+    for dir in [COLLECTIONS_DIR, ENVIRONMENTS_DIR, MCP_DIR] {
         fs::create_dir_all(root.join(dir))
             .map_err(|e| format!("Could not create {}: {e}", root.join(dir).display()))?;
     }

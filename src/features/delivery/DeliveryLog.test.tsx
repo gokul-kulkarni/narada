@@ -6,6 +6,7 @@ import { useHistoryStore } from "../../state/history-store";
 import { useTabsStore, type RequestTab } from "../../state/tabs-store";
 import { resetStores } from "../../test/reset-stores";
 import { DeliveryLog, PAST_DELIVERY_LIMIT } from "./DeliveryLog";
+import { asHttp } from "../../test/http";
 
 const request = { ...newRequest(), id: "req-1", url: "{{baseUrl}}/pets" };
 
@@ -119,7 +120,7 @@ describe("DeliveryLog", () => {
     render(<DeliveryLog tab={tab()} environment={null} />);
     fireEvent.click(screen.getByRole("button", { name: /Not delivered/ }));
     const [opened] = useTabsStore.getState().tabs;
-    expect(opened.request.url).toBe("{{baseUrl}}/pets");
+    expect(asHttp(opened.request).url).toBe("{{baseUrl}}/pets");
     expect(opened.request.id).not.toBe("req-1");
   });
 

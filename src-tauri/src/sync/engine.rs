@@ -11,7 +11,7 @@ use crate::storage::files::{list_documents, read_optional, remove_file, write_at
 use crate::storage::paths::{document_path, kind_dir};
 
 pub const DRIVE_FOLDER: &str = "narada";
-pub const KINDS: [&str; 2] = ["collections", "environments"];
+pub const KINDS: [&str; 3] = ["collections", "environments", "mcp"];
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "camelCase", default)]

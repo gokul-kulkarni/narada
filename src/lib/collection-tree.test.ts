@@ -10,6 +10,7 @@ import {
   upsertRequest,
 } from "./collection-tree";
 import type { Collection, FolderItem } from "./model";
+import { asHttp } from "../test/http";
 
 const folder = (
   id: string,
@@ -54,8 +55,8 @@ describe("collection tree", () => {
   it("updates a request without touching the original", () => {
     const original = sample();
     const next = updateRequestInCollection(original, "r-inner", (r) => ({ ...r, url: "x" }));
-    expect(findRequest(next, "r-inner")?.request.url).toBe("x");
-    expect(findRequest(original, "r-inner")?.request.url).toBe("");
+    expect(asHttp(findRequest(next, "r-inner")?.request).url).toBe("x");
+    expect(asHttp(findRequest(original, "r-inner")?.request).url).toBe("");
   });
 
   it("adds items at the root or inside a folder", () => {

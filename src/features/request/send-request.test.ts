@@ -1,11 +1,12 @@
 import { describe, expect, it, vi } from "vitest";
 import { newRequest } from "../../lib/factories";
-import type { HttpResponse } from "../../lib/model";
+import type { HttpRequestDef, HttpResponse } from "../../lib/model";
 import type { PreparedRequest } from "../../lib/prepare-request";
 import { runScript } from "../../lib/scripts/sandbox";
 import type { VariableScopes } from "../../lib/variables";
 import type { RequestTab } from "../../state/tabs-store";
 import { sendTab } from "./send-request";
+import { asHttp } from "../../test/http";
 
 const scopes: VariableScopes = {
   global: {},
@@ -24,7 +25,7 @@ const response: HttpResponse = {
   timeMs: 5,
 };
 
-const tabWith = (overrides: Partial<RequestTab["request"]>): RequestTab => ({
+const tabWith = (overrides: Partial<HttpRequestDef>): RequestTab => ({
   id: "t1",
   request: newRequest(overrides),
   source: null,
@@ -58,7 +59,7 @@ describe("sendTab", () => {
       url: "https://{{host}}/x",
       testScript: `pm.test("ok", () => {}); pm.environment.set("t", "1")`,
     });
-    await sendTab(tab, tab.request, d);
+    await sendTab(tab, asHttp(tab.request), d);
 
     expect(d.send.mock.calls[0][0].url).toBe("https://a.dev/x");
     expect(d.patchTab).toHaveBeenNthCalledWith(1, "t1", {
@@ -89,7 +90,7 @@ describe("sendTab", () => {
   it("reports errors on the tab and still records history", async () => {
     const d = deps(async () => Promise.reject("Could not connect"));
     const tab = tabWith({ url: "https://a.dev" });
-    await sendTab(tab, tab.request, d);
+    await sendTab(tab, asHttp(tab.request), d);
     expect(d.patchTab).toHaveBeenLastCalledWith(
       "t1",
       expect.objectContaining({ delivery: null, error: "Could not connect" }),

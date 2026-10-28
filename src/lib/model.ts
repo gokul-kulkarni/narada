@@ -51,8 +51,25 @@ export interface HttpRequestDef {
   readonly testScript: string;
 }
 
+export type JsonObject = Readonly<Record<string, unknown>>;
+
+/** What an MCP request asks of its server. */
+export type McpOperation =
+  | { readonly type: "tool"; readonly name: string; readonly arguments: JsonObject }
+  | { readonly type: "resource"; readonly uri: string }
+  | { readonly type: "prompt"; readonly name: string; readonly arguments: JsonObject };
+
+export interface McpRequestDef {
+  readonly protocol: "mcp";
+  readonly id: string;
+  readonly name: string;
+  /** The saved MCP server (src/lib/mcp/server.ts) this request goes to. */
+  readonly serverId: string;
+  readonly operation: McpOperation;
+}
+
 /** A saved or open request of any protocol; each protocol module in src/protocols handles its own. */
-export type RequestDef = HttpRequestDef;
+export type RequestDef = HttpRequestDef | McpRequestDef;
 export type ProtocolId = RequestDef["protocol"];
 
 export interface FolderItem {
@@ -111,7 +128,17 @@ export interface HttpDelivery {
   readonly response: HttpResponse;
 }
 
-export type Delivery = HttpDelivery;
+export interface McpDelivery {
+  readonly protocol: "mcp";
+  readonly operation: McpOperation["type"];
+  /** The server's reply as MCP JSON (CallToolResult, ReadResourceResult or GetPromptResult). */
+  readonly result: unknown;
+  /** A tool ran but reported failure (`isError`). */
+  readonly isError: boolean;
+  readonly timeMs: number;
+}
+
+export type Delivery = HttpDelivery | McpDelivery;
 
 export interface StreamMark {
   readonly atMs: number;
@@ -124,6 +151,8 @@ export interface HistoryEntry {
   readonly request: RequestDef;
   readonly status: number | null;
   readonly timeMs: number | null;
+  /** A reply that reached the client but reported failure (MCP `isError`). */
+  readonly isError?: boolean;
   /** Name of the environment the request was sent to; missing in history from older versions. */
   readonly environment?: string | null;
 }

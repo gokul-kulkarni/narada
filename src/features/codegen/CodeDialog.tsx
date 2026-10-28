@@ -11,7 +11,7 @@ export function CodeDialog({ tabId, onClose }: { tabId: string; onClose: () => v
   const tab = useTabsStore((s) => s.tabs.find((t) => t.id === tabId));
   const [language, setLanguage] = useState<CodeLanguage>("curl");
   const [copied, setCopied] = useState(false);
-  if (!tab) return null;
+  if (tab?.request.protocol !== "http") return null;
 
   let code: string;
   try {

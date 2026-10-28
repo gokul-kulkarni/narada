@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
-import type { FolderItem, RequestItem } from "../model";
+import type { FolderItem, HttpRequestDef } from "../model";
+
+type HttpItem = { readonly kind: "request"; readonly request: HttpRequestDef };
 import { fromPostmanCollection, toPostmanCollection } from "./collection";
 import { POSTMAN_COLLECTION } from "./fixtures";
 
@@ -7,11 +9,11 @@ describe("fromPostmanCollection", () => {
   const collection = fromPostmanCollection(POSTMAN_COLLECTION);
   const [folder, create, login, upload] = collection.items as [
     FolderItem,
-    RequestItem,
-    RequestItem,
-    RequestItem,
+    HttpItem,
+    HttpItem,
+    HttpItem,
   ];
-  const list = (folder.items[0] as RequestItem).request;
+  const list = (folder.items[0] as HttpItem).request;
 
   it("reads collection metadata, auth, variables and scripts", () => {
     expect(collection).toMatchObject({
@@ -80,7 +82,7 @@ describe("fromPostmanCollection", () => {
       item: [{ name: "r", request: { method: "get", url: "", body: { mode: "file", file: {} } } }],
     });
     expect(parsed.auth).toEqual({ type: "none" });
-    expect((parsed.items[0] as RequestItem).request).toMatchObject({
+    expect((parsed.items[0] as HttpItem).request).toMatchObject({
       method: "GET",
       body: { mode: "none" },
     });
@@ -91,7 +93,7 @@ describe("fromPostmanCollection", () => {
       info: { name: "X" },
       item: [{ name: "r", request: "https://a.dev" }],
     });
-    expect((parsed.items[0] as RequestItem).request).toMatchObject({
+    expect((parsed.items[0] as HttpItem).request).toMatchObject({
       method: "GET",
       url: "https://a.dev",
     });

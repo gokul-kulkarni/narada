@@ -14,4 +14,8 @@ describe("detectImport", () => {
     expect(() => detectImport('{"a":1}')).toThrow(/Unrecognised JSON/);
     expect(() => detectImport("null")).toThrow(/Unrecognised JSON/);
   });
+
+  it("recognises an mcpServers config", () => {
+    expect(detectImport('{"mcpServers": {"a": {"command": "x"}}}').kind).toBe("mcp");
+  });
 });

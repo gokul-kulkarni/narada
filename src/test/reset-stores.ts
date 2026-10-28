@@ -3,7 +3,9 @@ import {
   createMemorySecretStore,
   type DocumentStore,
 } from "../lib/storage/document-store";
+import { setMcpClient } from "../lib/mcp/client";
 import { useHistoryStore } from "../state/history-store";
+import { useMcpStore } from "../state/mcp-store";
 import { setServices } from "../state/services";
 import { useTabsStore } from "../state/tabs-store";
 import { useUiStore } from "../state/ui-store";
@@ -31,5 +33,7 @@ export function resetStores(): DocumentStore {
     loadErrors: [],
     lastError: null,
   });
+  useMcpStore.setState({ servers: [], connections: {}, logs: {}, trusted: [], loadErrors: [] });
+  setMcpClient(null);
   return documents;
 }

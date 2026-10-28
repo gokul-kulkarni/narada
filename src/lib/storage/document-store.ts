@@ -1,7 +1,7 @@
 import { invoke, isTauri } from "@tauri-apps/api/core";
 
-export type DocumentKind = "collections" | "environments";
-export type LocalFile = "history.json" | "globals.json" | "sync-state.json";
+export type DocumentKind = "collections" | "environments" | "mcp";
+export type LocalFile = "history.json" | "globals.json" | "sync-state.json" | "mcp-trust.json";
 
 export interface StoredDocument {
   readonly fileName: string;

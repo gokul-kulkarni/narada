@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { newRequest } from "../lib/factories";
 import { selectActiveTab, useTabsStore } from "./tabs-store";
+import { asHttp } from "../test/http";
 
 describe("tabs store", () => {
   beforeEach(() => useTabsStore.setState({ tabs: [], activeTabId: null }));
@@ -25,9 +26,9 @@ describe("tabs store", () => {
     const before = useTabsStore.getState().tabs[0];
     useTabsStore.getState().updateRequest(id, (r) => ({ ...r, url: "https://a.dev" }));
     const after = useTabsStore.getState().tabs[0];
-    expect(after.request.url).toBe("https://a.dev");
+    expect(asHttp(after.request).url).toBe("https://a.dev");
     expect(after.dirty).toBe(true);
-    expect(before.request.url).toBe("");
+    expect(asHttp(before.request).url).toBe("");
   });
 
   it("activates a neighbour when the active tab closes", () => {

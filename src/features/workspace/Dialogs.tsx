@@ -2,6 +2,7 @@ import { useUiStore } from "../../state/ui-store";
 import { CodeDialog } from "../codegen/CodeDialog";
 import { SaveRequestDialog } from "../collections/SaveRequestDialog";
 import { ImportDialog } from "../import/ImportDialog";
+import { TrustDialog } from "../mcp/TrustDialog";
 
 export function Dialogs() {
   const dialog = useUiStore((s) => s.dialog);
@@ -14,5 +15,7 @@ export function Dialogs() {
       return <SaveRequestDialog tabId={dialog.tabId} onClose={close} />;
     case "code":
       return <CodeDialog tabId={dialog.tabId} onClose={close} />;
+    case "mcp-trust":
+      return <TrustDialog serverId={dialog.serverId} onClose={close} />;
   }
 }
