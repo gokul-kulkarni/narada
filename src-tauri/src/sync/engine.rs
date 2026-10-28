@@ -10,7 +10,7 @@ use super::plan::{plan, Action, RemoteFile, SyncedFile};
 use crate::storage::files::{list_documents, read_optional, remove_file, write_atomic};
 use crate::storage::paths::{document_path, kind_dir};
 
-pub const DRIVE_FOLDER: &str = "free-postman";
+pub const DRIVE_FOLDER: &str = "narada";
 pub const KINDS: [&str; 2] = ["collections", "environments"];
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, PartialEq)]
@@ -65,7 +65,7 @@ async fn folder_ids<R: Remote>(remote: &R, state: &mut SyncState) -> Result<BTre
     Ok(ids)
 }
 
-/// Two-way sync of Collections/ and Environments/ under `root` with Drive's free-postman folder.
+/// Two-way sync of Collections/ and Environments/ under `root` with Drive's narada folder.
 pub async fn sync<R: Remote>(remote: &R, root: &Path, conflicts_dir: &Path, state: &mut SyncState, stamp: &str) -> Result<SyncReport, String> {
     let folders = folder_ids(remote, state).await?;
     let mut report = SyncReport::default();

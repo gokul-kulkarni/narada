@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Free Postman",
+  "productName": "Narada",
   "version": "0.1.0",
-  "identifier": "com.freepostman.app",
+  "identifier": "com.narada.app",
   "build": {
     "beforeDevCommand": "pnpm dev",
     "devUrl": "http://localhost:1420",
@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "Free Postman",
+        "title": "Narada",
         "width": 1280,
         "height": 800,
         "minWidth": 900,

@@ -32,7 +32,7 @@ export function StorageSettings() {
       <h3 className="text-sm font-semibold">Storage folder</h3>
       <p className="text-xs text-neutral-500">
         Collections and Environments are saved as Postman JSON files here. Choose a folder inside
-        Google Drive for Desktop (e.g. My Drive/free-postman) and Google syncs it for free.
+        Google Drive for Desktop (e.g. My Drive/narada) and Google syncs it for free.
       </p>
       <code
         className="block rounded bg-neutral-100 p-2 text-xs break-all dark:bg-neutral-900"

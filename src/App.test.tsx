@@ -18,7 +18,7 @@ describe("App", () => {
       }),
     );
     render(<App />);
-    await screen.findByRole("heading", { name: "Free Postman" });
+    await screen.findByRole("heading", { name: "Narada" });
     fireEvent.click(screen.getByRole("button", { name: "New request tab" }));
     fireEvent.change(screen.getByLabelText("URL"), {
       target: { value: "https://api.dev/users?page=2" },
@@ -38,7 +38,7 @@ describe("App", () => {
 
   it("edits query params, headers, body and auth", async () => {
     render(<App />);
-    await screen.findByRole("heading", { name: "Free Postman" });
+    await screen.findByRole("heading", { name: "Narada" });
     fireEvent.click(screen.getByRole("button", { name: "New request tab" }));
     fireEvent.change(screen.getByLabelText("URL"), { target: { value: "https://a.dev?x=1" } });
     expect(screen.getByLabelText("Key 1")).toHaveValue("x");
@@ -71,7 +71,7 @@ describe("App", () => {
   it("shows request errors", async () => {
     vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("Failed to fetch"));
     render(<App />);
-    await screen.findByRole("heading", { name: "Free Postman" });
+    await screen.findByRole("heading", { name: "Narada" });
     fireEvent.click(screen.getByRole("button", { name: "New request tab" }));
     fireEvent.change(screen.getByLabelText("URL"), { target: { value: "https://down.dev" } });
     fireEvent.click(screen.getByRole("button", { name: "Send" }));

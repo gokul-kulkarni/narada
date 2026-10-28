@@ -32,7 +32,7 @@ describe("collections and environments", () => {
       .spyOn(globalThis, "fetch")
       .mockResolvedValue(new Response("[]", { status: 200 }));
     render(<App />);
-    await screen.findByRole("heading", { name: "Free Postman" });
+    await screen.findByRole("heading", { name: "Narada" });
     await importText(JSON.stringify(POSTMAN_COLLECTION));
     expect(screen.getByRole("status")).toHaveTextContent('Imported collection "Pet Store"');
     await importText(JSON.stringify(POSTMAN_ENVIRONMENT));
@@ -54,7 +54,7 @@ describe("collections and environments", () => {
 
   it("creates a collection, adds and saves a request", async () => {
     render(<App />);
-    await screen.findByRole("heading", { name: "Free Postman" });
+    await screen.findByRole("heading", { name: "Narada" });
     fireEvent.click(
       within(screen.getByRole("region", { name: "Collections" })).getByRole("button", {
         name: "+ New",
@@ -71,7 +71,7 @@ describe("collections and environments", () => {
 
   it("saves an unsaved tab through the save dialog into a new collection", async () => {
     render(<App />);
-    await screen.findByRole("heading", { name: "Free Postman" });
+    await screen.findByRole("heading", { name: "Narada" });
     fireEvent.click(screen.getByRole("button", { name: "New request tab" }));
     fireEvent.click(screen.getByRole("button", { name: "Save" }));
     const dialog = screen.getByRole("dialog", { name: "Save request" });
@@ -91,7 +91,7 @@ describe("collections and environments", () => {
 
   it("saves into a chosen folder of an existing collection", async () => {
     render(<App />);
-    await screen.findByRole("heading", { name: "Free Postman" });
+    await screen.findByRole("heading", { name: "Narada" });
     await importText(JSON.stringify(POSTMAN_COLLECTION));
     fireEvent.click(screen.getByRole("button", { name: "New request tab" }));
     fireEvent.click(screen.getByRole("button", { name: "Save" }));
@@ -112,7 +112,7 @@ describe("collections and environments", () => {
 
   it("imports curl into a new tab and reports bad input", async () => {
     render(<App />);
-    await screen.findByRole("heading", { name: "Free Postman" });
+    await screen.findByRole("heading", { name: "Narada" });
     await importText("curl -X POST https://a.dev/items -d '{\"a\":1}'");
     expect(screen.getByLabelText("URL")).toHaveValue("https://a.dev/items");
     fireEvent.click(screen.getByRole("button", { name: "Import" }));
@@ -123,7 +123,7 @@ describe("collections and environments", () => {
 
   it("edits environments with secrets kept out of the file", async () => {
     render(<App />);
-    await screen.findByRole("heading", { name: "Free Postman" });
+    await screen.findByRole("heading", { name: "Narada" });
     fireEvent.click(
       within(screen.getByRole("region", { name: "Environments" })).getByRole("button", {
         name: "+ New",
@@ -150,7 +150,7 @@ describe("collections and environments", () => {
 
   it("renames, duplicates and deletes tree items", async () => {
     render(<App />);
-    await screen.findByRole("heading", { name: "Free Postman" });
+    await screen.findByRole("heading", { name: "Narada" });
     await importText(JSON.stringify(POSTMAN_COLLECTION));
     fireEvent.click(within(sidebar()).getByRole("button", { name: /^▸\s*Pet Store$/ }));
     menuItem("Login", "Rename");
@@ -182,7 +182,7 @@ describe("collections and environments", () => {
       ]),
     );
     render(<App />);
-    await screen.findByRole("heading", { name: "Free Postman" });
+    await screen.findByRole("heading", { name: "Narada" });
     expect(await screen.findByText("https://old.dev")).toBeInTheDocument();
     await importText(JSON.stringify(POSTMAN_COLLECTION));
     menuItem("Pet Store", "Settings");

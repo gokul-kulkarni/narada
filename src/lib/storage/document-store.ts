@@ -39,7 +39,7 @@ export const keychainSecretStore: SecretStore = {
 
 /** In-memory store for tests and the browser build; `persist` mirrors it into a Storage. */
 export function createMemoryDocumentStore(persist?: Storage): DocumentStore {
-  const prefix = "free-postman:";
+  const prefix = "narada:";
   const read = (key: string) => {
     try {
       return persist?.getItem(prefix + key) ?? null;

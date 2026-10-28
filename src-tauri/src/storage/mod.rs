@@ -1,4 +1,5 @@
 pub mod files;
+pub mod migrate;
 pub mod paths;
 pub mod settings;
 
@@ -18,7 +19,10 @@ pub struct StorageState {
 impl StorageState {
     pub fn init(app: &AppHandle) -> Result<Self, String> {
         let data_dir = app.path().app_data_dir().map_err(|e| e.to_string())?;
-        let settings_path = app.path().app_config_dir().map_err(|e| e.to_string())?.join("settings.json");
+        let config_dir = app.path().app_config_dir().map_err(|e| e.to_string())?;
+        migrate::adopt_legacy_dir(&data_dir)?;
+        migrate::adopt_legacy_dir(&config_dir)?;
+        let settings_path = config_dir.join("settings.json");
         let settings = settings::load(&settings_path)?;
         let state = Self { data_dir, settings_path, settings: Mutex::new(settings) };
         files::ensure_layout(&state.root())?;

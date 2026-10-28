@@ -92,7 +92,7 @@ async fn first_sync_uploads_local_files_and_creates_folders() {
     assert_eq!(report.uploaded, ["collections/a.json"]);
     assert_eq!(s.drive.names_in(&s.folder("collections")), ["a.json"]);
     let folders: Vec<String> = s.drive.folders.borrow().iter().map(|(n, _, _)| n.clone()).collect();
-    assert_eq!(folders, ["free-postman", "Collections", "Environments"]);
+    assert_eq!(folders, ["narada", "Collections", "Environments"]);
     assert_eq!(s.sync().await, SyncReport::default(), "second sync is a no-op");
 }
 

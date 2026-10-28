@@ -1,4 +1,7 @@
-# Free Postman Alternative — Strategy & Phase 0 Plan
+# Narada — Strategy & Phase 0 Plan
+
+> Written when the project was called "Free Postman"; folder names below are historical
+> (the app now uses `narada`).
 
 ## Context
 

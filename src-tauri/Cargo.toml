@@ -1,5 +1,5 @@
 [package]
-name = "free-postman"
+name = "narada"
 version = "0.1.0"
 description = "A free, local-first API client"
 authors = ["Gokul Kulkarni"]
@@ -11,7 +11,7 @@ edition = "2024"
 # The `_lib` suffix may seem redundant but it is necessary
 # to make the lib name unique and wouldn't conflict with the bin name.
 # This seems to be only an issue on Windows, see https://github.com/rust-lang/cargo/issues/8519
-name = "free_postman_lib"
+name = "narada_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]

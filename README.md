@@ -1,6 +1,9 @@
-# free-postman
+# Narada
 
-A free, local-first Postman alternative (Tauri desktop app). Collections and environments are
+Named after Narada Muni, the wandering sage who carries messages between the worlds — as this
+app carries your requests to APIs and back.
+
+A free, local-first, Postman-compatible API client (Tauri desktop app). Collections and environments are
 plain Postman v2.1 JSON files, stored in a folder you choose and optionally synced to your own
 Google Drive. See [STRATEGY.md](STRATEGY.md) for the plan and roadmap.
 
@@ -27,7 +30,7 @@ Google Drive. See [STRATEGY.md](STRATEGY.md) for the plan and roadmap.
 - **Runner**: run a collection or folder for N iterations, with a CSV/JSON data file and delay;
   per-request status, time and test results.
 - **Code**: generate cURL, JavaScript `fetch` and Python `requests`. Import cURL commands.
-- **Google Drive sync**: two-way sync with a `free-postman` folder in your Drive.
+- **Google Drive sync**: two-way sync with a `narada` folder in your Drive.
 
 ## Data layout
 
@@ -46,7 +49,7 @@ on the machine (not synced).
 Two options:
 
 1. **Zero setup**: install Google Drive for Desktop and pick a folder inside it as the storage
-   folder (e.g. `~/Library/CloudStorage/GoogleDrive-<you>/My Drive/free-postman`). Google syncs it.
+   folder (e.g. `~/Library/CloudStorage/GoogleDrive-<you>/My Drive/narada`). Google syncs it.
 2. **Built-in sync** (no Drive for Desktop needed):
    1. In [Google Cloud Console](https://console.cloud.google.com/) create a project, enable the
       **Google Drive API**, configure the OAuth consent screen (External; add yourself as a test user).
@@ -55,8 +58,12 @@ Two options:
       **Sign in with Google**. Use **⟳ Sync** in the header to sync.
 
    The app uses the `drive.file` scope: it can only see files it created, in My Drive →
-   `free-postman/Collections` and `free-postman/Environments`. (A folder you create by hand in
+   `narada/Collections` and `narada/Environments`. (A folder you create by hand in
    Drive is invisible to it; the app creates its own on first sync.)
+
+   Upgrading from the pre-rename build ("Free Postman"): local data, settings and keychain
+   secrets move over automatically on first launch. Drive sync now uses a `narada` folder, so
+   the first sync uploads your files there; the old `free-postman` Drive folder is left as is.
 
    Sync rules: the first sync never deletes anything; a deletion on one side only propagates if
    the file wasn't changed on the other; if both sides changed, the Drive version wins and your

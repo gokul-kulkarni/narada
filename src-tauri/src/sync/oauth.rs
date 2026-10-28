@@ -68,7 +68,7 @@ pub fn parse_callback(request: &str, expected_state: &str) -> Result<String, Str
 }
 
 const DONE_PAGE: &str = "<html><body style=\"font-family:sans-serif;text-align:center;padding-top:4em\">\
-<h2>Free Postman is connected to Google Drive</h2><p>You can close this tab.</p></body></html>";
+<h2>Narada is connected to Google Drive</h2><p>You can close this tab.</p></body></html>";
 
 /// Runs the browser sign-in and returns tokens. `open_browser` opens the consent page.
 pub async fn sign_in(

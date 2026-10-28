@@ -50,7 +50,7 @@ export function DriveSettings() {
       ) : (
         <>
           <p className="text-xs text-neutral-500">
-            Syncs Collections/ and Environments/ with a <code>free-postman</code> folder in your
+            Syncs Collections/ and Environments/ with a <code>narada</code> folder in your
             Drive, using the limited <code>drive.file</code> scope (the app can only see files it
             created). Create a free OAuth client of type “Desktop app” in Google Cloud Console and
             paste it here. Secret variable values are never uploaded.

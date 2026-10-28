@@ -11,7 +11,7 @@ const json = (body: unknown, status = 200) =>
 
 async function renderApp() {
   render(<App />);
-  await screen.findByRole("heading", { name: "Free Postman" });
+  await screen.findByRole("heading", { name: "Narada" });
 }
 
 describe("scripts, runner, code generation and OAuth", () => {

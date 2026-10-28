@@ -8,7 +8,7 @@ import { fromPostmanEnvironment } from "../lib/postman/environment";
 import * as repo from "../lib/storage/workspace-repository";
 import { getServices } from "./services";
 
-const ACTIVE_ENV_KEY = "free-postman:active-environment";
+const ACTIVE_ENV_KEY = "narada:active-environment";
 
 interface WorkspaceState {
   readonly loaded: boolean;
