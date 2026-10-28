@@ -2,7 +2,7 @@ use serde::Serialize;
 use std::fs;
 use std::path::Path;
 
-use super::paths::{kind_dir, validate_file_name, COLLECTIONS_DIR, ENVIRONMENTS_DIR};
+use super::paths::{COLLECTIONS_DIR, ENVIRONMENTS_DIR, kind_dir, validate_file_name};
 
 #[derive(Debug, Serialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
@@ -25,7 +25,8 @@ pub fn list_documents(root: &Path, kind: &str) -> Result<Vec<StoredDocument>, St
     if !dir.exists() {
         return Ok(Vec::new());
     }
-    let entries = fs::read_dir(&dir).map_err(|e| format!("Could not read {}: {e}", dir.display()))?;
+    let entries =
+        fs::read_dir(&dir).map_err(|e| format!("Could not read {}: {e}", dir.display()))?;
     let mut documents: Vec<StoredDocument> = entries
         .filter_map(Result::ok)
         .filter_map(|entry| {
@@ -42,7 +43,8 @@ pub fn list_documents(root: &Path, kind: &str) -> Result<Vec<StoredDocument>, St
 /// Writes via a temp file + rename so a crash never leaves a half-written document.
 pub fn write_atomic(path: &Path, content: &str) -> Result<(), String> {
     let parent = path.parent().ok_or("File has no parent directory")?;
-    fs::create_dir_all(parent).map_err(|e| format!("Could not create {}: {e}", parent.display()))?;
+    fs::create_dir_all(parent)
+        .map_err(|e| format!("Could not create {}: {e}", parent.display()))?;
     let temp = path.with_extension("json.tmp");
     fs::write(&temp, content).map_err(|e| format!("Could not write {}: {e}", temp.display()))?;
     fs::rename(&temp, path).map_err(|e| format!("Could not save {}: {e}", path.display()))
@@ -95,7 +97,11 @@ mod tests {
     #[test]
     fn missing_folders_and_files_are_empty() {
         let root = tempfile::tempdir().unwrap();
-        assert!(list_documents(root.path(), "environments").unwrap().is_empty());
+        assert!(
+            list_documents(root.path(), "environments")
+                .unwrap()
+                .is_empty()
+        );
         assert_eq!(read_optional(&root.path().join("nope.json")).unwrap(), None);
     }
 }

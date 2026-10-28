@@ -33,7 +33,9 @@ pub fn validate_file_name(name: &str) -> Result<&str, String> {
 }
 
 pub fn document_path(root: &Path, kind: &str, file_name: &str) -> Result<PathBuf, String> {
-    Ok(root.join(kind_dir(kind)?).join(validate_file_name(file_name)?))
+    Ok(root
+        .join(kind_dir(kind)?)
+        .join(validate_file_name(file_name)?))
 }
 
 pub fn local_path(data_dir: &Path, name: &str) -> Result<PathBuf, String> {
@@ -55,7 +57,15 @@ mod tests {
 
     #[test]
     fn rejects_traversal_and_odd_names() {
-        for bad in ["../x.json", "a/b.json", "x.txt", "", ".hidden.json", "a..b.json", "a b.json"] {
+        for bad in [
+            "../x.json",
+            "a/b.json",
+            "x.txt",
+            "",
+            ".hidden.json",
+            "a..b.json",
+            "a b.json",
+        ] {
             assert!(validate_file_name(bad).is_err(), "{bad} should be rejected");
         }
     }

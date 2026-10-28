@@ -1,6 +1,6 @@
 //! Google OAuth for installed apps: PKCE + loopback redirect (RFC 8252).
 
-use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine};
+use base64::{Engine, engine::general_purpose::URL_SAFE_NO_PAD};
 use serde::Deserialize;
 use sha2::{Digest, Sha256};
 use std::time::Duration;
@@ -34,7 +34,12 @@ pub fn pkce_challenge(verifier: &str) -> String {
     URL_SAFE_NO_PAD.encode(Sha256::digest(verifier.as_bytes()))
 }
 
-pub fn authorization_url(config: &ClientConfig, redirect_uri: &str, challenge: &str, state: &str) -> String {
+pub fn authorization_url(
+    config: &ClientConfig,
+    redirect_uri: &str,
+    challenge: &str,
+    state: &str,
+) -> String {
     let mut url = reqwest::Url::parse(AUTH_URL).expect("valid auth url");
     url.query_pairs_mut()
         .append_pair("client_id", &config.client_id)
@@ -56,8 +61,13 @@ pub fn parse_callback(request: &str, expected_state: &str) -> Result<String, Str
         .next()
         .and_then(|line| line.split_whitespace().nth(1))
         .ok_or("Malformed sign-in callback")?;
-    let url = reqwest::Url::parse(&format!("http://127.0.0.1{target}")).map_err(|e| e.to_string())?;
-    let param = |name: &str| url.query_pairs().find(|(k, _)| k == name).map(|(_, v)| v.into_owned());
+    let url =
+        reqwest::Url::parse(&format!("http://127.0.0.1{target}")).map_err(|e| e.to_string())?;
+    let param = |name: &str| {
+        url.query_pairs()
+            .find(|(k, _)| k == name)
+            .map(|(_, v)| v.into_owned())
+    };
     if let Some(error) = param("error") {
         return Err(format!("Google sign-in was not completed: {error}"));
     }
@@ -76,11 +86,21 @@ pub async fn sign_in(
     config: &ClientConfig,
     open_browser: impl FnOnce(&str) -> Result<(), String>,
 ) -> Result<TokenResponse, String> {
-    let listener = TcpListener::bind("127.0.0.1:0").await.map_err(|e| e.to_string())?;
-    let redirect_uri = format!("http://127.0.0.1:{}", listener.local_addr().map_err(|e| e.to_string())?.port());
+    let listener = TcpListener::bind("127.0.0.1:0")
+        .await
+        .map_err(|e| e.to_string())?;
+    let redirect_uri = format!(
+        "http://127.0.0.1:{}",
+        listener.local_addr().map_err(|e| e.to_string())?.port()
+    );
     let verifier = random_token();
     let state = random_token();
-    open_browser(&authorization_url(config, &redirect_uri, &pkce_challenge(&verifier), &state))?;
+    open_browser(&authorization_url(
+        config,
+        &redirect_uri,
+        &pkce_challenge(&verifier),
+        &state,
+    ))?;
 
     let code = tokio::time::timeout(SIGN_IN_TIMEOUT, async {
         let (mut socket, _) = listener.accept().await.map_err(|e| e.to_string())?;
@@ -101,39 +121,58 @@ pub async fn sign_in(
     .await
     .map_err(|_| "Timed out waiting for Google sign-in".to_string())??;
 
-    exchange(http, &[
-        ("code", code.as_str()),
-        ("client_id", &config.client_id),
-        ("client_secret", &config.client_secret),
-        ("redirect_uri", &redirect_uri),
-        ("grant_type", "authorization_code"),
-        ("code_verifier", &verifier),
-    ])
+    exchange(
+        http,
+        &[
+            ("code", code.as_str()),
+            ("client_id", &config.client_id),
+            ("client_secret", &config.client_secret),
+            ("redirect_uri", &redirect_uri),
+            ("grant_type", "authorization_code"),
+            ("code_verifier", &verifier),
+        ],
+    )
     .await
 }
 
-pub async fn refresh(http: &reqwest::Client, config: &ClientConfig, refresh_token: &str) -> Result<TokenResponse, String> {
-    exchange(http, &[
-        ("client_id", config.client_id.as_str()),
-        ("client_secret", &config.client_secret),
-        ("refresh_token", refresh_token),
-        ("grant_type", "refresh_token"),
-    ])
+pub async fn refresh(
+    http: &reqwest::Client,
+    config: &ClientConfig,
+    refresh_token: &str,
+) -> Result<TokenResponse, String> {
+    exchange(
+        http,
+        &[
+            ("client_id", config.client_id.as_str()),
+            ("client_secret", &config.client_secret),
+            ("refresh_token", refresh_token),
+            ("grant_type", "refresh_token"),
+        ],
+    )
     .await
 }
 
 async fn exchange(http: &reqwest::Client, form: &[(&str, &str)]) -> Result<TokenResponse, String> {
-    let response = http.post(TOKEN_URL).form(form).send().await.map_err(|e| format!("Token request failed: {e}"))?;
+    let response = http
+        .post(TOKEN_URL)
+        .form(form)
+        .send()
+        .await
+        .map_err(|e| format!("Token request failed: {e}"))?;
     let status = response.status();
     let text = response.text().await.map_err(|e| e.to_string())?;
     if !status.is_success() {
-        return Err(format!("Google rejected the token request ({status}): {text}"));
+        return Err(format!(
+            "Google rejected the token request ({status}): {text}"
+        ));
     }
     serde_json::from_str(&text).map_err(|e| format!("Unexpected token response: {e}"))
 }
 
 fn html_escape(text: &str) -> String {
-    text.replace('&', "&amp;").replace('<', "&lt;").replace('>', "&gt;")
+    text.replace('&', "&amp;")
+        .replace('<', "&lt;")
+        .replace('>', "&gt;")
 }
 
 #[cfg(test)]
@@ -150,20 +189,44 @@ mod tests {
 
     #[test]
     fn builds_the_consent_url() {
-        let config = ClientConfig { client_id: "id".into(), client_secret: "s".into() };
+        let config = ClientConfig {
+            client_id: "id".into(),
+            client_secret: "s".into(),
+        };
         let url = authorization_url(&config, "http://127.0.0.1:5000", "ch", "st");
         assert!(url.starts_with(AUTH_URL));
-        for part in ["client_id=id", "code_challenge=ch", "state=st", "access_type=offline", "drive.file"] {
+        for part in [
+            "client_id=id",
+            "code_challenge=ch",
+            "state=st",
+            "access_type=offline",
+            "drive.file",
+        ] {
             assert!(url.contains(part), "{url} missing {part}");
         }
     }
 
     #[test]
     fn parses_callbacks() {
-        assert_eq!(parse_callback("GET /?state=s&code=abc HTTP/1.1\r\n", "s").unwrap(), "abc");
-        assert!(parse_callback("GET /?state=x&code=abc HTTP/1.1", "s").unwrap_err().contains("state"));
-        assert!(parse_callback("GET /?error=access_denied HTTP/1.1", "s").unwrap_err().contains("access_denied"));
-        assert!(parse_callback("GET /?state=s HTTP/1.1", "s").unwrap_err().contains("no authorization code"));
+        assert_eq!(
+            parse_callback("GET /?state=s&code=abc HTTP/1.1\r\n", "s").unwrap(),
+            "abc"
+        );
+        assert!(
+            parse_callback("GET /?state=x&code=abc HTTP/1.1", "s")
+                .unwrap_err()
+                .contains("state")
+        );
+        assert!(
+            parse_callback("GET /?error=access_denied HTTP/1.1", "s")
+                .unwrap_err()
+                .contains("access_denied")
+        );
+        assert!(
+            parse_callback("GET /?state=s HTTP/1.1", "s")
+                .unwrap_err()
+                .contains("no authorization code")
+        );
         assert!(parse_callback("", "s").is_err());
     }
 
@@ -171,6 +234,9 @@ mod tests {
     fn random_tokens_are_unique_and_url_safe() {
         let (a, b) = (random_token(), random_token());
         assert_ne!(a, b);
-        assert!(a.chars().all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_'));
+        assert!(
+            a.chars()
+                .all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_')
+        );
     }
 }

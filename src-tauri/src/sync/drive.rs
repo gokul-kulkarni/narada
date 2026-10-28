@@ -27,11 +27,24 @@ struct FileList {
 
 /// Operations the sync engine needs; implemented by Drive and by an in-memory fake in tests.
 pub trait Remote {
-    fn find_or_create_folder(&self, name: &str, parent: Option<&str>) -> impl Future<Output = Result<String, String>>;
+    fn find_or_create_folder(
+        &self,
+        name: &str,
+        parent: Option<&str>,
+    ) -> impl Future<Output = Result<String, String>>;
     fn list(&self, folder_id: &str) -> impl Future<Output = Result<Vec<DriveFile>, String>>;
     fn download(&self, file_id: &str) -> impl Future<Output = Result<Vec<u8>, String>>;
-    fn create(&self, folder_id: &str, name: &str, content: &[u8]) -> impl Future<Output = Result<DriveFile, String>>;
-    fn update(&self, file_id: &str, content: &[u8]) -> impl Future<Output = Result<DriveFile, String>>;
+    fn create(
+        &self,
+        folder_id: &str,
+        name: &str,
+        content: &[u8],
+    ) -> impl Future<Output = Result<DriveFile, String>>;
+    fn update(
+        &self,
+        file_id: &str,
+        content: &[u8],
+    ) -> impl Future<Output = Result<DriveFile, String>>;
     fn trash(&self, file_id: &str) -> impl Future<Output = Result<(), String>>;
 }
 
@@ -69,21 +82,39 @@ impl DriveClient<'_> {
         })
     }
 
-    async fn json<T: serde::de::DeserializeOwned>(request: reqwest::RequestBuilder) -> Result<T, String> {
-        let response = Self::check(request.send().await.map_err(|e| format!("Drive request failed: {e}"))?).await?;
-        response.json().await.map_err(|e| format!("Unexpected Drive response: {e}"))
+    async fn json<T: serde::de::DeserializeOwned>(
+        request: reqwest::RequestBuilder,
+    ) -> Result<T, String> {
+        let response = Self::check(
+            request
+                .send()
+                .await
+                .map_err(|e| format!("Drive request failed: {e}"))?,
+        )
+        .await?;
+        response
+            .json()
+            .await
+            .map_err(|e| format!("Unexpected Drive response: {e}"))
     }
 
     async fn query(&self, q: String) -> Result<Vec<DriveFile>, String> {
         let mut files = Vec::new();
         let mut page_token: Option<String> = None;
         loop {
-            let mut request = self.http.get(format!("{API}/files")).bearer_auth(&self.token).query(&[
-                ("q", q.as_str()),
-                ("fields", "nextPageToken,files(id,name,md5Checksum,modifiedTime)"),
-                ("pageSize", "1000"),
-                ("orderBy", "modifiedTime desc"),
-            ]);
+            let mut request = self
+                .http
+                .get(format!("{API}/files"))
+                .bearer_auth(&self.token)
+                .query(&[
+                    ("q", q.as_str()),
+                    (
+                        "fields",
+                        "nextPageToken,files(id,name,md5Checksum,modifiedTime)",
+                    ),
+                    ("pageSize", "1000"),
+                    ("orderBy", "modifiedTime desc"),
+                ]);
             if let Some(token) = &page_token {
                 request = request.query(&[("pageToken", token)]);
             }
@@ -96,51 +127,113 @@ impl DriveClient<'_> {
         }
     }
 
-    async fn upload(&self, request: reqwest::RequestBuilder, metadata: serde_json::Value, content: &[u8]) -> Result<DriveFile, String> {
+    async fn upload(
+        &self,
+        request: reqwest::RequestBuilder,
+        metadata: serde_json::Value,
+        content: &[u8],
+    ) -> Result<DriveFile, String> {
         let boundary = format!("narada-{}", super::oauth::random_token());
         let request = request
             .bearer_auth(&self.token)
-            .query(&[("uploadType", "multipart"), ("fields", "id,name,md5Checksum,modifiedTime")])
-            .header("Content-Type", format!("multipart/related; boundary={boundary}"))
+            .query(&[
+                ("uploadType", "multipart"),
+                ("fields", "id,name,md5Checksum,modifiedTime"),
+            ])
+            .header(
+                "Content-Type",
+                format!("multipart/related; boundary={boundary}"),
+            )
             .body(multipart_body(&boundary, &metadata, content));
         Self::json(request).await
     }
 }
 
 impl Remote for DriveClient<'_> {
-    async fn find_or_create_folder(&self, name: &str, parent: Option<&str>) -> Result<String, String> {
+    async fn find_or_create_folder(
+        &self,
+        name: &str,
+        parent: Option<&str>,
+    ) -> Result<String, String> {
         let parent = parent.unwrap_or("root");
-        let q = format!("name = {} and mimeType = '{FOLDER_MIME}' and {} in parents and trashed = false", quote(name), quote(parent));
+        let q = format!(
+            "name = {} and mimeType = '{FOLDER_MIME}' and {} in parents and trashed = false",
+            quote(name),
+            quote(parent)
+        );
         if let Some(folder) = self.query(q).await?.into_iter().next() {
             return Ok(folder.id);
         }
-        let metadata = serde_json::json!({ "name": name, "mimeType": FOLDER_MIME, "parents": [parent] });
-        let created: DriveFile = Self::json(self.http.post(format!("{API}/files")).bearer_auth(&self.token).json(&metadata)).await?;
+        let metadata =
+            serde_json::json!({ "name": name, "mimeType": FOLDER_MIME, "parents": [parent] });
+        let created: DriveFile = Self::json(
+            self.http
+                .post(format!("{API}/files"))
+                .bearer_auth(&self.token)
+                .json(&metadata),
+        )
+        .await?;
         Ok(created.id)
     }
 
     async fn list(&self, folder_id: &str) -> Result<Vec<DriveFile>, String> {
-        self.query(format!("{} in parents and trashed = false and mimeType != '{FOLDER_MIME}'", quote(folder_id))).await
+        self.query(format!(
+            "{} in parents and trashed = false and mimeType != '{FOLDER_MIME}'",
+            quote(folder_id)
+        ))
+        .await
     }
 
     async fn download(&self, file_id: &str) -> Result<Vec<u8>, String> {
-        let request = self.http.get(format!("{API}/files/{file_id}")).bearer_auth(&self.token).query(&[("alt", "media")]);
-        let response = Self::check(request.send().await.map_err(|e| format!("Drive download failed: {e}"))?).await?;
+        let request = self
+            .http
+            .get(format!("{API}/files/{file_id}"))
+            .bearer_auth(&self.token)
+            .query(&[("alt", "media")]);
+        let response = Self::check(
+            request
+                .send()
+                .await
+                .map_err(|e| format!("Drive download failed: {e}"))?,
+        )
+        .await?;
         Ok(response.bytes().await.map_err(|e| e.to_string())?.to_vec())
     }
 
-    async fn create(&self, folder_id: &str, name: &str, content: &[u8]) -> Result<DriveFile, String> {
+    async fn create(
+        &self,
+        folder_id: &str,
+        name: &str,
+        content: &[u8],
+    ) -> Result<DriveFile, String> {
         let metadata = serde_json::json!({ "name": name, "parents": [folder_id], "mimeType": "application/json" });
-        self.upload(self.http.post(format!("{UPLOAD}/files")), metadata, content).await
+        self.upload(self.http.post(format!("{UPLOAD}/files")), metadata, content)
+            .await
     }
 
     async fn update(&self, file_id: &str, content: &[u8]) -> Result<DriveFile, String> {
-        self.upload(self.http.patch(format!("{UPLOAD}/files/{file_id}")), serde_json::json!({}), content).await
+        self.upload(
+            self.http.patch(format!("{UPLOAD}/files/{file_id}")),
+            serde_json::json!({}),
+            content,
+        )
+        .await
     }
 
     async fn trash(&self, file_id: &str) -> Result<(), String> {
-        let request = self.http.patch(format!("{API}/files/{file_id}")).bearer_auth(&self.token).json(&serde_json::json!({ "trashed": true }));
-        Self::check(request.send().await.map_err(|e| format!("Drive request failed: {e}"))?).await.map(|_| ())
+        let request = self
+            .http
+            .patch(format!("{API}/files/{file_id}"))
+            .bearer_auth(&self.token)
+            .json(&serde_json::json!({ "trashed": true }));
+        Self::check(
+            request
+                .send()
+                .await
+                .map_err(|e| format!("Drive request failed: {e}"))?,
+        )
+        .await
+        .map(|_| ())
     }
 }
 

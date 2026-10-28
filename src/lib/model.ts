@@ -94,6 +94,15 @@ export interface HttpResponse {
   readonly isBinary: boolean;
   readonly sizeBytes: number;
   readonly timeMs: number;
+  /** When each streamed piece arrived; `end` is the body length after that piece. */
+  readonly timeline?: readonly StreamMark[];
+  /** Why the body stopped early (stopped, idle, size limit), if it did. */
+  readonly incomplete?: string | null;
+}
+
+export interface StreamMark {
+  readonly atMs: number;
+  readonly end: number;
 }
 
 export interface HistoryEntry {

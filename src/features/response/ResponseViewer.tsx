@@ -1,21 +1,40 @@
-import { useState, type ReactNode } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { TabStrip, TextArea } from "../../components/ui";
 import { findHeader, prettyBody } from "../../lib/format";
-import type { HttpResponse } from "../../lib/model";
+import type { HttpResponse, StreamMark } from "../../lib/model";
+import { parseStream, streamKind } from "../../lib/stream/sse";
+import { assembleText } from "../../lib/stream/stream-text";
+import { StreamEvents } from "./StreamEvents";
+import { StreamText } from "./StreamText";
 
-type View = "pretty" | "raw" | "headers" | "tests";
+const NO_MARKS: readonly StreamMark[] = [];
+
+type View = "text" | "events" | "pretty" | "raw" | "headers" | "tests";
 
 interface Props {
   readonly response: HttpResponse;
   readonly testResults?: ReactNode;
   readonly testSummary?: string;
+  /** The response is still arriving. */
+  readonly live?: boolean;
 }
 
 /** Body, headers and tests of one response; status and timing are shown by the delivery log. */
-export function ResponseViewer({ response, testResults, testSummary }: Props) {
-  const [view, setView] = useState<View>("pretty");
+export function ResponseViewer({ response, testResults, testSummary, live = false }: Props) {
+  const [chosen, setView] = useState<View | null>(null);
   const contentType = findHeader(response.headers, "content-type") ?? "";
+  const kind = streamKind(contentType);
+  const timeline = response.timeline ?? NO_MARKS;
+  const messages = useMemo(
+    () => (kind ? parseStream(kind, response.body, !live) : []),
+    [kind, response.body, live],
+  );
+  const assembled = useMemo(() => assembleText(messages, timeline), [messages, timeline]);
+  // Until the user picks a view, streams open on their most readable one.
+  const view = chosen ?? (assembled ? "text" : kind ? "events" : "pretty");
   const views: { id: View; label: string }[] = [
+    ...(assembled ? [{ id: "text" as const, label: "Text" }] : []),
+    ...(kind ? [{ id: "events" as const, label: `Events (${messages.length})` }] : []),
     { id: "pretty", label: "Pretty" },
     { id: "raw", label: "Raw" },
     { id: "headers", label: `Headers (${response.headers.length})` },
@@ -30,6 +49,8 @@ export function ResponseViewer({ response, testResults, testSummary }: Props) {
           Binary response ({contentType || "unknown type"}); shown as lossy text.
         </p>
       )}
+      {view === "text" && assembled && <StreamText assembled={assembled} live={live} />}
+      {view === "events" && <StreamEvents messages={messages} timeline={timeline} />}
       {(view === "pretty" || view === "raw") && (
         <TextArea
           aria-label="Response body"

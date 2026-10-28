@@ -15,6 +15,8 @@ export interface RequestTab {
   readonly source: RequestSource | null;
   readonly dirty: boolean;
   readonly loading: boolean;
+  /** The response so far while it is still arriving. */
+  readonly partial: HttpResponse | null;
   readonly response: HttpResponse | null;
   readonly error: string | null;
   readonly tests: readonly TestResult[];
@@ -38,6 +40,7 @@ const createTab = (request: RequestDef, source: RequestSource | null): RequestTa
   source,
   dirty: false,
   loading: false,
+  partial: null,
   response: null,
   error: null,
   tests: [],

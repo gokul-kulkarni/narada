@@ -13,10 +13,13 @@ interface Props {
   readonly environment: string | null;
   /** The response body/headers/tests view for the newest delivery. */
   readonly responseView?: ReactNode;
+  /** The view of a response still arriving. */
+  readonly liveView?: ReactNode;
+  readonly onStop?: () => void;
 }
 
 /** Every time the open request was sent, newest first, on a timeline. */
-export function DeliveryLog({ tab, environment, responseView }: Props) {
+export function DeliveryLog({ tab, environment, responseView, liveView, onStop }: Props) {
   const entries = useHistoryStore((s) => s.entries);
   const hasCurrent = !tab.loading && (tab.response !== null || tab.error !== null);
   // When a response is showing, the newest history entry is that same delivery.
@@ -40,7 +43,16 @@ export function DeliveryLog({ tab, environment, responseView }: Props) {
 
   return (
     <ol aria-label="Delivery log" className="ml-3 flex flex-col gap-4 border-l-2 border-line pl-6">
-      {tab.loading && <PendingDelivery request={tab.request} environment={environment} />}
+      {tab.loading && (
+        <PendingDelivery
+          request={tab.request}
+          environment={environment}
+          partial={tab.partial}
+          onStop={onStop}
+        >
+          {tab.partial && liveView}
+        </PendingDelivery>
+      )}
       {hasCurrent && (
         <CurrentDelivery
           request={tab.request}

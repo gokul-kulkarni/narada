@@ -1,7 +1,7 @@
 mod http;
-mod sync;
 mod secrets;
 mod storage;
+mod sync;
 
 use tauri::Manager;
 
@@ -20,6 +20,7 @@ pub fn run() {
         })
         .invoke_handler(tauri::generate_handler![
             http::send_request,
+            http::cancel_request,
             storage::get_storage_dir,
             storage::set_storage_dir,
             storage::list_documents,

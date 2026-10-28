@@ -1,6 +1,8 @@
 import { useEffect } from "react";
 import { Button } from "../../components/ui";
 import { sendHttp } from "../../lib/http-client";
+import type { HttpResponse } from "../../lib/model";
+import { throttle } from "../../lib/throttle";
 import { executeScript } from "../../lib/scripts/script-runner";
 import { useHistoryStore } from "../../state/history-store";
 import { selectActiveTab, useTabsStore, type RequestTab } from "../../state/tabs-store";
@@ -8,6 +10,7 @@ import { useUiStore } from "../../state/ui-store";
 import { selectActiveEnvironment, useWorkspaceStore } from "../../state/workspace-store";
 import { DeliveryLog } from "../delivery/DeliveryLog";
 import { RecentDeliveries } from "../delivery/RecentDeliveries";
+import { beginDelivery, endDelivery, stopDelivery } from "../request/in-flight";
 import { OAuthTokenButton } from "../request/OAuthTokenButton";
 import { RequestEditor } from "../request/RequestEditor";
 import { sendTab } from "../request/send-request";
@@ -21,15 +24,27 @@ import { saveTab } from "./save-tab";
 const activeEnvironmentName = () =>
   selectActiveEnvironment(useWorkspaceStore.getState())?.name ?? null;
 
+/** How often a streaming response repaints; often enough to look live, cheap on long streams. */
+const PROGRESS_INTERVAL_MS = 50;
+
 function send(tab: RequestTab) {
-  return sendTab(tab, {
-    send: sendHttp,
+  const signal = beginDelivery(tab.id);
+  const showPartial = throttle((partial: HttpResponse) => {
+    const { tabs, patchTab } = useTabsStore.getState();
+    if (tabs.find((t) => t.id === tab.id)?.loading) patchTab(tab.id, { partial });
+  }, PROGRESS_INTERVAL_MS);
+  const delivered = sendTab(tab, {
+    send: (request) => sendHttp(request, { signal, onProgress: showPartial }),
     execute: executeScript,
     getInput: inputForTab,
     applyScopes: (t, before, after) => applyScopes(t.source?.collectionId ?? null, before, after),
     patchTab: useTabsStore.getState().patchTab,
     addHistory: (entry) =>
       useHistoryStore.getState().add({ ...entry, environment: activeEnvironmentName() }),
+  });
+  return delivered.finally(() => {
+    showPartial.cancel();
+    endDelivery(tab.id, signal);
   });
 }
 
@@ -108,6 +123,8 @@ export function RequestWorkspace() {
           <DeliveryLog
             tab={tab}
             environment={environment}
+            onStop={() => stopDelivery(tab.id)}
+            liveView={tab.partial && <ResponseViewer key={tab.id} response={tab.partial} live />}
             responseView={
               tab.response && (
                 <ResponseViewer

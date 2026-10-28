@@ -7,9 +7,13 @@ pub type HeaderPair = (String, String);
 pub enum RequestBody {
     None,
     /// Raw text, including pre-encoded `x-www-form-urlencoded` bodies.
-    Text { content: String },
+    Text {
+        content: String,
+    },
     /// `multipart/form-data` with text fields.
-    Multipart { fields: Vec<HeaderPair> },
+    Multipart {
+        fields: Vec<HeaderPair>,
+    },
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -33,4 +37,33 @@ pub struct HttpResponse {
     pub is_binary: bool,
     pub size_bytes: usize,
     pub time_ms: u128,
+    /// Why the body stopped early, if it did.
+    pub incomplete: Option<String>,
+}
+
+/// Progress of one request, sent to the UI as it happens.
+#[derive(Debug, Clone, Serialize, PartialEq)]
+#[serde(
+    tag = "kind",
+    rename_all = "camelCase",
+    rename_all_fields = "camelCase"
+)]
+pub enum StreamEvent {
+    Head {
+        status: u16,
+        status_text: String,
+        headers: Vec<HeaderPair>,
+    },
+    /// `text` is decoded UTF-8; a character split across pieces arrives with the next one.
+    Chunk {
+        text: String,
+        bytes: usize,
+        at_ms: u128,
+    },
+    End {
+        size_bytes: usize,
+        time_ms: u128,
+        is_binary: bool,
+        incomplete: Option<String>,
+    },
 }

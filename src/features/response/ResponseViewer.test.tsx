@@ -35,4 +35,45 @@ describe("ResponseViewer", () => {
     render(<ResponseViewer response={response({ isBinary: true, headers: [] })} />);
     expect(screen.getByText(/Binary response \(unknown type\)/)).toBeInTheDocument();
   });
+
+  describe("streams", () => {
+    const chunk = (content: string) =>
+      `data: ${JSON.stringify({ choices: [{ delta: { content } }] })}\n\n`;
+    const body = chunk("Keep ") + chunk("going.") + "data: [DONE]\n\n";
+    const stream = response({
+      status: 200,
+      headers: [["content-type", "text/event-stream"]],
+      body,
+      timeline: [
+        { atMs: 120, end: chunk("Keep ").length },
+        { atMs: 300, end: body.length },
+      ],
+    });
+
+    it("opens LLM streams on the joined text", () => {
+      render(<ResponseViewer response={stream} />);
+      expect(screen.getByRole("tab", { name: "Text" })).toHaveAttribute("aria-selected", "true");
+      expect(screen.getByLabelText("Streamed text")).toHaveTextContent("Keep going.");
+      expect(screen.getByText(/First text after 120 ms · 2 pieces/)).toBeInTheDocument();
+    });
+
+    it("lists each event with when it arrived", () => {
+      render(<ResponseViewer response={stream} />);
+      fireEvent.click(screen.getByRole("tab", { name: "Events (3)" }));
+      const events = screen.getAllByRole("listitem");
+      expect(events[0]).toHaveTextContent("+120 ms");
+      expect(events[2]).toHaveTextContent("+300 ms[DONE]");
+    });
+
+    it("opens other streams on their events", () => {
+      render(
+        <ResponseViewer
+          live
+          response={response({ headers: [["content-type", "application/x-ndjson"]], body: "" })}
+        />,
+      );
+      expect(screen.queryByRole("tab", { name: "Text" })).not.toBeInTheDocument();
+      expect(screen.getByText("No complete events yet.")).toBeInTheDocument();
+    });
+  });
 });

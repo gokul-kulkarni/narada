@@ -26,7 +26,9 @@ pub fn get(key: &str) -> Result<Option<String>, String> {
         return Ok(Some(value));
     }
     let legacy = entry_in(LEGACY_IDENTIFIER, key)?;
-    let Some(value) = read(&legacy)? else { return Ok(None) };
+    let Some(value) = read(&legacy)? else {
+        return Ok(None);
+    };
     set(key, &value)?;
     // The copy succeeded; failing to remove the old entry only leaves a stale duplicate.
     let _ = legacy.delete_credential();
@@ -34,7 +36,9 @@ pub fn get(key: &str) -> Result<Option<String>, String> {
 }
 
 pub fn set(key: &str, value: &str) -> Result<(), String> {
-    entry(key)?.set_password(value).map_err(|e| format!("Could not store secret: {e}"))
+    entry(key)?
+        .set_password(value)
+        .map_err(|e| format!("Could not store secret: {e}"))
 }
 
 pub fn delete(key: &str) -> Result<(), String> {

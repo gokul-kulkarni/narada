@@ -15,9 +15,13 @@ pub fn adopt_legacy_dir(dir: &Path) -> Result<bool, String> {
     if dir.exists() || !legacy.is_dir() {
         return Ok(false);
     }
-    fs::rename(&legacy, dir)
-        .map(|()| true)
-        .map_err(|e| format!("Could not move {} to {}: {e}", legacy.display(), dir.display()))
+    fs::rename(&legacy, dir).map(|()| true).map_err(|e| {
+        format!(
+            "Could not move {} to {}: {e}",
+            legacy.display(),
+            dir.display()
+        )
+    })
 }
 
 #[cfg(test)]

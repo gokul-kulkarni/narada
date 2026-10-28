@@ -30,6 +30,7 @@ const tabWith = (overrides: Partial<RequestTab["request"]>): RequestTab => ({
   source: null,
   dirty: false,
   loading: false,
+  partial: null,
   response: null,
   error: null,
   tests: [],
@@ -63,12 +64,14 @@ describe("sendTab", () => {
     expect(d.send.mock.calls[0][0].url).toBe("https://a.dev/x");
     expect(d.patchTab).toHaveBeenNthCalledWith(1, "t1", {
       loading: true,
+      partial: null,
       error: null,
       tests: [],
       logs: [],
     });
     expect(d.patchTab).toHaveBeenLastCalledWith("t1", {
       loading: false,
+      partial: null,
       response,
       error: null,
       tests: [{ name: "ok", passed: true }],

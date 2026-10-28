@@ -23,7 +23,7 @@ export interface SendDeps {
 
 export async function sendTab(tab: RequestTab, deps: SendDeps): Promise<void> {
   const now = deps.now ?? (() => new Date());
-  deps.patchTab(tab.id, { loading: true, error: null, tests: [], logs: [] });
+  deps.patchTab(tab.id, { loading: true, partial: null, error: null, tests: [], logs: [] });
   const input = deps.getInput(tab);
   const result = await runPipeline(
     { ...input, request: tab.request },
@@ -32,6 +32,7 @@ export async function sendTab(tab: RequestTab, deps: SendDeps): Promise<void> {
   await deps.applyScopes(tab, input.scopes, result.scopes);
   deps.patchTab(tab.id, {
     loading: false,
+    partial: null,
     response: result.response,
     error: result.error,
     tests: result.tests,

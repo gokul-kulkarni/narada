@@ -15,7 +15,9 @@ pub struct Settings {
 
 pub fn load(path: &Path) -> Result<Settings, String> {
     match read_optional(path)? {
-        Some(content) => serde_json::from_str(&content).map_err(|e| format!("Invalid settings file: {e}")),
+        Some(content) => {
+            serde_json::from_str(&content).map_err(|e| format!("Invalid settings file: {e}"))
+        }
         None => Ok(Settings::default()),
     }
 }
@@ -34,7 +36,10 @@ mod tests {
         let dir = tempfile::tempdir().unwrap();
         let path = dir.path().join("settings.json");
         assert_eq!(load(&path).unwrap(), Settings::default());
-        let settings = Settings { storage_dir: Some("/x".into()), ..Settings::default() };
+        let settings = Settings {
+            storage_dir: Some("/x".into()),
+            ..Settings::default()
+        };
         save(&path, &settings).unwrap();
         assert_eq!(load(&path).unwrap(), settings);
     }

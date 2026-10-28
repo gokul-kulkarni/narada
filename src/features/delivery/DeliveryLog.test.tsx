@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { newRequest } from "../../lib/factories";
 import type { HistoryEntry, HttpResponse } from "../../lib/model";
 import { useHistoryStore } from "../../state/history-store";
@@ -15,6 +15,7 @@ const tab = (overrides: Partial<RequestTab> = {}): RequestTab => ({
   source: null,
   dirty: false,
   loading: false,
+  partial: null,
   response: null,
   error: null,
   tests: [],
@@ -54,6 +55,34 @@ describe("DeliveryLog", () => {
     const pending = screen.getByRole("article", { name: "Dispatching" });
     expect(pending).toHaveTextContent("/pets→ staging");
     expect(pending).toHaveTextContent("Dispatching…");
+  });
+
+  it("shows the reply arriving and lets it be stopped", () => {
+    const onStop = vi.fn();
+    render(
+      <DeliveryLog
+        tab={tab({ loading: true, partial: { ...response, sizeBytes: 3400 } })}
+        environment={null}
+        onStop={onStop}
+        liveView={<p>live body</p>}
+      />,
+    );
+    expect(screen.getByTestId("delivery-progress")).toHaveTextContent(
+      "Receiving · 201 Created · 3.3 KB",
+    );
+    expect(screen.getByText("live body")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Stop" }));
+    expect(onStop).toHaveBeenCalledOnce();
+  });
+
+  it("notes a reply that ended early", () => {
+    render(
+      <DeliveryLog
+        tab={tab({ response: { ...response, incomplete: "Stopped." } })}
+        environment={null}
+      />,
+    );
+    expect(screen.getByRole("article", { name: "Latest delivery" })).toHaveTextContent("Stopped.");
   });
 
   it("expands the latest delivery with where it went and the response view", () => {

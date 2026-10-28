@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { Button } from "../../components/ui";
 import { deliveryOutcome, formatSentAt, shortUrl } from "../../lib/delivery";
 import { formatBytes, formatDuration } from "../../lib/format";
 import type { HistoryEntry, HttpResponse, RequestDef } from "../../lib/model";
@@ -60,6 +61,11 @@ export function CurrentDelivery({
             </StatusPill>
           </span>
         </div>
+        {response?.incomplete && (
+          <p className="mx-4 mb-3 rounded-lg bg-warn-soft px-3 py-2 text-sm text-warn">
+            {response.incomplete}
+          </p>
+        )}
         {error && (
           <div role="alert" className="mx-4 mb-3 rounded-lg bg-err-soft px-3 py-2 text-sm text-err">
             {error}
@@ -71,25 +77,41 @@ export function CurrentDelivery({
   );
 }
 
+/** A delivery in flight; once the reply starts arriving it shows what came so far. */
 export function PendingDelivery({
   request,
   environment,
+  partial,
+  onStop,
+  children,
 }: {
   request: RequestDef;
   environment: string | null;
+  partial: HttpResponse | null;
+  onStop?: () => void;
+  children?: ReactNode;
 }) {
+  const status = partial && `${partial.status} ${partial.statusText}`.trim();
   return (
     <li className="relative">
       <TimelineDot tone="pending" />
-      <article
-        aria-label="Dispatching"
-        aria-busy="true"
-        className={`${CARD} flex items-center gap-3 px-4 py-3`}
-      >
-        <Destination request={request} environment={environment} />
-        <span className="ml-auto">
-          <StatusPill tone="pending">Dispatching…</StatusPill>
-        </span>
+      <article aria-label="Dispatching" aria-busy="true" className={`${CARD} overflow-hidden`}>
+        <div className="flex items-center gap-3 px-4 py-3">
+          <Destination request={request} environment={environment} />
+          <span className="ml-auto flex shrink-0 items-center gap-2">
+            <StatusPill tone="pending" testId="delivery-progress">
+              {partial
+                ? `Receiving · ${status} · ${formatBytes(partial.sizeBytes)}`
+                : "Dispatching…"}
+            </StatusPill>
+            {onStop && (
+              <Button variant="ghost" onClick={onStop}>
+                Stop
+              </Button>
+            )}
+          </span>
+        </div>
+        {children && <div className="border-t border-line-soft">{children}</div>}
       </article>
     </li>
   );
