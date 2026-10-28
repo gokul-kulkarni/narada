@@ -35,7 +35,7 @@ test("import a collection from a Postman account and send a request from it", as
   await page.getByRole("button", { name: "Import selected" }).click();
   await expect(page.getByRole("status")).toContainText("Imported 1 item(s) from Postman.");
 
-  await page.getByRole("button", { name: /^▸\s*Remote API$/ }).click();
+  await expect(page.getByRole("button", { name: /^▾\s*Remote API$/ })).toBeVisible();
   await page.getByRole("button", { name: /^GET\s*Ping$/ }).click();
   await page.getByRole("button", { name: "Send" }).click();
   await expect(page.getByTestId("response-status")).toHaveText("200 OK");

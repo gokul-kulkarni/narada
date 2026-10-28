@@ -122,7 +122,7 @@ describe("ImportDialog — files", () => {
     fireEvent.change(screen.getByLabelText("Import file"), { target: { files } });
   const json = (name: string, value: unknown) => new File([JSON.stringify(value)], name);
 
-  it("imports several exported files at once and reports failures", async () => {
+  it("previews chosen files, then imports the valid ones", async () => {
     const onClose = vi.fn();
     render(<ImportDialog onClose={onClose} />);
     pick([
@@ -130,16 +130,47 @@ describe("ImportDialog — files", () => {
       json("staging.postman_environment.json", POSTMAN_ENVIRONMENT),
       json("junk.json", { a: 1 }),
     ]);
-    await waitFor(() => expect(onClose).toHaveBeenCalled());
-    expect(useUiStore.getState().notice).toMatch(
-      /^Imported 2 of 3 items\. Failed: junk\.json: Unrecognised JSON/,
+    const list = await screen.findByRole("list", { name: "Ready to import" });
+    expect(list).toHaveTextContent("Pet Store");
+    expect(list).toHaveTextContent(
+      "Collection · 1 folder · 4 requests · pets.postman_collection.json",
     );
+    expect(screen.getByRole("alert")).toHaveTextContent(/Unrecognised JSON/);
+    expect(useWorkspaceStore.getState().collections).toHaveLength(0); // nothing until confirmed
+
+    fireEvent.click(screen.getByRole("button", { name: "Remove junk.json" }));
+    fireEvent.click(screen.getByRole("button", { name: "Import 2 items" }));
+    await waitFor(() => expect(onClose).toHaveBeenCalled());
+    expect(useUiStore.getState().notice).toBe("Imported 2 of 2 items.");
     expect(useWorkspaceStore.getState().collections).toHaveLength(1);
+    expect(useWorkspaceStore.getState().environments).toHaveLength(1);
   });
 
-  it("shows an error when no file could be imported", async () => {
+  it("reveals a single imported collection", async () => {
     render(<ImportDialog onClose={vi.fn()} />);
-    pick([json("a.json", {}), json("b.json", [])]);
-    expect(await screen.findByRole("alert")).toHaveTextContent(/^Nothing was imported\. a\.json/);
+    pick([json("pets.json", POSTMAN_COLLECTION)]);
+    fireEvent.click(await screen.findByRole("button", { name: "Import" }));
+    await waitFor(() => expect(useUiStore.getState().revealed.size).toBe(1));
+    expect(useUiStore.getState().notice).toBe('Imported collection "Pet Store".');
+  });
+
+  it("previews files dropped on the drop zone or handed in by the window", async () => {
+    render(
+      <ImportDialog initialFiles={[json("env.json", POSTMAN_ENVIRONMENT)]} onClose={vi.fn()} />,
+    );
+    fireEvent.drop(screen.getByTestId("drop-zone"), {
+      dataTransfer: { files: [json("pets.json", POSTMAN_COLLECTION)], types: ["Files"] },
+    });
+    const list = await screen.findByRole("list", { name: "Ready to import" });
+    await waitFor(() => expect(list.querySelectorAll("li")).toHaveLength(2));
+    expect(screen.getByRole("button", { name: "Import 2 items" })).toBeEnabled();
+  });
+
+  it("can't import when nothing is valid", async () => {
+    render(<ImportDialog onClose={vi.fn()} />);
+    pick([json("a.json", {}), json("old.json", { name: "Old", requests: [] })]);
+    expect(await screen.findAllByRole("alert")).toHaveLength(2);
+    expect(screen.getByText(/choose Collection v2\.1/)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Import" })).toBeDisabled();
   });
 });

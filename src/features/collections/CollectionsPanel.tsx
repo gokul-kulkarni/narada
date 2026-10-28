@@ -25,7 +25,9 @@ async function exportCollection(collection: Collection) {
 }
 
 function CollectionNode({ collection }: { collection: Collection }) {
-  const [open, setOpen] = useState(false);
+  const revealed = useUiStore((s) => s.revealed.has(collection.id));
+  const [toggled, setOpen] = useState<boolean | null>(null);
+  const open = toggled ?? revealed;
   const [renaming, setRenaming] = useState(false);
   const { updateCollection, deleteCollection } = useWorkspaceStore.getState();
   const { show } = useUiStore.getState();
@@ -85,6 +87,8 @@ function CollectionNode({ collection }: { collection: Collection }) {
   );
 }
 
+const openImport = () => useUiStore.getState().openDialog({ kind: "import" });
+
 export function CollectionsPanel() {
   const collections = useWorkspaceStore((s) => s.collections);
   return (
@@ -93,16 +97,32 @@ export function CollectionsPanel() {
         <h2 className="text-xs font-semibold tracking-wide text-neutral-500 uppercase">
           Collections
         </h2>
-        <Button
-          variant="ghost"
-          className="px-2 py-0.5"
-          onClick={() => useWorkspaceStore.getState().createCollection()}
-        >
-          + New
-        </Button>
+        <div className="flex">
+          <Button
+            variant="ghost"
+            className="px-2 py-0.5"
+            aria-label="Import collections"
+            onClick={openImport}
+          >
+            Import
+          </Button>
+          <Button
+            variant="ghost"
+            className="px-2 py-0.5"
+            onClick={() => useWorkspaceStore.getState().createCollection()}
+          >
+            + New
+          </Button>
+        </div>
       </div>
       {collections.length === 0 ? (
-        <EmptyState>No collections yet. Create one or import a Postman collection.</EmptyState>
+        <EmptyState>
+          <p>No collections yet.</p>
+          <Button variant="primary" className="mt-2" onClick={openImport}>
+            Import from Postman
+          </Button>
+          <p className="mt-2 text-xs">or drop exported .json files anywhere in this window</p>
+        </EmptyState>
       ) : (
         <ul className="text-sm">
           {collections.map((collection) => (

@@ -9,7 +9,7 @@ export function Dialogs() {
   if (!dialog) return null;
   switch (dialog.kind) {
     case "import":
-      return <ImportDialog onClose={close} />;
+      return <ImportDialog initialFiles={dialog.files} onClose={close} />;
     case "save":
       return <SaveRequestDialog tabId={dialog.tabId} onClose={close} />;
     case "code":

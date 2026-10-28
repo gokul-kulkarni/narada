@@ -40,7 +40,7 @@ describe("collections and environments", () => {
     fireEvent.change(screen.getByLabelText("Active environment"), {
       target: { value: POSTMAN_ENVIRONMENT.id },
     });
-    fireEvent.click(within(sidebar()).getByRole("button", { name: /^▸\s*Pet Store$/ }));
+    expect(within(sidebar()).getByRole("button", { name: /^▾\s*Pet Store$/ })).toBeInTheDocument(); // imported collections open expanded
     fireEvent.click(within(sidebar()).getByRole("button", { name: /^POST\s*Create pet$/ }));
     fireEvent.click(screen.getByRole("button", { name: "Send" }));
 
@@ -152,7 +152,7 @@ describe("collections and environments", () => {
     render(<App />);
     await screen.findByRole("heading", { name: "Narada" });
     await importText(JSON.stringify(POSTMAN_COLLECTION));
-    fireEvent.click(within(sidebar()).getByRole("button", { name: /^▸\s*Pet Store$/ }));
+    expect(within(sidebar()).getByRole("button", { name: /^▾\s*Pet Store$/ })).toBeInTheDocument(); // imported collections open expanded
     menuItem("Login", "Rename");
     const input = screen.getByLabelText("Rename");
     fireEvent.change(input, { target: { value: "Sign in" } });

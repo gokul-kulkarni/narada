@@ -9,6 +9,7 @@ import {
   type PostmanWorkspace,
 } from "../../lib/postman-api";
 import { getServices } from "../../state/services";
+import { useUiStore } from "../../state/ui-store";
 import { useWorkspaceStore } from "../../state/workspace-store";
 
 export interface WorkspaceContents {
@@ -28,6 +29,8 @@ async function loadContents(api: PostmanApi, workspaceId: string): Promise<Works
   return { collections, environments };
 }
 
+const revealCollection = ({ id }: { id: string }) => useUiStore.getState().reveal([id]);
+
 async function importSelected(
   api: PostmanApi,
   contents: WorkspaceContents,
@@ -39,7 +42,8 @@ async function importSelected(
       .filter((c) => selection.has(collectionKey(c.uid)))
       .map((c) => ({
         name: c.name,
-        run: async () => workspace.importCollection(await api.getCollection(c.uid)),
+        run: async () =>
+          workspace.importCollection(await api.getCollection(c.uid)).then(revealCollection),
       })),
     ...contents.environments
       .filter((e) => selection.has(environmentKey(e.uid)))

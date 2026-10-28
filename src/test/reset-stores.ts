@@ -16,7 +16,12 @@ export function resetStores(): DocumentStore {
   localStorage.clear();
   useTabsStore.setState({ tabs: [], activeTabId: null });
   useHistoryStore.setState({ entries: [] });
-  useUiStore.setState({ view: { kind: "requests" }, dialog: null, notice: null });
+  useUiStore.setState({
+    view: { kind: "requests" },
+    dialog: null,
+    notice: null,
+    revealed: new Set(),
+  });
   useWorkspaceStore.setState({
     loaded: false,
     collections: [],

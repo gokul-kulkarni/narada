@@ -1,50 +1,57 @@
 import { parseCurl } from "../../lib/curl";
 import { errorMessage } from "../../lib/format";
 import { detectImport } from "../../lib/import-detect";
+import type { ImportPreview } from "../../lib/import-preview";
 import { useTabsStore } from "../../state/tabs-store";
 import { useUiStore } from "../../state/ui-store";
 import { useWorkspaceStore } from "../../state/workspace-store";
 
-export async function runImport(text: string): Promise<string> {
+type Imported =
+  { readonly kind: "curl" | "environment" } | { readonly kind: "collection"; readonly id: string };
+
+async function runImport(text: string): Promise<Imported> {
   const detected = detectImport(text);
   const workspace = useWorkspaceStore.getState();
   switch (detected.kind) {
-    case "curl": {
+    case "curl":
       useTabsStore.getState().openRequest(parseCurl(detected.command), null);
-      useUiStore.getState().show({ kind: "requests" });
-      return "Opened the curl request in a new tab.";
-    }
+      return { kind: "curl" };
     case "collection":
-      return `Imported collection "${(await workspace.importCollection(detected.json)).name}".`;
+      return { kind: "collection", id: (await workspace.importCollection(detected.json)).id };
     case "environment":
-      return `Imported environment "${(await workspace.importEnvironment(detected.json)).name}".`;
+      await workspace.importEnvironment(detected.json);
+      return { kind: "environment" };
   }
 }
 
-export interface NamedSource {
-  readonly name: string;
-  readonly load: () => Promise<string>;
+function summary(previews: readonly ImportPreview[], failed: readonly string[]): string {
+  const imported = previews.length - failed.length;
+  const [first] = previews;
+  const head =
+    previews.length === 1 && first?.ok
+      ? first.kind === "curl"
+        ? "Opened the curl request in a new tab."
+        : `Imported ${first.kind} "${first.title}".`
+      : `Imported ${imported} of ${previews.length} items.`;
+  return failed.length > 0 ? `${head} Failed: ${failed.join(" ")}` : head;
 }
 
-/** Imports each source independently so one bad file doesn't block the rest. */
-export async function runImports(sources: readonly NamedSource[]): Promise<string> {
-  const results = await Promise.all(
-    sources.map(async (source) => {
-      try {
-        return { ok: true as const, message: await runImport(await source.load()) };
-      } catch (e) {
-        return { ok: false as const, message: `${source.name}: ${errorMessage(e)}` };
-      }
-    }),
-  );
-  if (results.length === 1) {
-    const [only] = results;
-    if (!only!.ok) throw new Error(only!.message);
-    return only!.message;
+/** Imports validated previews one by one, then shows what was imported. */
+export async function importPreviews(previews: readonly ImportPreview[]): Promise<string> {
+  const valid = previews.filter((p) => p.ok);
+  const failed: string[] = [];
+  const results: Imported[] = [];
+  for (const preview of valid) {
+    try {
+      results.push(await runImport(preview.text));
+    } catch (e) {
+      failed.push(`${preview.source}: ${errorMessage(e)}`);
+    }
   }
-  const failed = results.filter((r) => !r.ok).map((r) => r.message);
-  const imported = results.length - failed.length;
-  if (imported === 0) throw new Error(`Nothing was imported. ${failed.join(" ")}`);
-  const summary = `Imported ${imported} of ${results.length} items.`;
-  return failed.length > 0 ? `${summary} Failed: ${failed.join(" ")}` : summary;
+  if (results.length === 0) throw new Error(`Nothing was imported. ${failed.join(" ")}`);
+  const collections = results.flatMap((r) => (r.kind === "collection" ? [r.id] : []));
+  const ui = useUiStore.getState();
+  ui.reveal(collections);
+  ui.show({ kind: "requests" });
+  return summary(valid, failed);
 }

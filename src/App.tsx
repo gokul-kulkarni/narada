@@ -7,12 +7,14 @@ import { syncNow } from "./features/settings/sync-now";
 import { MainView } from "./features/workspace/MainView";
 import { Notices } from "./features/workspace/Notices";
 import { useBootstrap } from "./hooks/use-bootstrap";
+import { useFileDrop } from "./hooks/use-file-drop";
 import { driveAvailable } from "./lib/drive-api";
 import { useUiStore } from "./state/ui-store";
 import { useWorkspaceStore } from "./state/workspace-store";
 
 function App() {
   useBootstrap();
+  useFileDrop();
   const loaded = useWorkspaceStore((s) => s.loaded);
   const { show, openDialog } = useUiStore.getState();
 

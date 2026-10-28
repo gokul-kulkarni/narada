@@ -11,14 +11,20 @@ const SOURCES = [
   { id: "postman", label: "Postman account" },
 ] as const;
 
-export function ImportDialog({ onClose }: { onClose: () => void }) {
+export function ImportDialog({
+  initialFiles,
+  onClose,
+}: {
+  initialFiles?: readonly File[];
+  onClose: () => void;
+}) {
   const [source, setSource] = useState<Source>("file");
   return (
     <Modal title="Import" onClose={onClose}>
       <div className="space-y-3 text-sm">
         <TabStrip label="Import from" tabs={SOURCES} active={source} onChange={setSource} />
         {source === "file" ? (
-          <FileImport onClose={onClose} />
+          <FileImport initialFiles={initialFiles} onClose={onClose} />
         ) : (
           <PostmanAccountImport onClose={onClose} />
         )}

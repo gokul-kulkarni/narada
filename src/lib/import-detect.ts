@@ -18,5 +18,9 @@ export function detectImport(text: string): DetectedImport {
   if (typeof doc.info === "object" && Array.isArray(doc.item)) return { kind: "collection", json };
   if (Array.isArray(doc.values) && typeof doc.name === "string")
     return { kind: "environment", json };
+  if (Array.isArray(doc.requests))
+    throw new Error(
+      "This is an old Postman v1 collection. In Postman, export it again and choose Collection v2.1.",
+    );
   throw new Error("Unrecognised JSON: expected a Postman v2.x collection or environment export.");
 }
