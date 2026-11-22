@@ -12,6 +12,60 @@
       },
       "releases": [
         {
+          "version": "0.2.0",
+          "commit": "e9fe009e58e7433b8a1b8044410b5635405806fc",
+          "contentHash": "9b305c785e6bbdc7f65583d5f6243acf646d1a8bd121348b050607b7a5062d65",
+          "execution": "trusted-worker",
+          "minimumOrca": "1.4.248",
+          "name": "Narada",
+          "contributes": [
+            {
+              "kind": "panels",
+              "name": "Narada"
+            }
+          ],
+          "capabilities": ["settings:own", "secrets:own"],
+          "images": {
+            "icon": {
+              "path": "apps/orca-plugin/assets/icon.png",
+              "alt": "Narada",
+              "sha256": "d8c0f7ea02ec529373992c9248e40682bc8b63526f338187a91de3e67b09ab30",
+              "width": 256,
+              "height": 256
+            },
+            "cover": {
+              "path": "apps/orca-plugin/assets/cover.png",
+              "alt": "Narada in Orca's sidebar: a Shop API collection, the List orders request with its query parameters, and a 200 OK JSON response",
+              "sha256": "63087f4ff6255dc3fd757257249a0c2a4f283ca76c06690f7b560f708b5aad5c",
+              "width": 1600,
+              "height": 1000
+            },
+            "screenshots": [
+              {
+                "path": "apps/orca-plugin/assets/screenshot-send.png",
+                "alt": "The Narada panel with List orders chosen in the Local environment, status=open and limit=3 as params, and a 200 OK response listing three orders",
+                "sha256": "5a9af2a94358ff283a7aec6ad151aae69ffdf1ac57189583a160192beffd090a",
+                "width": 1600,
+                "height": 1000
+              },
+              {
+                "path": "apps/orca-plugin/assets/screenshot-collections.png",
+                "alt": "The Narada panel with the Production environment, a prompt for one secret variable, and the Shop API collection open at Create order",
+                "sha256": "19516818f79198d11cef607f23914d96bf233f2363d60878877a3fe4817eb78e",
+                "width": 1600,
+                "height": 1000
+              },
+              {
+                "path": "apps/orca-plugin/assets/screenshot-curl.png",
+                "alt": "The new request from cURL form with a POST refund command, the name Refund order, the Shop API collection and the Orders folder",
+                "sha256": "9f9ebcf2551e3ac4b9e50bfb21333221ecfa470b79611645b470d074c31939a7",
+                "width": 1600,
+                "height": 1000
+              }
+            ]
+          }
+        },
+        {
           "version": "0.1.2",
           "commit": "0dd0e6cb0e02a161ea6977359b3a8c3c85cd3dbb",
           "contentHash": "3703f5ee9ffbe135977b84577d3e7e2b12ce85b974d3a3c49cbbb5918e108ad1",
