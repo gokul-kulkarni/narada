@@ -12,6 +12,30 @@
       },
       "releases": [
         {
+          "version": "0.1.2",
+          "commit": "0dd0e6cb0e02a161ea6977359b3a8c3c85cd3dbb",
+          "contentHash": "3703f5ee9ffbe135977b84577d3e7e2b12ce85b974d3a3c49cbbb5918e108ad1",
+          "execution": "trusted-worker",
+          "minimumOrca": "1.4.248",
+          "name": "Narada",
+          "contributes": [
+            {
+              "kind": "panels",
+              "name": "Narada"
+            }
+          ],
+          "capabilities": ["settings:own", "secrets:own"],
+          "images": {
+            "icon": {
+              "path": "assets/icon.png",
+              "alt": "Narada",
+              "sha256": "d8c0f7ea02ec529373992c9248e40682bc8b63526f338187a91de3e67b09ab30",
+              "width": 256,
+              "height": 256
+            }
+          }
+        },
+        {
           "version": "0.1.1",
           "commit": "a2d68999f6072ac4b1c9831c4103eb32545ddbe5",
           "contentHash": "97fe453f08978dad7b9bce806955977930a1fea44b3f72656783ef95e3f03f49",
