@@ -9,6 +9,8 @@ lerna-debug.log*
 
 node_modules
 dist
+# Orca runs the plugin's committed worker bundle (no install-time build)
+!apps/orca-plugin/dist/
 dist-ssr
 *.local
 

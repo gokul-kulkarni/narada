@@ -1,3 +1,4 @@
+import { parseGlobals } from "@narada/core/storage/globals";
 import { create } from "zustand";
 import { newCollection, newEnvironment } from "@narada/core/factories";
 import { errorMessage } from "@narada/core/format";
@@ -50,20 +51,6 @@ function writeActiveEnvironment(id: string | null): void {
     else globalThis.localStorage?.removeItem(ACTIVE_ENV_KEY);
   } catch {
     // Not persisting the selection is harmless.
-  }
-}
-
-function parseGlobals(content: string | null): KeyValue[] {
-  if (!content) return [];
-  try {
-    const parsed: unknown = JSON.parse(content);
-    return Array.isArray(parsed)
-      ? parsed.filter(
-          (row): row is KeyValue => typeof row?.key === "string" && typeof row?.value === "string",
-        )
-      : [];
-  } catch {
-    return [];
   }
 }
 

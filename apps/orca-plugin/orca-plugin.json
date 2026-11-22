@@ -1,0 +1,57 @@
+{
+  "manifestVersion": 2,
+  "id": "narada",
+  "name": "Narada",
+  "version": "0.1.0",
+  "description": "Send your saved Narada and Postman collection requests from Orca's sidebar: pick a request and an environment, adjust it, and read the response.",
+  "author": {
+    "name": "Gokul Kulkarni",
+    "url": "https://github.com/gokul-kulkarni"
+  },
+  "repository": "https://github.com/gokul-kulkarni/narada",
+  "license": "MIT",
+  "engines": {
+    "orca": ">=1.4.248"
+  },
+  "execution": "trusted-worker",
+  "pluginApi": 1,
+  "main": "dist/worker.js",
+  "contributes": {
+    "panels": [
+      {
+        "id": "requests",
+        "title": "Narada",
+        "icon": "globe",
+        "entry": "src/panel.tsx",
+        "ui": "components"
+      }
+    ],
+    "settings": [
+      {
+        "key": "collectionsFolder",
+        "title": "Collections folder",
+        "description": "Folder holding Collections/ and Environments/. Leave empty to use the folder the Narada app uses.",
+        "type": "string",
+        "default": "",
+        "placeholder": "~/Google Drive/narada"
+      },
+      {
+        "key": "timeoutSeconds",
+        "title": "Request timeout (seconds)",
+        "description": "How long a server may stay silent before the request fails.",
+        "type": "integer",
+        "default": 30,
+        "minimum": 1,
+        "maximum": 110
+      }
+    ]
+  },
+  "capabilities": [
+    {
+      "kind": "settings:own"
+    },
+    {
+      "kind": "secrets:own"
+    }
+  ]
+}

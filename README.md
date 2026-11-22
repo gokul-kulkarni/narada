@@ -107,6 +107,7 @@ is an app beside it. `pnpm check` runs typecheck, lint and tests for every proje
 packages/core/            @narada/core: logic every client shares, with no Tauri, React or browser
   src/                    globals: model, Postman converters, variables, auth, request preparation,
                           fetch transport, streaming, curl, codegen, MCP helpers, storage ports
+apps/orca-plugin/         Narada as an Orca sidebar panel (see apps/orca-plugin/README.md)
 apps/desktop/             the Tauri desktop app
   src/lib/                desktop adapters (Tauri send, keychain/file stores, Drive, dialogs),
                           scripts sandbox (Web Worker) and runner
