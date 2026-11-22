@@ -27,7 +27,7 @@
           "capabilities": ["settings:own", "secrets:own"],
           "images": {
             "icon": {
-              "path": "assets/icon.png",
+              "path": "apps/orca-plugin/assets/icon.png",
               "alt": "Narada",
               "sha256": "d8c0f7ea02ec529373992c9248e40682bc8b63526f338187a91de3e67b09ab30",
               "width": 256,
