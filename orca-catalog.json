@@ -7,15 +7,14 @@
       "id": "gokul-kulkarni.narada",
       "source": {
         "kind": "git",
-        "url": "https://github.com/gokul-kulkarni/narada",
-        "ref": "main",
-        "path": "apps/orca-plugin"
+        "url": "https://github.com/gokul-kulkarni/narada-orca",
+        "ref": "main"
       },
       "releases": [
         {
-          "version": "0.1.0",
-          "commit": "d531b2f7102c2c13eb41184fbf45f401da06ce5f",
-          "contentHash": "5b8ed4a402643dd97c4818c08928248445ed1961358461f19822c66742f2997f",
+          "version": "0.1.1",
+          "commit": "a2d68999f6072ac4b1c9831c4103eb32545ddbe5",
+          "contentHash": "97fe453f08978dad7b9bce806955977930a1fea44b3f72656783ef95e3f03f49",
           "execution": "trusted-worker",
           "minimumOrca": "1.4.248",
           "name": "Narada",
