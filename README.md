@@ -82,6 +82,13 @@ Two options:
    the file wasn't changed on the other; if both sides changed, the Drive version wins and your
    local copy is saved to `<app data>/conflicts/`.
 
+## Orca plugin
+
+Narada also runs as a panel in [Orca](https://www.onorca.dev)'s sidebar, sending your saved
+requests with the same logic as the app. Install it with
+`orca plugin catalog add gokul-kulkarni/narada` then `orca plugin install gokul-kulkarni.narada`;
+see [apps/orca-plugin/README.md](apps/orca-plugin/README.md).
+
 ## Development
 
 Requires Node 24+, pnpm, and Rust (stable).

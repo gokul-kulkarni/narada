@@ -8,6 +8,18 @@ It uses the same logic as the Narada desktop app (`@narada/core`): Postman v2.1 
 `{{variable}}` resolution with Postman's precedence (environment > collection > global), and
 Basic, Bearer, API-key and OAuth 2.0 token auth inherited from folders and the collection.
 
+## Install
+
+The plugin lives in a subfolder of the Narada repository, which publishes it through its own Orca
+catalog (`orca-catalog.json` at the repository root):
+
+```sh
+orca plugin catalog add gokul-kulkarni/narada   # Orca asks you to approve the catalog
+orca plugin install gokul-kulkarni.narada       # Orca shows the access it asks for, then installs
+```
+
+Then open the **Narada** panel from Orca's right sidebar.
+
 ## What it reads
 
 - **Collections and environments** from the folder the Narada app uses (the one chosen in Narada,
