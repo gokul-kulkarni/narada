@@ -118,6 +118,8 @@ test("shows a failed send and the scripts notice", async () => {
     },
   });
   const view = await mount(panel, { host, persisted: { plugin: { selectedKey: KEYS.create } } });
+  // The folder holding the chosen request starts open, with the collections.
+  assert.ok(drawn(view).includes('"defaultExpanded":["c:col-1","f:col-1:orders"]'));
   assert.ok(drawn(view).includes("scripts run only in the Narada app"));
   await view.press({ text: "Send" });
   assert.ok(drawn(view).includes("fetch failed: connect ECONNREFUSED"));

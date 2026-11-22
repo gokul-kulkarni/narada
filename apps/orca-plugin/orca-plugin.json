@@ -2,7 +2,7 @@
   "manifestVersion": 2,
   "id": "narada",
   "name": "Narada",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "description": "Send your saved Narada and Postman collection requests from Orca's sidebar: pick a request and an environment, edit its params, headers and body, read the response, or save a new request from cURL.",
   "author": {
     "name": "Gokul Kulkarni",
@@ -12,6 +12,27 @@
   "homepage": "https://github.com/gokul-kulkarni/narada",
   "license": "MIT",
   "icon": "assets/icon.png",
+  "cover": {
+    "path": "assets/cover.png",
+    "alt": "Narada in Orca's sidebar: a Shop API collection, the List orders request with its query parameters, and a 200 OK JSON response"
+  },
+  "screenshots": [
+    {
+      "path": "assets/screenshot-send.png",
+      "alt": "The Narada panel with List orders chosen in the Local environment, status=open and limit=3 as params, and a 200 OK response listing three orders",
+      "caption": "Send a saved request and read the response"
+    },
+    {
+      "path": "assets/screenshot-collections.png",
+      "alt": "The Narada panel with the Production environment, a prompt for one secret variable, and the Shop API collection open at Create order",
+      "caption": "Your Narada collections, folders and environments"
+    },
+    {
+      "path": "assets/screenshot-curl.png",
+      "alt": "The new request from cURL form with a POST refund command, the name Refund order, the Shop API collection and the Orders folder",
+      "caption": "Paste a cURL command to save it as a request"
+    }
+  ],
   "engines": {
     "orca": ">=1.4.248"
   },

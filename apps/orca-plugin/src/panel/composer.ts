@@ -1,7 +1,7 @@
 // The "new request from cURL" form: its state and the save action.
 import { atom, plugin, read, set, update } from "orca";
 import type { WorkspaceSnapshot } from "../protocol";
-import { loadWorkspace, selectedRequest, selectedKey } from "./state";
+import { loadWorkspace, selectedKey } from "./state";
 
 /** Orca refuses an empty option value, so "top level of the collection" gets its own. */
 export const TOP_LEVEL = "top";
@@ -30,7 +30,7 @@ export const composer = atom<Composer>("composer", CLOSED);
 
 /** Opens the form, aimed at the collection of the request on screen, else the first one. */
 export function openComposer(snapshot: WorkspaceSnapshot): void {
-  const current = read(selectedRequest)?.collectionId;
+  const current = snapshot.requests[read(selectedKey) ?? ""]?.collectionId;
   const collectionId =
     snapshot.collections.find((c) => c.id === current)?.id ?? snapshot.collections[0]?.id ?? "";
   set(composer, { ...CLOSED, open: true, collectionId });

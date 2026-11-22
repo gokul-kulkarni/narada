@@ -114,6 +114,23 @@ function folderNotice(snapshot: WorkspaceSnapshot) {
   );
 }
 
+/** Keys of the collection and folders that hold `key`, outermost first; null if it isn't there. */
+function ancestorsOf(items: WorkspaceSnapshot["tree"], key: string): string[] | null {
+  for (const item of items) {
+    if (item.key === key) return [];
+    const inner = item.children ? ancestorsOf(item.children, key) : null;
+    if (inner) return [item.key, ...inner];
+  }
+  return null;
+}
+
+/** Collections start open, and so does every folder around the chosen request. */
+function expandedKeys(snapshot: WorkspaceSnapshot): string[] {
+  const chosen = read(selectedKey);
+  const around = chosen ? (ancestorsOf(snapshot.tree, chosen) ?? []) : [];
+  return [...new Set([...snapshot.tree.map((collection) => collection.key), ...around])];
+}
+
 function workspaceView(snapshot: WorkspaceSnapshot) {
   const request = read(selectedRequest);
   const environment = snapshot.environments.find((e) => e.id === read(environmentId));
@@ -129,7 +146,7 @@ function workspaceView(snapshot: WorkspaceSnapshot) {
       <Tree
         label="Saved requests"
         items={snapshot.tree}
-        defaultExpanded={snapshot.tree.map((collection) => collection.key)}
+        defaultExpanded={expandedKeys(snapshot)}
         selected={read(selectedKey) ?? undefined}
         maxHeight="md"
         onSelect={({ key }) => {

@@ -102,7 +102,7 @@ export function requestEditor(request: RequestSummary) {
             label="Query parameters, one key=value per line"
             labelHidden
             rows={4}
-            placeholder={"limit=20\nsearch={{term}}\n# page=2 (switched off)"}
+            placeholder={"One key=value per line.\nStart a line with # to switch it off."}
             value={paramsTextFor(request)}
             onChange={(text) => editParams(request, text)}
           />
