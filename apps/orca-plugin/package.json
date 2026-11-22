@@ -1,0 +1,55 @@
+{
+  "name": "@narada/orca-plugin",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Narada as an Orca sidebar panel: send saved requests with @narada/core.",
+  "type": "module",
+  "scripts": {
+    "build": "esbuild src/worker.ts --bundle --platform=node --target=node22 --format=esm --external:orca --external:'orca/*' --legal-comments=none --outfile=dist/worker.js",
+    "types": "orca plugin types .",
+    "typecheck": "orca plugin types . >/dev/null && tsc -p .",
+    "lint": "eslint .",
+    "test": "orca plugin test . --json",
+    "check": "orca plugin check . --json",
+    "validate": "orca plugin validate . --json",
+    "bundle:verify": "esbuild src/worker.ts --bundle --platform=node --target=node22 --format=esm --external:orca --external:'orca/*' --legal-comments=none --outfile=.orca/verify/worker.js --log-level=warning && cmp -s dist/worker.js .orca/verify/worker.js || (echo 'dist/worker.js is stale: run pnpm build and commit it' && exit 1)"
+  },
+  "dependencies": {
+    "@narada/core": "workspace:*"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^26.6.5",
+    "esbuild": "^0.28.2",
+    "eslint": "^10.13.0",
+    "globals": "^17.13.0",
+    "typescript": "~6.0.3",
+    "typescript-eslint": "^8.72.1"
+  },
+  "nx": {
+    "targets": {
+      "test": {
+        "dependsOn": [
+          "build"
+        ]
+      },
+      "check": {
+        "dependsOn": [
+          "build"
+        ],
+        "cache": true
+      },
+      "build": {
+        "inputs": [
+          "{projectRoot}/src/**/*.ts",
+          "!{projectRoot}/src/**/*.test.ts",
+          "!{projectRoot}/src/**/*.check.ts",
+          "^default"
+        ],
+        "outputs": [
+          "{projectRoot}/dist"
+        ]
+      }
+    }
+  }
+}

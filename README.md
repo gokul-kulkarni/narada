@@ -96,19 +96,28 @@ Requires Node 24+, pnpm, and Rust (stable).
 | `pnpm e2e`                                     | Playwright E2E against the web layer                                      |
 | `pnpm test:rust`                               | Rust tests (HTTP, storage, sync planner/engine, OAuth helpers)            |
 | `pnpm lint` / `pnpm typecheck` / `pnpm format` | ESLint, TypeScript, Prettier                                              |
+| `pnpm check`                                   | Typecheck, lint and test every project (Nx, cached)                       |
 
 ## Source layout
 
+A pnpm workspace run with [Nx](https://nx.dev): shared logic lives in one package and each client
+is an app beside it. `pnpm check` runs typecheck, lint and tests for every project.
+
 ```
-src/lib/          pure logic: request pipeline, auth, variables, Postman converters, curl, codegen,
-                  runner, scripts sandbox, storage repository
-src/protocols/    one module per protocol (http/, mcp/) plus registry.tsx, which the generic UI
-                  (tabs, history, delivery log) asks instead of reading protocol fields
-src/state/        zustand stores (tabs, workspace, history, ui, mcp)
-src/features/     UI by feature: request, response, collections, environments, scripts, runner, …
-src-tauri/src/    http/ (streaming send), mcp/ (MCP client via rmcp), storage/ (files, settings),
-                  secrets/ (keychain), sync/ (OAuth, Drive, sync engine)
-e2e/              Playwright tests
+packages/core/            @narada/core: logic every client shares, with no Tauri, React or browser
+  src/                    globals: model, Postman converters, variables, auth, request preparation,
+                          fetch transport, streaming, curl, codegen, MCP helpers, storage ports
+apps/orca-plugin/         Narada as an Orca sidebar panel (see apps/orca-plugin/README.md)
+apps/desktop/             the Tauri desktop app
+  src/lib/                desktop adapters (Tauri send, keychain/file stores, Drive, dialogs),
+                          scripts sandbox (Web Worker) and runner
+  src/protocols/          one module per protocol (http/, mcp/) plus registry.tsx, which the generic
+                          UI (tabs, history, delivery log) asks instead of reading protocol fields
+  src/state/              zustand stores (tabs, workspace, history, ui, mcp)
+  src/features/           UI by feature: request, response, collections, environments, runner, …
+  src-tauri/src/          http/ (streaming send), mcp/ (MCP client via rmcp), storage/ (files,
+                          settings), secrets/ (keychain), sync/ (OAuth, Drive, sync engine)
+  e2e/                    Playwright tests
 ```
 
 ## Known limitations
