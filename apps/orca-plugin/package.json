@@ -1,6 +1,6 @@
 {
   "name": "@narada/orca-plugin",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "private": true,
   "description": "Narada as an Orca sidebar panel: send saved requests with @narada/core.",
   "type": "module",
