@@ -1,11 +1,11 @@
 import { useRef, useState } from "react";
 import { Card, ErrorText, Page, PAGE_TITLE } from "../../components/page";
 import { Button, EmptyState, TextInput } from "../../components/ui";
-import { findFolder, findRequest, flattenRequests } from "../../lib/collection-tree";
-import { parseDataFile, type DataRow } from "../../lib/data-file";
-import { errorMessage } from "../../lib/format";
+import { findFolder, findRequest, flattenRequests } from "@narada/core/collection-tree";
+import { parseDataFile, type DataRow } from "@narada/core/data-file";
+import { errorMessage } from "@narada/core/format";
 import { sendHttp } from "../../lib/http-client";
-import type { HttpRequestDef } from "../../lib/model";
+import type { HttpRequestDef } from "@narada/core/model";
 import { iterationCount, runCollection, type RunRow } from "../../lib/runner";
 import { executeScript } from "../../lib/scripts/script-runner";
 import { useWorkspaceStore } from "../../state/workspace-store";

@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { newRequest } from "../../lib/factories";
-import type { Delivery, HistoryEntry, HttpResponse } from "../../lib/model";
+import { newRequest } from "@narada/core/factories";
+import type { Delivery, HistoryEntry, HttpResponse } from "@narada/core/model";
 import { useHistoryStore } from "../../state/history-store";
 import { useTabsStore, type RequestTab } from "../../state/tabs-store";
 import { resetStores } from "../../test/reset-stores";

@@ -1,11 +1,11 @@
 import { create } from "zustand";
-import { newCollection, newEnvironment } from "../lib/factories";
-import { errorMessage } from "../lib/format";
-import { newId } from "../lib/ids";
-import type { Collection, Environment, KeyValue } from "../lib/model";
-import { fromPostmanCollection } from "../lib/postman/collection";
-import { fromPostmanEnvironment } from "../lib/postman/environment";
-import * as repo from "../lib/storage/workspace-repository";
+import { newCollection, newEnvironment } from "@narada/core/factories";
+import { errorMessage } from "@narada/core/format";
+import { newId } from "@narada/core/ids";
+import type { Collection, Environment, KeyValue } from "@narada/core/model";
+import { fromPostmanCollection } from "@narada/core/postman/collection";
+import { fromPostmanEnvironment } from "@narada/core/postman/environment";
+import * as repo from "@narada/core/storage/workspace-repository";
 import { getServices } from "./services";
 
 const ACTIVE_ENV_KEY = "narada:active-environment";

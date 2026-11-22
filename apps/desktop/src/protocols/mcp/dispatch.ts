@@ -1,7 +1,7 @@
-import { errorMessage } from "../../lib/format";
-import { newId } from "../../lib/ids";
+import { errorMessage } from "@narada/core/format";
+import { newId } from "@narada/core/ids";
 import { getMcpClient } from "../../lib/mcp/client";
-import type { McpRequestDef } from "../../lib/model";
+import type { McpRequestDef } from "@narada/core/model";
 import { useHistoryStore } from "../../state/history-store";
 import { useMcpStore } from "../../state/mcp-store";
 import { useTabsStore, type RequestTab } from "../../state/tabs-store";

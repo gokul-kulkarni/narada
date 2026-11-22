@@ -1,8 +1,8 @@
 import { ErrorText } from "../../components/page";
 import { useEffect, useState } from "react";
 import { Button, TextArea } from "../../components/ui";
-import { errorMessage } from "../../lib/format";
-import { previewImport, type ImportPreview } from "../../lib/import-preview";
+import { errorMessage } from "@narada/core/format";
+import { previewImport, type ImportPreview } from "@narada/core/import-preview";
 import { useUiStore } from "../../state/ui-store";
 import { DropZone } from "./DropZone";
 import { PreviewList } from "./PreviewList";

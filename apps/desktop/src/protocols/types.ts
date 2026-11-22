@@ -1,4 +1,4 @@
-import type { DeliveryTone } from "../lib/delivery";
+import type { DeliveryTone } from "@narada/core/delivery";
 
 /** How the delivery log words one delivery, whatever the protocol. */
 export interface DeliverySummary {

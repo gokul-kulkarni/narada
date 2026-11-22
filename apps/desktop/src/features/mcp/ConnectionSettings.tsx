@@ -6,7 +6,7 @@ import {
   splitArgs,
   type McpServer,
   type McpTransport,
-} from "../../lib/mcp/server";
+} from "@narada/core/mcp/server";
 import { KeyValueEditor } from "../request/KeyValueEditor";
 
 const LABEL = "flex flex-col gap-1 text-sm font-semibold";

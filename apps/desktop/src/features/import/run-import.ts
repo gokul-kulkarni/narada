@@ -1,7 +1,7 @@
-import { parseCurl } from "../../lib/curl";
-import { errorMessage } from "../../lib/format";
-import { detectImport } from "../../lib/import-detect";
-import type { ImportPreview } from "../../lib/import-preview";
+import { parseCurl } from "@narada/core/curl";
+import { errorMessage } from "@narada/core/format";
+import { detectImport } from "@narada/core/import-detect";
+import type { ImportPreview } from "@narada/core/import-preview";
 import { useMcpStore } from "../../state/mcp-store";
 import { useTabsStore } from "../../state/tabs-store";
 import { useUiStore } from "../../state/ui-store";

@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import type { HttpResponse } from "../../lib/model";
+import type { HttpResponse } from "@narada/core/model";
 import { ResponseViewer } from "./ResponseViewer";
 
 const response = (overrides: Partial<HttpResponse> = {}): HttpResponse => ({

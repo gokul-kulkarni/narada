@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import App from "../../App";
-import { newRequest } from "../../lib/factories";
+import { newRequest } from "@narada/core/factories";
 import { useTabsStore } from "../../state/tabs-store";
 import { useWorkspaceStore } from "../../state/workspace-store";
 import { resetStores } from "../../test/reset-stores";

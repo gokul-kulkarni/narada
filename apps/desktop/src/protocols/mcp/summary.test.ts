@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import type { HistoryEntry, McpRequestDef } from "../../lib/model";
+import type { HistoryEntry, McpRequestDef } from "@narada/core/model";
 import { useMcpStore } from "../../state/mcp-store";
 import { resetStores } from "../../test/reset-stores";
 import { mcpShortSummary, mcpSummary, mcpTarget } from "./summary";

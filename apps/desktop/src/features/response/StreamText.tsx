@@ -1,4 +1,4 @@
-import { streamStats, type AssembledText } from "../../lib/stream/stream-text";
+import { streamStats, type AssembledText } from "@narada/core/stream/stream-text";
 
 interface Props {
   readonly assembled: AssembledText;

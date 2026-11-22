@@ -1,6 +1,6 @@
-import { formatDuration } from "../../lib/format";
-import type { StreamMark } from "../../lib/model";
-import { arrivalMs, type StreamMessage } from "../../lib/stream/sse";
+import { formatDuration } from "@narada/core/format";
+import type { StreamMark } from "@narada/core/model";
+import { arrivalMs, type StreamMessage } from "@narada/core/stream/sse";
 
 /** More rows than this slow the view down; the rest stay readable in Raw. */
 export const EVENT_ROW_LIMIT = 500;

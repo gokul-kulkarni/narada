@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from "react";
 import { Button, Select, TabStrip, TextInput } from "../../components/ui";
-import { HTTP_METHODS, type HttpMethod, type HttpRequestDef } from "../../lib/model";
+import { HTTP_METHODS, type HttpMethod, type HttpRequestDef } from "@narada/core/model";
 import { AuthEditor } from "./AuthEditor";
 import { BodyEditor } from "./BodyEditor";
 import { KeyValueEditor } from "./KeyValueEditor";

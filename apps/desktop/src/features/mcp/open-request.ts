@@ -1,5 +1,5 @@
-import { newId } from "../../lib/ids";
-import type { McpOperation, McpRequestDef } from "../../lib/model";
+import { newId } from "@narada/core/ids";
+import type { McpOperation, McpRequestDef } from "@narada/core/model";
 import { useMcpStore } from "../../state/mcp-store";
 import { useTabsStore } from "../../state/tabs-store";
 import { pipelineInputFor } from "../workspace/context";

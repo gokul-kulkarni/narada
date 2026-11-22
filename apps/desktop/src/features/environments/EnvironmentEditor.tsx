@@ -1,9 +1,9 @@
 import { Card, Page, PAGE_TITLE, TITLE_INPUT } from "../../components/page";
 import { Button, EmptyState, TextInput } from "../../components/ui";
-import { errorMessage } from "../../lib/format";
+import { errorMessage } from "@narada/core/format";
 import { exportTextFile, safeExportName } from "../../lib/export-file";
-import type { Environment } from "../../lib/model";
-import { toPostmanEnvironment } from "../../lib/postman/environment";
+import type { Environment } from "@narada/core/model";
+import { toPostmanEnvironment } from "@narada/core/postman/environment";
 import { useUiStore } from "../../state/ui-store";
 import { useWorkspaceStore } from "../../state/workspace-store";
 import { KeyValueEditor } from "../request/KeyValueEditor";

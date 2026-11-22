@@ -1,6 +1,6 @@
 import { Button, TextInput } from "../../components/ui";
-import { newKeyValue } from "../../lib/factories";
-import type { KeyValue } from "../../lib/model";
+import { newKeyValue } from "@narada/core/factories";
+import type { KeyValue } from "@narada/core/model";
 
 interface Props<T extends KeyValue> {
   readonly rows: readonly T[];

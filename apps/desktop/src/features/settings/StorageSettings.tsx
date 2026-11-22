@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Card, ErrorText } from "../../components/page";
 import { Button } from "../../components/ui";
-import { errorMessage } from "../../lib/format";
+import { errorMessage } from "@narada/core/format";
 import {
   canUseNativeStorage,
   getStorageDir,

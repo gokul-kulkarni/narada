@@ -1,11 +1,11 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { newKeyValue } from "../lib/factories";
-import { POSTMAN_COLLECTION, POSTMAN_ENVIRONMENT } from "../lib/postman/fixtures";
+import { newKeyValue } from "@narada/core/factories";
+import { POSTMAN_COLLECTION, POSTMAN_ENVIRONMENT } from "@narada/core/postman/fixtures";
 import {
   createMemoryDocumentStore,
   createMemorySecretStore,
   type DocumentStore,
-} from "../lib/storage/document-store";
+} from "@narada/core/storage/document-store";
 import { setServices } from "./services";
 import { selectActiveEnvironment, useWorkspaceStore } from "./workspace-store";
 

@@ -9,7 +9,7 @@ import {
   signOutOfDrive,
   type DriveStatus,
 } from "../../lib/drive-api";
-import { errorMessage } from "../../lib/format";
+import { errorMessage } from "@narada/core/format";
 import { syncNow } from "./sync-now";
 
 export function DriveSettings() {

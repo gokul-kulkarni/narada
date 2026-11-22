@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { HttpResponse } from "../model";
+import type { HttpResponse } from "@narada/core/model";
 import { runScript } from "./sandbox";
 import type { ScriptContext } from "./types";
 

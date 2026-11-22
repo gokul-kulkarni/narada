@@ -1,4 +1,4 @@
-import { prettyText, type ContentBlock } from "../../lib/mcp/results";
+import { prettyText, type ContentBlock } from "@narada/core/mcp/results";
 
 const PRE =
   "max-h-96 overflow-auto rounded-lg bg-surface-2 p-3 font-mono text-[13px] leading-relaxed whitespace-pre-wrap break-all";

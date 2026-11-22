@@ -1,7 +1,7 @@
-import { addItem, removeItem, renameItem } from "../../lib/collection-tree";
-import { newRequest } from "../../lib/factories";
-import { newId } from "../../lib/ids";
-import type { Collection, RequestDef } from "../../lib/model";
+import { addItem, removeItem, renameItem } from "@narada/core/collection-tree";
+import { newRequest } from "@narada/core/factories";
+import { newId } from "@narada/core/ids";
+import type { Collection, RequestDef } from "@narada/core/model";
 import { useTabsStore } from "../../state/tabs-store";
 import { useWorkspaceStore } from "../../state/workspace-store";
 

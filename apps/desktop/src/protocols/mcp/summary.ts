@@ -1,5 +1,5 @@
-import { formatDuration } from "../../lib/format";
-import type { HistoryEntry, McpDelivery, McpOperation, McpRequestDef } from "../../lib/model";
+import { formatDuration } from "@narada/core/format";
+import type { HistoryEntry, McpDelivery, McpOperation, McpRequestDef } from "@narada/core/model";
 import { useMcpStore } from "../../state/mcp-store";
 import type { DeliverySummary, ShortSummary } from "../types";
 

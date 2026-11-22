@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { newRequest } from "../lib/factories";
+import { newRequest } from "@narada/core/factories";
 import { selectActiveTab, useTabsStore } from "./tabs-store";
 import { asHttp } from "../test/http";
 

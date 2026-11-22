@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { newKeyValue } from "../lib/factories";
-import type { McpServer } from "../lib/mcp/server";
+import { newKeyValue } from "@narada/core/factories";
+import type { McpServer } from "@narada/core/mcp/server";
 import { installFakeMcp } from "../test/fake-mcp";
 import { resetStores } from "../test/reset-stores";
 import { LOG_LIMIT, useMcpStore } from "./mcp-store";

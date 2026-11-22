@@ -1,7 +1,7 @@
-import { readToolResult } from "../../lib/mcp/results";
-import { checkArguments, fieldsFor } from "../../lib/mcp/schema-form";
-import type { JsonObject, McpOperation } from "../../lib/model";
-import { resolveTemplate, type VariableScopes } from "../../lib/variables";
+import { readToolResult } from "@narada/core/mcp/results";
+import { checkArguments, fieldsFor } from "@narada/core/mcp/schema-form";
+import type { JsonObject, McpOperation } from "@narada/core/model";
+import { resolveTemplate, type VariableScopes } from "@narada/core/variables";
 import type { Connection } from "../../state/mcp-store";
 
 /** Replaces {{variables}} in every string inside a JSON value. */

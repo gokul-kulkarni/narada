@@ -1,9 +1,9 @@
 import { useMemo, useState, type ReactNode } from "react";
 import { TabStrip, TextArea } from "../../components/ui";
-import { findHeader, prettyBody } from "../../lib/format";
-import type { HttpResponse, StreamMark } from "../../lib/model";
-import { parseStream, streamKind } from "../../lib/stream/sse";
-import { assembleText } from "../../lib/stream/stream-text";
+import { findHeader, prettyBody } from "@narada/core/format";
+import type { HttpResponse, StreamMark } from "@narada/core/model";
+import { parseStream, streamKind } from "@narada/core/stream/sse";
+import { assembleText } from "@narada/core/stream/stream-text";
 import { StreamEvents } from "./StreamEvents";
 import { StreamText } from "./StreamText";
 

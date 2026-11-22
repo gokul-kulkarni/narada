@@ -1,9 +1,9 @@
-import { findRequest } from "../../lib/collection-tree";
-import { newId } from "../../lib/ids";
-import type { KeyValue } from "../../lib/model";
+import { findRequest } from "@narada/core/collection-tree";
+import { newId } from "@narada/core/ids";
+import type { KeyValue } from "@narada/core/model";
 import type { PipelineInput } from "../../lib/scripts/pipeline";
-import { buildContext } from "../../lib/request-context";
-import type { VariableMap, VariableScopes } from "../../lib/variables";
+import { buildContext } from "@narada/core/request-context";
+import type { VariableMap, VariableScopes } from "@narada/core/variables";
 import type { RequestTab } from "../../state/tabs-store";
 import { selectActiveEnvironment, useWorkspaceStore } from "../../state/workspace-store";
 

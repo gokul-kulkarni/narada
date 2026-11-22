@@ -1,8 +1,8 @@
 import { Card, Page, TITLE_INPUT } from "../../components/page";
 import { Button, EmptyState, TextArea, TextInput } from "../../components/ui";
-import { flattenRequests } from "../../lib/collection-tree";
-import type { Collection } from "../../lib/model";
-import { buildScopes } from "../../lib/request-context";
+import { flattenRequests } from "@narada/core/collection-tree";
+import type { Collection } from "@narada/core/model";
+import { buildScopes } from "@narada/core/request-context";
 import { useUiStore } from "../../state/ui-store";
 import { selectActiveEnvironment, useWorkspaceStore } from "../../state/workspace-store";
 import { AuthEditor } from "../request/AuthEditor";

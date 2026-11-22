@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import App from "../../App";
-import type { McpOperation } from "../../lib/model";
+import type { McpOperation } from "@narada/core/model";
 import { useHistoryStore } from "../../state/history-store";
 import { useMcpStore } from "../../state/mcp-store";
 import { useTabsStore } from "../../state/tabs-store";

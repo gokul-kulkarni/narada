@@ -1,9 +1,9 @@
-import { newId } from "../../lib/ids";
-import type { HistoryEntry, HttpRequestDef, HttpResponse } from "../../lib/model";
-import type { PreparedRequest } from "../../lib/prepare-request";
+import { newId } from "@narada/core/ids";
+import type { HistoryEntry, HttpRequestDef, HttpResponse } from "@narada/core/model";
+import type { PreparedRequest } from "@narada/core/prepare-request";
 import { runPipeline, type PipelineInput } from "../../lib/scripts/pipeline";
 import type { ExecuteScript } from "../../lib/scripts/script-runner";
-import type { VariableScopes } from "../../lib/variables";
+import type { VariableScopes } from "@narada/core/variables";
 import type { RequestTab } from "../../state/tabs-store";
 
 export interface SendDeps {

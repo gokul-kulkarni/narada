@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
-import { newRequest } from "./factories";
-import type { HttpResponse } from "./model";
-import type { PreparedRequest } from "./prepare-request";
+import { newRequest } from "@narada/core/factories";
+import type { HttpResponse } from "@narada/core/model";
+import type { PreparedRequest } from "@narada/core/prepare-request";
 import { iterationCount, runCollection, summarizeRun } from "./runner";
 import { runScript } from "./scripts/sandbox";
 

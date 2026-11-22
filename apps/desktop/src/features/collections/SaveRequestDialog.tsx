@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Modal } from "../../components/Modal";
 import { Button, Select, TextInput } from "../../components/ui";
-import { listFolders, upsertRequest } from "../../lib/collection-tree";
+import { listFolders, upsertRequest } from "@narada/core/collection-tree";
 import { useTabsStore } from "../../state/tabs-store";
 import { useWorkspaceStore } from "../../state/workspace-store";
 

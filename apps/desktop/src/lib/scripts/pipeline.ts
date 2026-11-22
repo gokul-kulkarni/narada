@@ -1,8 +1,8 @@
-import { newKeyValue } from "../factories";
-import { errorMessage } from "../format";
-import type { Auth, HttpResponse, HttpRequestDef } from "../model";
-import { prepareRequest, type PreparedRequest } from "../prepare-request";
-import type { VariableScopes } from "../variables";
+import { newKeyValue } from "@narada/core/factories";
+import { errorMessage } from "@narada/core/format";
+import type { Auth, HttpResponse, HttpRequestDef } from "@narada/core/model";
+import { prepareRequest, type PreparedRequest } from "@narada/core/prepare-request";
+import type { VariableScopes } from "@narada/core/variables";
 import type { ExecuteScript } from "./script-runner";
 import type { ScriptRequest, ScriptVariables, TestResult } from "./types";
 

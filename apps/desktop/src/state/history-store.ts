@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import type { HistoryEntry } from "../lib/model";
+import type { HistoryEntry } from "@narada/core/model";
 
 export const HISTORY_LIMIT = 200;
 

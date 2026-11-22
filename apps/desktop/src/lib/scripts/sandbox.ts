@@ -1,6 +1,6 @@
 import { expect as chaiExpect } from "chai";
-import { errorMessage } from "../format";
-import type { HttpResponse } from "../model";
+import { errorMessage } from "@narada/core/format";
+import type { HttpResponse } from "@narada/core/model";
 import type {
   ScriptContext,
   ScriptRequest,

@@ -1,8 +1,8 @@
-import type { DataRow } from "./data-file";
-import type { Auth, HttpRequestDef } from "./model";
+import type { DataRow } from "@narada/core/data-file";
+import type { Auth, HttpRequestDef } from "@narada/core/model";
 import { runPipeline, type PipelineDeps } from "./scripts/pipeline";
 import type { TestResult } from "./scripts/types";
-import type { VariableScopes } from "./variables";
+import type { VariableScopes } from "@narada/core/variables";
 
 export interface RunStep {
   readonly request: HttpRequestDef;

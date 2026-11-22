@@ -1,5 +1,5 @@
-import { deliveryOutcome } from "../../lib/delivery";
-import { formatDuration } from "../../lib/format";
+import { deliveryOutcome } from "@narada/core/delivery";
+import { formatDuration } from "@narada/core/format";
 import { summarizeRun, type RunRow } from "../../lib/runner";
 import { StatusPill } from "../delivery/StatusPill";
 

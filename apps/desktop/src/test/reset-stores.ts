@@ -2,7 +2,7 @@ import {
   createMemoryDocumentStore,
   createMemorySecretStore,
   type DocumentStore,
-} from "../lib/storage/document-store";
+} from "@narada/core/storage/document-store";
 import { setMcpClient } from "../lib/mcp/client";
 import { useHistoryStore } from "../state/history-store";
 import { useMcpStore } from "../state/mcp-store";

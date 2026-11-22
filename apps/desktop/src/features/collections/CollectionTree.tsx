@@ -1,7 +1,7 @@
 import { requestBadge } from "../../protocols/registry";
 import { useState } from "react";
 import { InlineRename } from "../../components/InlineRename";
-import type { Collection, CollectionItem } from "../../lib/model";
+import type { Collection, CollectionItem } from "@narada/core/model";
 import { useTabsStore } from "../../state/tabs-store";
 import { useUiStore } from "../../state/ui-store";
 import {

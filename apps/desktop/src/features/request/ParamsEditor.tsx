@@ -1,6 +1,6 @@
-import { newId } from "../../lib/ids";
-import type { KeyValue } from "../../lib/model";
-import { parseQueryParams, withQueryParams } from "../../lib/url-params";
+import { newId } from "@narada/core/ids";
+import type { KeyValue } from "@narada/core/model";
+import { parseQueryParams, withQueryParams } from "@narada/core/url-params";
 import { KeyValueEditor } from "./KeyValueEditor";
 
 /** Query params are derived from the URL, so the URL stays the single source of truth. */

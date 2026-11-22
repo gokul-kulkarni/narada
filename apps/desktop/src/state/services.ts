@@ -1,4 +1,5 @@
-import { defaultStores, type DocumentStore, type SecretStore } from "../lib/storage/document-store";
+import type { DocumentStore, SecretStore } from "@narada/core/storage/document-store";
+import { defaultStores } from "../lib/storage/native-stores";
 
 export interface Services {
   documents: DocumentStore;

@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { Button } from "../../components/ui";
-import { errorMessage } from "../../lib/format";
+import { errorMessage } from "@narada/core/format";
 import { sendHttp } from "../../lib/http-client";
-import type { Auth } from "../../lib/model";
-import { buildTokenRequest, parseTokenResponse } from "../../lib/oauth2";
-import { resolveTemplate, type VariableScopes } from "../../lib/variables";
+import type { Auth } from "@narada/core/model";
+import { buildTokenRequest, parseTokenResponse } from "@narada/core/oauth2";
+import { resolveTemplate, type VariableScopes } from "@narada/core/variables";
 
 type OAuth2 = Extract<Auth, { type: "oauth2" }>;
 

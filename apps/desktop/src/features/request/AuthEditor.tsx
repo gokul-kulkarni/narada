@@ -1,5 +1,5 @@
 import { Select, TextInput } from "../../components/ui";
-import type { Auth, AuthType } from "../../lib/model";
+import type { Auth, AuthType } from "@narada/core/model";
 
 const AUTH_LABELS: Record<AuthType, string> = {
   inherit: "Inherit auth from parent",

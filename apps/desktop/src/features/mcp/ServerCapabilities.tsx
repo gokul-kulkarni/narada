@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Card } from "../../components/page";
 import { Button, TabStrip } from "../../components/ui";
-import type { McpOperation } from "../../lib/model";
+import type { McpOperation } from "@narada/core/model";
 import { useMcpStore, type Connection, type LogLine } from "../../state/mcp-store";
 import { openMcpRequest } from "./open-request";
 

@@ -1,6 +1,6 @@
 import { Button, Select, TextInput } from "../../components/ui";
-import { fieldsFor, type FormField } from "../../lib/mcp/schema-form";
-import type { McpOperation, McpRequestDef } from "../../lib/model";
+import { fieldsFor, type FormField } from "@narada/core/mcp/schema-form";
+import type { McpOperation, McpRequestDef } from "@narada/core/model";
 import { useMcpStore, type Connection } from "../../state/mcp-store";
 import { useTabsStore, type RequestTab } from "../../state/tabs-store";
 import { useUiStore } from "../../state/ui-store";

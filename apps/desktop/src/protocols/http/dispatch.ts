@@ -1,5 +1,5 @@
 import { sendHttp } from "../../lib/http-client";
-import type { HttpRequestDef, HttpResponse } from "../../lib/model";
+import type { HttpRequestDef, HttpResponse } from "@narada/core/model";
 import { executeScript } from "../../lib/scripts/script-runner";
 import { throttle } from "../../lib/throttle";
 import { useHistoryStore } from "../../state/history-store";

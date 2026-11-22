@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it } from "vitest";
-import type { Environment } from "../../lib/model";
+import type { Environment } from "@narada/core/model";
 import { useWorkspaceStore } from "../../state/workspace-store";
 import { resetStores } from "../../test/reset-stores";
 import { DeliverTo, SEGMENTED_ENVIRONMENT_LIMIT } from "./EnvironmentsPanel";

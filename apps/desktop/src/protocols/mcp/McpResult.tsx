@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { TabStrip } from "../../components/ui";
-import { readPromptResult, readResourceResult, readToolResult } from "../../lib/mcp/results";
-import type { McpDelivery } from "../../lib/model";
+import { readPromptResult, readResourceResult, readToolResult } from "@narada/core/mcp/results";
+import type { McpDelivery } from "@narada/core/model";
 import { ContentBlocks } from "./ContentBlocks";
 
 type View = "content" | "structured" | "raw";

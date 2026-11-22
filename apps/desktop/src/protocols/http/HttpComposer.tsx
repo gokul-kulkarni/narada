@@ -1,5 +1,5 @@
 import { Button } from "../../components/ui";
-import type { HttpRequestDef } from "../../lib/model";
+import type { HttpRequestDef } from "@narada/core/model";
 import { useTabsStore, type RequestTab } from "../../state/tabs-store";
 import { useUiStore } from "../../state/ui-store";
 import { OAuthTokenButton } from "../../features/request/OAuthTokenButton";

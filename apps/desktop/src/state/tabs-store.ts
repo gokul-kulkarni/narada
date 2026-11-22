@@ -1,7 +1,7 @@
 import { create } from "zustand";
-import { newRequest } from "../lib/factories";
-import { newId } from "../lib/ids";
-import type { Delivery, RequestDef } from "../lib/model";
+import { newRequest } from "@narada/core/factories";
+import { newId } from "@narada/core/ids";
+import type { Delivery, RequestDef } from "@narada/core/model";
 import type { TestResult } from "../lib/scripts/types";
 
 export interface RequestSource {

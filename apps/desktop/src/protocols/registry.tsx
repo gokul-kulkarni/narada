@@ -3,7 +3,7 @@
  * asks these functions instead of reading protocol fields, so adding a protocol means
  * adding a module under src/protocols and a case to each switch below.
  */
-import type { Delivery, HistoryEntry, RequestDef } from "../lib/model";
+import type { Delivery, HistoryEntry, RequestDef } from "@narada/core/model";
 import type { RequestTab } from "../state/tabs-store";
 import { dispatchHttp } from "./http/dispatch";
 import { HttpComposer } from "./http/HttpComposer";

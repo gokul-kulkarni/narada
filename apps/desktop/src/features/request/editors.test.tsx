@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { newKeyValue } from "../../lib/factories";
-import type { Auth, AuthType, RequestBody } from "../../lib/model";
+import { newKeyValue } from "@narada/core/factories";
+import type { Auth, AuthType, RequestBody } from "@narada/core/model";
 import { AuthEditor, defaultAuth } from "./AuthEditor";
 import { BodyEditor } from "./BodyEditor";
 import { KeyValueEditor } from "./KeyValueEditor";

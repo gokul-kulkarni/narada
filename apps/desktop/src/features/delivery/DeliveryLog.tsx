@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
-import { deliveriesFor } from "../../lib/delivery";
-import { newId } from "../../lib/ids";
+import { deliveriesFor } from "@narada/core/delivery";
+import { newId } from "@narada/core/ids";
 import { useHistoryStore } from "../../state/history-store";
 import { useTabsStore, type RequestTab } from "../../state/tabs-store";
 import { CurrentDelivery, PastDelivery, PendingDelivery } from "./DeliveryEntry";

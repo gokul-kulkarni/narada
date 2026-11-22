@@ -1,4 +1,4 @@
-import type { HttpDelivery } from "../../lib/model";
+import type { HttpDelivery } from "@narada/core/model";
 import type { RequestTab } from "../../state/tabs-store";
 import { ResponseViewer } from "../../features/response/ResponseViewer";
 import { TestResults, testSummary } from "../../features/scripts/TestResults";

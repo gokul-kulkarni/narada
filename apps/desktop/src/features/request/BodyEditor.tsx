@@ -1,5 +1,5 @@
 import { Select, TextArea } from "../../components/ui";
-import type { RawLanguage, RequestBody } from "../../lib/model";
+import type { RawLanguage, RequestBody } from "@narada/core/model";
 import { KeyValueEditor } from "./KeyValueEditor";
 
 const MODES: readonly { id: RequestBody["mode"]; label: string }[] = [

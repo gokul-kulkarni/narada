@@ -1,5 +1,3 @@
-import { invoke, isTauri } from "@tauri-apps/api/core";
-
 export type DocumentKind = "collections" | "environments" | "mcp";
 export type LocalFile = "history.json" | "globals.json" | "sync-state.json" | "mcp-trust.json";
 
@@ -22,20 +20,6 @@ export interface SecretStore {
   set(key: string, value: string): Promise<void>;
   remove(key: string): Promise<void>;
 }
-
-export const tauriDocumentStore: DocumentStore = {
-  list: (kind) => invoke("list_documents", { kind }),
-  write: (kind, fileName, content) => invoke("write_document", { kind, fileName, content }),
-  remove: (kind, fileName) => invoke("delete_document", { kind, fileName }),
-  readLocal: (name) => invoke("read_local", { name }),
-  writeLocal: (name, content) => invoke("write_local", { name, content }),
-};
-
-export const keychainSecretStore: SecretStore = {
-  get: (key) => invoke("secret_get", { key }),
-  set: (key, value) => invoke("secret_set", { key, value }),
-  remove: (key) => invoke("secret_delete", { key }),
-};
 
 /** In-memory store for tests and the browser build; `persist` mirrors it into a Storage. */
 export function createMemoryDocumentStore(persist?: Storage): DocumentStore {
@@ -99,13 +83,5 @@ export function createMemorySecretStore(): SecretStore {
     async remove(key) {
       secrets.delete(key);
     },
-  };
-}
-
-export function defaultStores(): { documents: DocumentStore; secrets: SecretStore } {
-  if (isTauri()) return { documents: tauriDocumentStore, secrets: keychainSecretStore };
-  return {
-    documents: createMemoryDocumentStore(globalThis.localStorage),
-    secrets: createMemorySecretStore(),
   };
 }

@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
-import { newKeyValue, newRequest } from "../factories";
-import type { HttpResponse } from "../model";
-import type { PreparedRequest } from "../prepare-request";
-import type { VariableScopes } from "../variables";
+import { newKeyValue, newRequest } from "@narada/core/factories";
+import type { HttpResponse } from "@narada/core/model";
+import type { PreparedRequest } from "@narada/core/prepare-request";
+import type { VariableScopes } from "@narada/core/variables";
 import { runPipeline } from "./pipeline";
 import { runScript } from "./sandbox";
 

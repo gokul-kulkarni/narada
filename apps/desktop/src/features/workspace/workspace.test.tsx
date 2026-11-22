@@ -1,8 +1,8 @@
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import App from "../../App";
-import { POSTMAN_COLLECTION, POSTMAN_ENVIRONMENT } from "../../lib/postman/fixtures";
-import type { DocumentStore } from "../../lib/storage/document-store";
+import { POSTMAN_COLLECTION, POSTMAN_ENVIRONMENT } from "@narada/core/postman/fixtures";
+import type { DocumentStore } from "@narada/core/storage/document-store";
 import { useTabsStore } from "../../state/tabs-store";
 import { useWorkspaceStore } from "../../state/workspace-store";
 import { resetStores } from "../../test/reset-stores";

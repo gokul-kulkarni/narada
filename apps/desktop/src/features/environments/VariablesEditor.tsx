@@ -1,5 +1,5 @@
-import { newId } from "../../lib/ids";
-import type { EnvironmentVariable } from "../../lib/model";
+import { newId } from "@narada/core/ids";
+import type { EnvironmentVariable } from "@narada/core/model";
 import { KeyValueEditor } from "../request/KeyValueEditor";
 
 export function VariablesEditor({

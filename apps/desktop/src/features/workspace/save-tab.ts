@@ -1,4 +1,4 @@
-import { upsertRequest } from "../../lib/collection-tree";
+import { upsertRequest } from "@narada/core/collection-tree";
 import { useTabsStore, type RequestTab } from "../../state/tabs-store";
 import { useUiStore } from "../../state/ui-store";
 import { useWorkspaceStore } from "../../state/workspace-store";

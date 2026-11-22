@@ -1,6 +1,6 @@
 import { Channel, invoke, isTauri } from "@tauri-apps/api/core";
-import type { McpOperation } from "../model";
-import type { ResolvedTransport } from "./server";
+import type { McpOperation } from "@narada/core/model";
+import type { ResolvedTransport } from "@narada/core/mcp/server";
 
 export type ListKind = "tools" | "resources" | "resourceTemplates" | "prompts";
 

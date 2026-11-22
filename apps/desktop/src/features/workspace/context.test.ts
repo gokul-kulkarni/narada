@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { newKeyValue } from "../../lib/factories";
-import type { VariableScopes } from "../../lib/variables";
+import { newKeyValue } from "@narada/core/factories";
+import type { VariableScopes } from "@narada/core/variables";
 import { useWorkspaceStore } from "../../state/workspace-store";
 import { resetStores } from "../../test/reset-stores";
 import { applyScopes, mergeRows } from "./context";

@@ -1,4 +1,4 @@
-import type { ImportPreview } from "../../lib/import-preview";
+import type { ImportPreview } from "@narada/core/import-preview";
 
 const BADGES: Record<string, string> = {
   collection: "Collection",

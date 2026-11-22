@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { POSTMAN_API_KEY_SECRET, POSTMAN_API_URL } from "../../lib/postman-api";
-import { POSTMAN_COLLECTION, POSTMAN_ENVIRONMENT } from "../../lib/postman/fixtures";
+import { POSTMAN_API_KEY_SECRET, POSTMAN_API_URL } from "@narada/core/postman-api";
+import { POSTMAN_COLLECTION, POSTMAN_ENVIRONMENT } from "@narada/core/postman/fixtures";
 import { getServices } from "../../state/services";
 import { useUiStore } from "../../state/ui-store";
 import { useWorkspaceStore } from "../../state/workspace-store";

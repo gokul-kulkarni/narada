@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { join } from "../../components/ui";
-import type { DeliveryTone } from "../../lib/delivery";
+import type { DeliveryTone } from "@narada/core/delivery";
 
 const TONES: Record<DeliveryTone | "pending", string> = {
   ok: "bg-ok-soft text-ok",

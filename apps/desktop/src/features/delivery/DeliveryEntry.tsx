@@ -1,8 +1,8 @@
 import type { ReactNode } from "react";
 import { Button } from "../../components/ui";
-import { formatSentAt } from "../../lib/delivery";
-import { formatDuration } from "../../lib/format";
-import type { Delivery, HistoryEntry, RequestDef } from "../../lib/model";
+import { formatSentAt } from "@narada/core/delivery";
+import { formatDuration } from "@narada/core/format";
+import type { Delivery, HistoryEntry, RequestDef } from "@narada/core/model";
 import {
   deliveryProgress,
   deliverySummary,

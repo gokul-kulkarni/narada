@@ -1,4 +1,4 @@
-import type { HttpResponse } from "../model";
+import type { HttpResponse } from "@narada/core/model";
 
 export type VariableBag = Readonly<Record<string, string>>;
 

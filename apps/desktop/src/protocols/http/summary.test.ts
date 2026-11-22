@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { newRequest } from "../../lib/factories";
-import type { HistoryEntry, HttpResponse } from "../../lib/model";
+import { newRequest } from "@narada/core/factories";
+import type { HistoryEntry, HttpResponse } from "@narada/core/model";
 import { httpBadge, httpProgress, httpShortSummary, httpSummary, httpTarget } from "./summary";
 
 const response: HttpResponse = {

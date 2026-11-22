@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import type { HistoryEntry } from "../lib/model";
+import type { HistoryEntry } from "@narada/core/model";
 import { useHistoryStore } from "../state/history-store";
 import { useMcpStore } from "../state/mcp-store";
 import { getServices } from "../state/services";

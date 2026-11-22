@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { InlineRename } from "../../components/InlineRename";
 import { Button, EmptyState, SectionHeading } from "../../components/ui";
-import { errorMessage } from "../../lib/format";
+import { errorMessage } from "@narada/core/format";
 import { exportTextFile, safeExportName } from "../../lib/export-file";
-import type { Collection } from "../../lib/model";
-import { toPostmanCollection } from "../../lib/postman/collection";
+import type { Collection } from "@narada/core/model";
+import { toPostmanCollection } from "@narada/core/postman/collection";
 import { useUiStore } from "../../state/ui-store";
 import { useWorkspaceStore } from "../../state/workspace-store";
 import { addFolder, addRequest } from "./collection-actions";

@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { errorMessage } from "../lib/format";
+import { errorMessage } from "@narada/core/format";
 import { getMcpClient, type ClientEvent, type ListKind, type ServerInfo } from "../lib/mcp/client";
 import {
   parsePrompts,
@@ -10,18 +10,18 @@ import {
   type McpResource,
   type McpResourceTemplate,
   type McpTool,
-} from "../lib/mcp/results";
+} from "@narada/core/mcp/results";
 import {
   newMcpServer,
   resolveTransport,
   serversFromConfig,
   type McpServer,
   type ResolvedTransport,
-} from "../lib/mcp/server";
-import { fingerprint, needsTrust, parseTrusted } from "../lib/mcp/trust";
-import * as repo from "../lib/storage/mcp-repository";
-import type { LoadError } from "../lib/storage/workspace-repository";
-import type { VariableScopes } from "../lib/variables";
+} from "@narada/core/mcp/server";
+import { fingerprint, needsTrust, parseTrusted } from "@narada/core/mcp/trust";
+import * as repo from "@narada/core/storage/mcp-repository";
+import type { LoadError } from "@narada/core/storage/workspace-repository";
+import type { VariableScopes } from "@narada/core/variables";
 import { getServices } from "./services";
 
 export const LOG_LIMIT = 500;

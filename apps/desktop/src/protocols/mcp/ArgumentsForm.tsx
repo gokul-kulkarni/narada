@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Select, TextArea, TextInput } from "../../components/ui";
-import { fieldText, type FormField } from "../../lib/mcp/schema-form";
-import type { JsonObject } from "../../lib/model";
+import { fieldText, type FormField } from "@narada/core/mcp/schema-form";
+import type { JsonObject } from "@narada/core/model";
 
 interface Props {
   readonly fields: readonly FormField[];

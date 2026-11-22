@@ -1,6 +1,6 @@
-import { deliveryOutcome, shortUrl } from "../../lib/delivery";
-import { formatBytes, formatDuration } from "../../lib/format";
-import type { HistoryEntry, HttpDelivery, HttpRequestDef } from "../../lib/model";
+import { deliveryOutcome, shortUrl } from "@narada/core/delivery";
+import { formatBytes, formatDuration } from "@narada/core/format";
+import type { HistoryEntry, HttpDelivery, HttpRequestDef } from "@narada/core/model";
 import type { DeliverySummary, ShortSummary } from "../types";
 
 export const httpBadge = (request: HttpRequestDef) => request.method;

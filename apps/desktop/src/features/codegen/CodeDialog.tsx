@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { Modal } from "../../components/Modal";
 import { Button, Select, TextArea } from "../../components/ui";
-import { CODE_LANGUAGES, generateCode, type CodeLanguage } from "../../lib/codegen";
-import { errorMessage } from "../../lib/format";
-import { prepareRequest } from "../../lib/prepare-request";
+import { CODE_LANGUAGES, generateCode, type CodeLanguage } from "@narada/core/codegen";
+import { errorMessage } from "@narada/core/format";
+import { prepareRequest } from "@narada/core/prepare-request";
 import { useTabsStore } from "../../state/tabs-store";
 import { inputForTab } from "../workspace/context";
 

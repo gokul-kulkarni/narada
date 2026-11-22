@@ -1,9 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
-import { newRequest } from "../../lib/factories";
-import type { HttpRequestDef, HttpResponse } from "../../lib/model";
-import type { PreparedRequest } from "../../lib/prepare-request";
+import { newRequest } from "@narada/core/factories";
+import type { HttpRequestDef, HttpResponse } from "@narada/core/model";
+import type { PreparedRequest } from "@narada/core/prepare-request";
 import { runScript } from "../../lib/scripts/sandbox";
-import type { VariableScopes } from "../../lib/variables";
+import type { VariableScopes } from "@narada/core/variables";
 import type { RequestTab } from "../../state/tabs-store";
 import { sendTab } from "./send-request";
 import { asHttp } from "../../test/http";

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { errorMessage } from "../../lib/format";
+import { errorMessage } from "@narada/core/format";
 import { sendHttp } from "../../lib/http-client";
 import {
   createPostmanApi,
@@ -7,7 +7,7 @@ import {
   type PostmanApi,
   type PostmanEntry,
   type PostmanWorkspace,
-} from "../../lib/postman-api";
+} from "@narada/core/postman-api";
 import { getServices } from "../../state/services";
 import { useUiStore } from "../../state/ui-store";
 import { useWorkspaceStore } from "../../state/workspace-store";

@@ -1,6 +1,6 @@
 import { ErrorText } from "../../components/page";
 import { Button, Select, TextInput } from "../../components/ui";
-import type { PostmanEntry } from "../../lib/postman-api";
+import type { PostmanEntry } from "@narada/core/postman-api";
 import { useUiStore } from "../../state/ui-store";
 import {
   collectionKey,

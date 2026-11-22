@@ -10,7 +10,7 @@ import {
   upsertRequest,
 } from "./collection-tree";
 import type { Collection, FolderItem } from "./model";
-import { asHttp } from "../test/http";
+import { asHttp } from "./testing/http";
 
 const folder = (
   id: string,

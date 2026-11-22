@@ -1,5 +1,5 @@
 import { summarizeSync, syncDrive } from "../../lib/drive-api";
-import { errorMessage } from "../../lib/format";
+import { errorMessage } from "@narada/core/format";
 import { useMcpStore } from "../../state/mcp-store";
 import { useUiStore } from "../../state/ui-store";
 import { flushWrites, useWorkspaceStore } from "../../state/workspace-store";

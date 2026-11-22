@@ -1,6 +1,6 @@
 import { Button, EmptyState } from "../../components/ui";
-import { formatSentAt } from "../../lib/delivery";
-import { newId } from "../../lib/ids";
+import { formatSentAt } from "@narada/core/delivery";
+import { newId } from "@narada/core/ids";
 import { historySummary, requestAddress, requestBadge } from "../../protocols/registry";
 import { useHistoryStore } from "../../state/history-store";
 import { useTabsStore } from "../../state/tabs-store";

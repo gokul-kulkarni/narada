@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it } from "vitest";
-import { newRequest } from "../../lib/factories";
+import { newRequest } from "@narada/core/factories";
 import { useHistoryStore } from "../../state/history-store";
 import { useTabsStore } from "../../state/tabs-store";
 import { HistoryList } from "../history/HistoryList";

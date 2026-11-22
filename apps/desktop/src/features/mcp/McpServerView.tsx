@@ -1,6 +1,6 @@
 import { Card, Page, TITLE_INPUT } from "../../components/page";
 import { Button, TextInput } from "../../components/ui";
-import { describeTransport } from "../../lib/mcp/server";
+import { describeTransport } from "@narada/core/mcp/server";
 import { useMcpStore } from "../../state/mcp-store";
 import { useUiStore } from "../../state/ui-store";
 import { StatusPill } from "../delivery/StatusPill";
