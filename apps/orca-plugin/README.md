@@ -2,7 +2,8 @@
 
 Send your saved [Narada](https://github.com/gokul-kulkarni/narada) requests from Orca's right
 sidebar. Pick a request from your collections, choose an environment, adjust the method, URL,
-headers or raw body, and read the status, timing, headers and body of the reply.
+query parameters, headers or raw body, and read the status, timing, headers and body of the reply.
+Paste a cURL command to save it as a new request in a collection.
 
 It uses the same logic as the Narada desktop app (`@narada/core`): Postman v2.1 collections,
 `{{variable}}` resolution with Postman's precedence (environment > collection > global), and
@@ -22,7 +23,10 @@ Then open the **Narada** panel from Orca's right sidebar.
 
 - **Collections and environments** from the folder the Narada app uses (the one chosen in Narada,
   else its default), or the folder set in Settings → Plugins → Narada → _Collections folder_.
-  It only reads: saving and editing collections stays in the Narada app.
+  The one thing it writes is a new request from cURL, added to the collection file you pick.
+  Editing and deleting stay in the Narada app. Narada reads its files when it starts: if it is
+  open when you add a request here, restart it before editing that collection there, or it will
+  save over the new request.
 - **Globals** from the Narada app's local `globals.json`.
 - **Secret variables**: Narada keeps them in the OS keychain, which the plugin can't read. The
   panel asks for any it needs and keeps them in the plugin's encrypted secrets.
@@ -34,8 +38,8 @@ bodies, streamed responses shown as they arrive, and history. Bodies over 400 KB
 
 ## Access it asks for
 
-A Node.js worker process (`trusted-worker`) that reads the collections folder and sends the HTTP
-requests, the plugin's own settings (`settings:own`) and its own encrypted secrets
+A Node.js worker process (`trusted-worker`) that reads the collections folder, adds requests you
+create from cURL to collection files, and sends the HTTP requests, the plugin's own settings (`settings:own`) and its own encrypted secrets
 (`secrets:own`). `orca plugin inspect .` lists exactly what it would be granted.
 
 ## Develop
@@ -66,5 +70,5 @@ From the repository root, `pnpm check` runs typecheck, lint and tests for every 
 | `src/panel/*`     | Panel state (atoms, worker calls), request editor, response view |
 | `src/protocol.ts` | The panel ↔ worker contract                                      |
 | `src/worker.ts`   | Worker entry: loads the folder, answers the panel                |
-| `src/worker/*`    | Folder lookup, read-only file store, tree building, sending      |
+| `src/worker/*`    | Folder lookup, file store, tree building, sending, cURL import   |
 | `src/shared/*`    | Pure helpers both sides use (header lines)                       |

@@ -9,6 +9,7 @@ import {
 } from "@narada/core/storage/workspace-repository";
 import type { OrcaWorkerApi } from "orca/worker";
 import type { WorkspaceSnapshot } from "./protocol";
+import { createFromCurl } from "./worker/create";
 import { createFsDocumentStore } from "./worker/fs-store";
 import { currentPlatform, desktopDirs, resolveFolder } from "./worker/paths";
 import { sendSaved, type LoadedWorkspace } from "./worker/send";
@@ -36,9 +37,7 @@ async function timeoutMs(orca: OrcaWorkerApi): Promise<number> {
   return Math.min(seconds, MAX_TIMEOUT_SECONDS) * 1000;
 }
 
-async function load(
-  orca: OrcaWorkerApi,
-): Promise<{ snapshot: WorkspaceSnapshot; workspace: LoadedWorkspace }> {
+async function openFolder(orca: OrcaWorkerApi) {
   const platform = currentPlatform();
   const dirs = desktopDirs(platform);
   const folder = await resolveFolder(
@@ -46,7 +45,13 @@ async function load(
     dirs,
     platform.home,
   );
-  const store = createFsDocumentStore(folder.path, dirs.dataDir);
+  return { folder, store: createFsDocumentStore(folder.path, dirs.dataDir) };
+}
+
+async function load(
+  orca: OrcaWorkerApi,
+): Promise<{ snapshot: WorkspaceSnapshot; workspace: LoadedWorkspace }> {
+  const { folder, store } = await openFolder(orca);
   const [collections, environments, globals] = await Promise.all([
     loadCollections(store),
     loadEnvironments(store, pluginSecrets(orca)),
@@ -72,6 +77,10 @@ export default function activate(orca: OrcaWorkerApi): void {
     const { workspace } = await load(orca);
     return sendSaved(workspace, input, { signal, timeoutMs: await timeoutMs(orca) });
   });
+
+  orca.panels.handle("request.create", async (input) =>
+    createFromCurl((await openFolder(orca)).store, input),
+  );
 
   orca.panels.handle("secret.set", async ({ environmentId, key, value }) => {
     await orca.secrets.set(secretKey(environmentId, key), value);

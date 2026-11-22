@@ -7,7 +7,7 @@ import os from "node:os";
 import path from "node:path";
 import { after, before } from "node:test";
 import { assert, mockHost, mountWorker, test } from "orca/testing";
-import type { SendResult, WorkspaceSnapshot } from "./protocol";
+import type { CreateResult, SendResult, WorkspaceSnapshot } from "./protocol";
 
 const main = (await import(
   new URL("../dist/worker.js", import.meta.url).href
@@ -23,6 +23,7 @@ const COLLECTION = {
   variable: [{ key: "base", value: "http://127.0.0.1:1" }],
   item: [
     {
+      id: "fld-orders",
       name: "Orders",
       item: [
         {
@@ -184,6 +185,62 @@ test("answers send failures as data", async () => {
     draft: { method: "GET", url: base, headersText: "", bodyText: "" },
   })) as SendResult;
   assert.equal(gone.ok, false);
+  await worker.deactivate();
+});
+
+test("adds a request from a cURL command to the chosen folder", async () => {
+  const worker = await mount();
+  const before = (await worker.request("workspace.load")) as WorkspaceSnapshot;
+  assert.deepEqual(before.collections, [
+    { id: "col-1", name: "Shop API", folders: [{ id: "fld-orders", label: "Orders" }] },
+  ]);
+  const file = path.join(folder, "Collections", "shop.postman_collection.json");
+  const original = await fs.readFile(file, "utf8");
+
+  const created = (await worker.request("request.create", {
+    collectionId: "col-1",
+    folderId: "fld-orders",
+    name: "",
+    curl: `curl -X PATCH '{{base}}/orders/7?notify=1' -H 'Content-Type: application/json' -d '{"qty":2}'`,
+  })) as CreateResult;
+  assert.ok(created.ok, JSON.stringify(created));
+
+  const after = (await worker.request("workspace.load")) as WorkspaceSnapshot;
+  const added = after.requests[created.key];
+  assert.equal(added.name, "PATCH /orders/7");
+  assert.equal(added.location, "Shop API / Orders");
+  assert.equal(added.url, "{{base}}/orders/7?notify=1");
+  assert.equal(added.headersText, "Content-Type: application/json");
+  assert.equal(added.bodyText, '{"qty":2}');
+  // Written to the file it came from, still Postman v2.1, with the other requests kept.
+  const saved = JSON.parse(await fs.readFile(file, "utf8"));
+  assert.match(saved.info.schema, /v2\.1\.0/);
+  assert.deepEqual(
+    saved.item[0].item.map((i: { name: string }) => i.name),
+    ["List orders", "Create order", "PATCH /orders/7"],
+  );
+  assert.deepEqual(await fs.readdir(path.join(folder, "Collections")), [
+    "broken.postman_collection.json",
+    "notes.txt",
+    "shop.postman_collection.json",
+  ]);
+  await fs.writeFile(file, original);
+  await worker.deactivate();
+});
+
+test("refuses a bad cURL command or a collection that is gone", async () => {
+  const worker = await mount();
+  const create = (input: { collectionId: string; folderId: string | null; curl: string }) =>
+    worker.request("request.create", { name: "x", ...input }) as Promise<CreateResult>;
+  assert.deepEqual(await create({ collectionId: "col-1", folderId: null, curl: "wget x" }), {
+    ok: false,
+    error: "Not a curl command (it should start with `curl`).",
+  });
+  const gone = await create({ collectionId: "nope", folderId: null, curl: "curl http://a" });
+  assert.equal(gone.ok, false);
+  assert.match(!gone.ok ? gone.error : "", /no longer in/);
+  const noFolder = await create({ collectionId: "col-1", folderId: "nope", curl: "curl http://a" });
+  assert.match(!noFolder.ok ? noFolder.error : "", /folder/);
   await worker.deactivate();
 });
 

@@ -13,7 +13,17 @@ import {
   Input,
 } from "orca";
 import type { RequestSummary } from "../protocol";
-import { draftFor, editDraft, isEdited, outcomeFor, resetDraft, send, stop } from "./state";
+import {
+  draftFor,
+  editDraft,
+  editParams,
+  isEdited,
+  outcomeFor,
+  paramsTextFor,
+  resetDraft,
+  send,
+  stop,
+} from "./state";
 
 const METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"].map((m) => ({
   value: m,
@@ -86,7 +96,17 @@ export function requestEditor(request: RequestSummary) {
           />
         </Box>
       </Row>
-      <Tabs label="Request" defaultValue="headers">
+      <Tabs label="Request" defaultValue="params">
+        <Tab value="params" label="Params">
+          <Textarea
+            label="Query parameters, one key=value per line"
+            labelHidden
+            rows={4}
+            placeholder={"limit=20\nsearch={{term}}\n# page=2 (switched off)"}
+            value={paramsTextFor(request)}
+            onChange={(text) => editParams(request, text)}
+          />
+        </Tab>
         <Tab value="headers" label="Headers">
           <Textarea
             label="Headers, one Name: value per line"

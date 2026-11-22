@@ -3,7 +3,7 @@
   "id": "narada",
   "name": "Narada",
   "version": "0.1.2",
-  "description": "Send your saved Narada and Postman collection requests from Orca's sidebar: pick a request and an environment, adjust it, and read the response.",
+  "description": "Send your saved Narada and Postman collection requests from Orca's sidebar: pick a request and an environment, edit its params, headers and body, read the response, or save a new request from cURL.",
   "author": {
     "name": "Gokul Kulkarni",
     "url": "https://github.com/gokul-kulkarni"

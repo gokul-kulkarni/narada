@@ -26,7 +26,8 @@ export function isDocumentName(name: string): boolean {
   );
 }
 
-const READ_ONLY = "The Orca plugin only reads Narada's files; save changes in the Narada app.";
+const READ_ONLY =
+  "The Orca plugin only adds requests to collections; make other changes in the Narada app.";
 
 async function readIfPresent(file: string): Promise<string | null> {
   try {
@@ -37,9 +38,21 @@ async function readIfPresent(file: string): Promise<string | null> {
   }
 }
 
+/** Replaces a file in one step: a reader (or a crash) never sees it half-written. */
+async function writeWhole(file: string, content: string): Promise<void> {
+  const temporary = path.join(path.dirname(file), `.${path.basename(file)}.${process.pid}.tmp`);
+  try {
+    await fs.writeFile(temporary, content, "utf8");
+    await fs.rename(temporary, file);
+  } catch (error) {
+    await fs.rm(temporary, { force: true });
+    throw error;
+  }
+}
+
 /**
- * Reads Narada's storage folder from Node. Read-only: writes reject, so the plugin can never
- * change files the desktop app and Drive sync own.
+ * Narada's storage folder from Node. The plugin only reads, except that it may rewrite a
+ * collection file to add a request to it; environments, local files and deletes are refused.
  */
 export function createFsDocumentStore(root: string, dataDir: string): DocumentStore {
   return {
@@ -57,8 +70,10 @@ export function createFsDocumentStore(root: string, dataDir: string): DocumentSt
       );
       return documents.flat().sort((a, b) => a.fileName.localeCompare(b.fileName));
     },
-    async write() {
-      throw new Error(READ_ONLY);
+    async write(kind, fileName, content) {
+      if (kind !== "collections") throw new Error(READ_ONLY);
+      if (!isDocumentName(fileName)) throw new Error(`${fileName} is not a collection file name.`);
+      await writeWhole(path.join(root, KIND_DIRS.collections, fileName), content);
     },
     async remove() {
       throw new Error(READ_ONLY);

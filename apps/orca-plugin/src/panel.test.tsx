@@ -51,6 +51,65 @@ test("lists saved requests and sends the chosen one with edits", async () => {
   await view.unmount();
 });
 
+test("edits query parameters in the Params tab and keeps them in step with the URL", async () => {
+  const host = mockHost({ requests: { "workspace.load": () => SNAPSHOT } });
+  const view = await mount(panel, { host, persisted: { plugin: { selectedKey: KEYS.list } } });
+  const PARAMS = { label: "Query parameters, one key=value per line" };
+  assert.equal(view.valueOf(PARAMS), "limit=20");
+
+  await view.type(PARAMS, "limit=5\nq=red shoes\n# page=2\n", { replace: true });
+  assert.equal(view.valueOf({ label: "URL" }), "{{base}}/orders?limit=5&q=red%20shoes");
+  // The typed text stays as typed, comment and trailing new line included.
+  assert.equal(view.valueOf(PARAMS), "limit=5\nq=red shoes\n# page=2\n");
+
+  await view.type({ label: "URL" }, "&sort={{order}}");
+  assert.equal(view.valueOf(PARAMS), "limit=5\nq=red shoes\nsort={{order}}");
+
+  await view.press({ text: "Undo edits" });
+  assert.equal(view.valueOf(PARAMS), "limit=20");
+  assert.deepEqual(view.errors, []);
+  await view.unmount();
+});
+
+test("saves a request from a pasted cURL command and opens it", async () => {
+  const created: unknown[] = [];
+  const host = mockHost({
+    requests: {
+      "workspace.load": () => SNAPSHOT,
+      "request.create": (input) => {
+        created.push(input);
+        if (created.length === 1) return { ok: false as const, error: "No URL found." };
+        return { ok: true as const, key: KEYS.create };
+      },
+    },
+  });
+  const view = await mount(panel, { host });
+  await view.press({ label: "New request from cURL" });
+  assert.equal(view.valueOf({ label: "Collection" }), "col-1");
+
+  await view.type({ label: "cURL command" }, "curl -X POST");
+  await view.press({ text: "Save request" });
+  assert.ok(drawn(view).includes("No URL found."));
+
+  await view.type({ label: "cURL command" }, "curl https://api.example.com/orders", {
+    replace: true,
+  });
+  await view.type({ label: "Name" }, "All orders");
+  await view.select({ label: "Folder" }, "orders");
+  await view.press({ text: "Save request" });
+
+  assert.deepEqual(created.at(-1), {
+    collectionId: "col-1",
+    folderId: "orders",
+    name: "All orders",
+    curl: "curl https://api.example.com/orders",
+  });
+  assert.equal(view.find({ label: "cURL command" }), null);
+  assert.deepEqual(view.persisted.plugin, { selectedKey: KEYS.create });
+  assert.deepEqual(view.errors, []);
+  await view.unmount();
+});
+
 test("shows a failed send and the scripts notice", async () => {
   const host = mockHost({
     requests: {

@@ -7,6 +7,7 @@ import type {
   HttpRequestDef,
 } from "@narada/core/model";
 import type {
+  CollectionChoice,
   EnvironmentSummary,
   RequestSummary,
   RequestTreeItem,
@@ -112,6 +113,17 @@ function buildItems(
   );
 }
 
+function folderChoices(
+  items: readonly CollectionItem[],
+  parent: string,
+): CollectionChoice["folders"] {
+  return items.flatMap((item) => {
+    if (item.kind !== "folder") return [];
+    const label = parent ? `${parent} / ${item.name}` : item.name;
+    return [{ id: item.id, label }, ...folderChoices(item.items, label)];
+  });
+}
+
 export function summarizeEnvironment(environment: Environment): EnvironmentSummary {
   return {
     id: environment.id,
@@ -144,6 +156,11 @@ export function buildSnapshot(
   return {
     folder,
     tree: built.tree,
+    collections: collections.map((c) => ({
+      id: c.id,
+      name: c.name,
+      folders: folderChoices(c.items, ""),
+    })),
     requests: built.requests,
     environments: environments.map(summarizeEnvironment),
     errors,

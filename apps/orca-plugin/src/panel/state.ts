@@ -1,6 +1,7 @@
 // Panel state lives in atoms (components panels have no hooks); actions talk to the worker.
 import { atom, derived, plugin, read, set, update } from "orca";
 import type { RequestDraft, RequestSummary, ResponseSummary, WorkspaceSnapshot } from "../protocol";
+import { formatParamLines, urlWithParamLines } from "../shared/params-text";
 
 /** Orca's ceiling for one panel request; the worker's own timeout is shorter. */
 const SEND_TIMEOUT_MS = 120_000;
@@ -22,6 +23,14 @@ export const selectedKey = atom<string | null>("selectedKey", null, { persist: "
 export const environmentId = atom<string | null>("environmentId", null, { persist: "plugin" });
 /** Unsent edits per request key, for this panel run. */
 export const drafts = atom<Readonly<Record<string, RequestDraft>>>("drafts", {});
+/**
+ * What was last typed in the Params tab, with the URL it produced. While the URL still matches,
+ * the tab shows the typed text (blank and commented-out lines included) instead of re-deriving it.
+ */
+export const typedParams = atom<Readonly<Record<string, { text: string; url: string }>>>(
+  "typedParams",
+  {},
+);
 /** The last outcome per request key, for this panel run. */
 export const outcomes = atom<Readonly<Record<string, SendState>>>("outcomes", {});
 
@@ -40,6 +49,12 @@ export const draftFor = (request: RequestSummary): RequestDraft =>
   };
 
 export const isEdited = (request: RequestSummary): boolean => request.key in read(drafts);
+
+export function paramsTextFor(request: RequestSummary): string {
+  const url = draftFor(request).url;
+  const typed = read(typedParams)[request.key];
+  return typed && typed.url === url ? typed.text : formatParamLines(url);
+}
 
 export const outcomeFor = (key: string): SendState => read(outcomes)[key] ?? { kind: "idle" };
 
@@ -60,10 +75,19 @@ export function editDraft(request: RequestSummary, change: Partial<RequestDraft>
   update(drafts, (all) => ({ ...all, [request.key]: next }));
 }
 
+/** Rewrites the URL's query from the Params tab's lines. */
+export function editParams(request: RequestSummary, text: string): void {
+  const url = urlWithParamLines(draftFor(request).url, text);
+  editDraft(request, { url });
+  update(typedParams, (all) => ({ ...all, [request.key]: { text, url } }));
+}
+
+const without = <T>(all: Readonly<Record<string, T>>, key: string) =>
+  Object.fromEntries(Object.entries(all).filter(([k]) => k !== key));
+
 export function resetDraft(request: RequestSummary): void {
-  update(drafts, (all) =>
-    Object.fromEntries(Object.entries(all).filter(([k]) => k !== request.key)),
-  );
+  update(drafts, (all) => without(all, request.key));
+  update(typedParams, (all) => without(all, request.key));
 }
 
 const setOutcome = (key: string, outcome: SendState) =>

@@ -31,6 +31,7 @@ export const SNAPSHOT: WorkspaceSnapshot = {
       ],
     },
   ],
+  collections: [{ id: "col-1", name: "Shop API", folders: [{ id: "orders", label: "Orders" }] }],
   requests: {
     [LIST]: {
       key: LIST,

@@ -59,9 +59,17 @@ export interface LoadError {
   readonly message: string;
 }
 
+/** A collection a new request can go in, with its folders as "Parent / Child" paths. */
+export interface CollectionChoice {
+  readonly id: string;
+  readonly name: string;
+  readonly folders: readonly { readonly id: string; readonly label: string }[];
+}
+
 export interface WorkspaceSnapshot {
   readonly folder: FolderInfo;
   readonly tree: readonly RequestTreeItem[];
+  readonly collections: readonly CollectionChoice[];
   readonly requests: Readonly<Record<string, RequestSummary>>;
   readonly environments: readonly EnvironmentSummary[];
   readonly errors: readonly LoadError[];
@@ -107,12 +115,26 @@ export type SendResult =
   | { readonly ok: true; readonly response: ResponseSummary }
   | { readonly ok: false; readonly error: string };
 
+/** A request to add from a cURL command. An empty name is derived from the method and URL. */
+export interface CreateInput {
+  readonly collectionId: string;
+  /** null for the top level of the collection. */
+  readonly folderId: string | null;
+  readonly name: string;
+  readonly curl: string;
+}
+
+export type CreateResult =
+  { readonly ok: true; readonly key: string } | { readonly ok: false; readonly error: string };
+
 declare module "orca" {
   interface PluginRequests {
     /** Reads the collections folder, environments and globals. */
     "workspace.load": { output: WorkspaceSnapshot };
     /** Sends a saved request with the panel's edits and the chosen environment. */
     "request.send": { input: SendInput; output: SendResult };
+    /** Adds a request parsed from a cURL command to a collection file. */
+    "request.create": { input: CreateInput; output: CreateResult };
     /** Keeps a secret variable's value in the plugin's encrypted secrets. */
     "secret.set": {
       input: { environmentId: string; key: string; value: string };

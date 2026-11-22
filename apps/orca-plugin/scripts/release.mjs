@@ -18,7 +18,14 @@ const repoRoot = path.resolve(pluginDir, "../..");
 const dryRun = process.argv.includes("--dry-run");
 
 /** What the release repository contains, relative to the plugin folder (plus the license). */
-const RELEASED = ["orca-plugin.json", "README.md", ".gitattributes", "assets", "dist/worker.js", "src"];
+const RELEASED = [
+  "orca-plugin.json",
+  "README.md",
+  ".gitattributes",
+  "assets",
+  "dist/worker.js",
+  "src",
+];
 const SKIPPED_IN_SRC = /\.(test|check)\.tsx?$|^fixtures$/;
 
 const run = (cmd, args, cwd = pluginDir) =>
