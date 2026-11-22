@@ -1,0 +1,33 @@
+{
+  "catalogVersion": 2,
+  "name": "Narada",
+  "owner": "gokul-kulkarni",
+  "plugins": [
+    {
+      "id": "gokul-kulkarni.narada",
+      "source": {
+        "kind": "git",
+        "url": "https://github.com/gokul-kulkarni/narada",
+        "ref": "main",
+        "path": "apps/orca-plugin"
+      },
+      "releases": [
+        {
+          "version": "0.1.0",
+          "commit": "d531b2f7102c2c13eb41184fbf45f401da06ce5f",
+          "contentHash": "5b8ed4a402643dd97c4818c08928248445ed1961358461f19822c66742f2997f",
+          "execution": "trusted-worker",
+          "minimumOrca": "1.4.248",
+          "name": "Narada",
+          "contributes": [
+            {
+              "kind": "panels",
+              "name": "Narada"
+            }
+          ],
+          "capabilities": ["settings:own", "secrets:own"]
+        }
+      ]
+    }
+  ]
+}
