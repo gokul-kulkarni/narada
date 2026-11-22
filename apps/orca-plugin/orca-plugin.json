@@ -2,13 +2,14 @@
   "manifestVersion": 2,
   "id": "narada",
   "name": "Narada",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Send your saved Narada and Postman collection requests from Orca's sidebar: pick a request and an environment, adjust it, and read the response.",
   "author": {
     "name": "Gokul Kulkarni",
     "url": "https://github.com/gokul-kulkarni"
   },
-  "repository": "https://github.com/gokul-kulkarni/narada",
+  "repository": "https://github.com/gokul-kulkarni/narada-orca",
+  "homepage": "https://github.com/gokul-kulkarni/narada",
   "license": "MIT",
   "engines": {
     "orca": ">=1.4.248"

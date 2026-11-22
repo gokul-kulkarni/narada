@@ -10,12 +10,10 @@ Basic, Bearer, API-key and OAuth 2.0 token auth inherited from folders and the c
 
 ## Install
 
-The plugin lives in a subfolder of the Narada repository, which publishes it through its own Orca
-catalog (`orca-catalog.json` at the repository root):
+From Orca's plugin directory (search for Narada), or from the terminal:
 
 ```sh
-orca plugin catalog add gokul-kulkarni/narada   # Orca asks you to approve the catalog
-orca plugin install gokul-kulkarni.narada       # Orca shows the access it asks for, then installs
+orca plugin install gokul-kulkarni/narada-orca   # Orca shows the access it asks for, then installs
 ```
 
 Then open the **Narada** panel from Orca's right sidebar.
@@ -41,6 +39,11 @@ requests, the plugin's own settings (`settings:own`) and its own encrypted secre
 (`secrets:own`). `orca plugin inspect .` lists exactly what it would be granted.
 
 ## Develop
+
+The source lives in [gokul-kulkarni/narada](https://github.com/gokul-kulkarni/narada) under
+`apps/orca-plugin`. [gokul-kulkarni/narada-orca](https://github.com/gokul-kulkarni/narada-orca) is
+the release repository Orca installs from: `pnpm release` copies the manifest, panel sources,
+worker bundle and license there, then tags the version. Don't edit the release repository by hand.
 
 The worker imports `@narada/core` from this workspace, so Orca runs a bundle of it:
 `dist/worker.js`, built by `pnpm build` and committed (Orca does not build plugins on install).
