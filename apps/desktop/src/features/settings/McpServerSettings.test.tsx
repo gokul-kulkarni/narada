@@ -80,6 +80,7 @@ describe("McpServerSettings", () => {
   it("lists what connected agents asked for", async () => {
     install();
     useMcpActivityStore.getState().record({
+      callId: "c1",
       at: "2026-11-23T10:00:00.000Z",
       client: "Claude Code",
       tool: "create_request",
@@ -87,6 +88,7 @@ describe("McpServerSettings", () => {
       detail: "The user declined, so nothing was added.",
     });
     useMcpActivityStore.getState().record({
+      callId: "c2",
       at: "2026-11-23T10:01:00.000Z",
       client: null,
       tool: "list_collections",

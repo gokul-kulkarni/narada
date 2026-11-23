@@ -38,7 +38,8 @@ describe("installMcpBridge", () => {
   it("answers each tool call once, and listens only once", async () => {
     const { client, call } = fakeClient();
     setNaradaMcpClient(client);
-    await installMcpBridge();
+    // React runs startup effects twice in development: both installs overlap.
+    await Promise.all([installMcpBridge(), installMcpBridge()]);
     await installMcpBridge();
     expect(client.onToolCall).toHaveBeenCalledTimes(1);
     call({ callId: "c1", tool: "list_environments", arguments: {}, client: "Claude Code" });
@@ -77,5 +78,34 @@ describe("installMcpBridge", () => {
       }),
     );
     expect(useWorkspaceStore.getState().collections).toEqual([]);
+  });
+
+  it("logs a call as waiting when it arrives, and settles it when answered", async () => {
+    const { client, call } = fakeClient();
+    setNaradaMcpClient(client);
+    await installMcpBridge();
+    call({
+      callId: "c5",
+      tool: "create_folder",
+      arguments: { collection: "Shop", folder: "x" },
+      client: "Codex",
+    });
+    await vi.waitFor(() =>
+      expect(useMcpActivityStore.getState().entries[0]).toMatchObject({
+        tool: "create_folder",
+        outcome: "waiting",
+      }),
+    );
+    const [pending] = useMcpApprovalStore.getState().queue;
+    useMcpApprovalStore.getState().decide(pending?.id ?? "", "cancel");
+    await vi.waitFor(() =>
+      expect(useMcpActivityStore.getState().entries).toMatchObject([
+        {
+          tool: "create_folder",
+          outcome: "error",
+          detail: "The user declined, so nothing was added.",
+        },
+      ]),
+    );
   });
 });

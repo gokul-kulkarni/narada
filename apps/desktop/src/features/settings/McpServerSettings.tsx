@@ -90,8 +90,20 @@ function Activity() {
             </span>
             <span>{entry.client ?? "An agent"}</span>
             <code className="font-mono">{entry.tool}</code>
-            <span className={entry.outcome === "ok" ? "text-ok" : "text-err"}>
-              {entry.outcome === "ok" ? "answered" : entry.detail}
+            <span
+              className={
+                entry.outcome === "ok"
+                  ? "text-ok"
+                  : entry.outcome === "error"
+                    ? "text-err"
+                    : "text-muted"
+              }
+            >
+              {entry.outcome === "ok"
+                ? "answered"
+                : entry.outcome === "waiting"
+                  ? "waiting…"
+                  : entry.detail}
             </span>
           </li>
         ))}

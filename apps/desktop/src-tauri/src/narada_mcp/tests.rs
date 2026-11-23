@@ -400,3 +400,92 @@ mod waiting {
         );
     }
 }
+
+mod cancellation {
+    use super::*;
+
+    /// Records whether the agent's cancel token fired while a call was still waiting.
+    #[derive(Default)]
+    struct WatchingBridge {
+        cancelled_early: Mutex<Vec<bool>>,
+    }
+
+    impl ToolBridge for WatchingBridge {
+        fn call(
+            &self,
+            _tool: &str,
+            _arguments: Value,
+            _client: Option<String>,
+            cancelled: CancellationToken,
+        ) -> BridgeFuture<'_> {
+            Box::pin(async move {
+                let fired = tokio::time::timeout(Duration::from_millis(500), cancelled.cancelled())
+                    .await
+                    .is_ok();
+                self.cancelled_early.lock().unwrap().push(fired);
+                Ok(json!({ "ok": true }))
+            })
+        }
+    }
+
+    #[tokio::test]
+    async fn a_waiting_call_is_not_cancelled_while_the_agent_still_waits() {
+        let bridge = Arc::new(WatchingBridge::default());
+        let running = serve(0, TOKEN.into(), bridge.clone()).await.unwrap();
+        let sink: Sink = Arc::new(|_| {});
+        let transport = ServerTransport::Http {
+            url: format!("http://127.0.0.1:{}/mcp", running.port),
+            headers: vec![("Authorization".into(), format!("Bearer {TOKEN}"))],
+        };
+        let session = connect(transport, sink).await.unwrap();
+        let arguments = json!({ "name": "Billing" }).as_object().unwrap().clone();
+        let call = Operation::Tool {
+            name: "create_collection".into(),
+            arguments,
+        };
+        run(&session, call, Duration::from_secs(5)).await.unwrap();
+        assert_eq!(*bridge.cancelled_early.lock().unwrap(), vec![false]);
+        running.stop();
+    }
+}
+
+/// Serves the real MCP server on port 7388 with a bridge that answers after 3 s and logs what
+/// happened, for pointing a real agent at it. `cargo test serve_for_a_real_agent -- --ignored --nocapture`
+#[tokio::test]
+#[ignore]
+async fn serve_for_a_real_agent() {
+    struct SlowBridge;
+    impl ToolBridge for SlowBridge {
+        fn call(
+            &self,
+            tool: &str,
+            _arguments: Value,
+            client: Option<String>,
+            cancelled: CancellationToken,
+        ) -> BridgeFuture<'_> {
+            let tool = tool.to_owned();
+            Box::pin(async move {
+                println!(
+                    "CALL {tool} from {client:?}, cancelled at start: {}",
+                    cancelled.is_cancelled()
+                );
+                tokio::select! {
+                    () = tokio::time::sleep(Duration::from_secs(3)) => {
+                        println!("ANSWERED {tool}");
+                        Ok(json!({ "answered": tool }))
+                    }
+                    () = cancelled.cancelled() => {
+                        println!("CANCELLED {tool} while waiting");
+                        Err("cancelled".into())
+                    }
+                }
+            })
+        }
+    }
+    let running = serve(7388, TOKEN.into(), Arc::new(SlowBridge))
+        .await
+        .unwrap();
+    println!("SERVING on {}", running.port);
+    tokio::time::sleep(Duration::from_secs(150)).await;
+    running.stop();
+}
