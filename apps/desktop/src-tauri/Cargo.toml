@@ -1,6 +1,6 @@
 [package]
 name = "narada"
-version = "0.2.2"
+version = "0.2.3"
 description = "A free, local-first API client"
 authors = ["Gokul Kulkarni"]
 edition = "2024"
