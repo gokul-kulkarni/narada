@@ -3,6 +3,7 @@ mod http;
 mod mcp;
 #[cfg(target_os = "macos")]
 mod menu;
+mod narada_mcp;
 mod secrets;
 mod shell_env;
 mod storage;
@@ -25,6 +26,7 @@ pub fn run() {
         .manage(sync::DriveState::new())
         .manage(mcp::McpState::default())
         .manage(assist::AssistState::default())
+        .manage(narada_mcp::NaradaMcpState::default())
         .setup(|app| {
             let storage = storage::StorageState::init(app.handle())?;
             let tls = http::tls::TlsConfig::from(&storage.settings());
@@ -44,6 +46,10 @@ pub fn run() {
             assist::assist_detect,
             assist::assist_run,
             assist::assist_cancel,
+            narada_mcp::narada_mcp_start,
+            narada_mcp::narada_mcp_stop,
+            narada_mcp::narada_mcp_status,
+            narada_mcp::narada_mcp_reply,
             storage::get_storage_dir,
             storage::set_storage_dir,
             storage::list_documents,

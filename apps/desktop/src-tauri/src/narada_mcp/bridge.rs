@@ -1,0 +1,102 @@
+//! Tool calls are answered by the app's UI, which holds the collections, environments and
+//! tabs: Rust emits each call as an event and waits for `narada_mcp_reply`.
+
+use serde::Serialize;
+use serde_json::Value;
+use std::collections::HashMap;
+use std::future::Future;
+use std::pin::Pin;
+use std::sync::{Arc, Mutex};
+use std::time::Duration;
+use tauri::{AppHandle, Emitter};
+use tokio::sync::oneshot;
+
+pub type BridgeResult = Result<Value, String>;
+pub type BridgeFuture<'a> = Pin<Box<dyn Future<Output = BridgeResult> + Send + 'a>>;
+
+/// Answers one MCP tool call with JSON, or an error message for the agent.
+pub trait ToolBridge: Send + Sync + 'static {
+    fn call(&self, tool: &str, arguments: Value) -> BridgeFuture<'_>;
+}
+
+/// Tool calls waiting for the UI's answer, by call id.
+#[derive(Default, Clone)]
+pub struct Pending {
+    calls: Arc<Mutex<HashMap<String, oneshot::Sender<BridgeResult>>>>,
+}
+
+impl Pending {
+    fn calls(&self) -> std::sync::MutexGuard<'_, HashMap<String, oneshot::Sender<BridgeResult>>> {
+        // A poisoned lock only means another call panicked; the map itself is still usable.
+        self.calls.lock().unwrap_or_else(|e| e.into_inner())
+    }
+
+    pub fn open(&self) -> (String, oneshot::Receiver<BridgeResult>) {
+        let id: String = rand::random::<[u8; 16]>()
+            .iter()
+            .map(|b| format!("{b:02x}"))
+            .collect();
+        let (send, receive) = oneshot::channel();
+        self.calls().insert(id.clone(), send);
+        (id, receive)
+    }
+
+    /// Delivers the UI's answer; false if no call with this id is waiting.
+    pub fn answer(&self, id: &str, result: BridgeResult) -> bool {
+        self.calls()
+            .remove(id)
+            .is_some_and(|send| send.send(result).is_ok())
+    }
+
+    fn forget(&self, id: &str) {
+        self.calls().remove(id);
+    }
+}
+
+pub const TOOL_CALL_EVENT: &str = "narada-mcp://tool-call";
+const ANSWER_TIMEOUT: Duration = Duration::from_secs(30);
+
+#[derive(Serialize, Clone)]
+#[serde(rename_all = "camelCase")]
+struct ToolCall<'a> {
+    call_id: &'a str,
+    tool: &'a str,
+    arguments: Value,
+}
+
+pub struct TauriBridge {
+    app: AppHandle,
+    pending: Pending,
+}
+
+impl TauriBridge {
+    pub fn new(app: AppHandle, pending: Pending) -> Self {
+        Self { app, pending }
+    }
+}
+
+impl ToolBridge for TauriBridge {
+    fn call(&self, tool: &str, arguments: Value) -> BridgeFuture<'_> {
+        let tool = tool.to_owned();
+        Box::pin(async move {
+            let (id, reply) = self.pending.open();
+            let event = ToolCall {
+                call_id: &id,
+                tool: &tool,
+                arguments,
+            };
+            if let Err(e) = self.app.emit(TOOL_CALL_EVENT, event) {
+                self.pending.forget(&id);
+                return Err(format!("Narada could not take the call: {e}"));
+            }
+            match tokio::time::timeout(ANSWER_TIMEOUT, reply).await {
+                Ok(Ok(result)) => result,
+                Ok(Err(_)) => Err("Narada closed before answering.".into()),
+                Err(_) => {
+                    self.pending.forget(&id);
+                    Err("Narada didn't answer in time. Is its window open?".into())
+                }
+            }
+        })
+    }
+}

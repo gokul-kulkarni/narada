@@ -3,6 +3,8 @@ mod transport;
 mod types;
 
 pub use handler::Sink;
+#[cfg(test)]
+pub(crate) use transport::connect;
 pub use types::{ListKind, McpEvent, Operation, ServerTransport, Timed};
 
 use rmcp::ClientHandler;
