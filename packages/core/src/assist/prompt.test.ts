@@ -61,6 +61,25 @@ describe("renderPrompt", () => {
     expect(out).toContain("Why did this request fail");
   });
 
+  it("explains how to suggest a change to an HTTP request, and only for HTTP", () => {
+    const out = renderPrompt(ctx());
+    expect(out).toContain("```narada-patch");
+    expect(out).toContain('"removeHeaders"');
+    expect(out).toContain("[secret:name]");
+    const mcp = renderPrompt(
+      ctx({
+        request: {
+          protocol: "mcp",
+          id: "r",
+          name: "n",
+          serverId: "s",
+          operation: { type: "resource", uri: "u" },
+        },
+      }),
+    );
+    expect(mcp).not.toContain("narada-patch");
+  });
+
   it("uses the user's question when given", () => {
     expect(renderPrompt(ctx({ question: "Is the body shape right?" }))).toContain(
       "Is the body shape right?",

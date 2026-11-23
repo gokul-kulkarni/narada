@@ -2,8 +2,10 @@ import { useState, type FormEvent } from "react";
 import { Button, TextInput } from "../../components/ui";
 import { useAssistStore, type AssistRun } from "../../state/assist-store";
 import { useUiStore } from "../../state/ui-store";
+import { extractPatch, stripPatch } from "@narada/core/assist/patch";
 import { AnswerMarkdown } from "./AnswerMarkdown";
 import { askFollowUp } from "./ask";
+import { SuggestedChange } from "./SuggestedChange";
 
 function statusLine(run: AssistRun): string {
   switch (run.status) {
@@ -61,6 +63,8 @@ export function AssistPanel({ tabId }: { tabId: string }) {
   if (!run) return null;
   const { stop, dismiss } = useAssistStore.getState();
   const canFollowUp = run.sessionId !== null && run.status !== "running";
+  // Only a finished answer's suggestion is complete enough to apply.
+  const suggested = run.status === "done" ? extractPatch(run.text) : null;
 
   return (
     <aside
@@ -92,11 +96,12 @@ export function AssistPanel({ tabId }: { tabId: string }) {
         {run.earlier.map((exchange, index) => (
           <div key={index} className="border-b border-line-soft pb-2">
             {exchange.question !== null && <Question text={exchange.question} />}
-            <AnswerMarkdown text={exchange.answer} />
+            <AnswerMarkdown text={stripPatch(exchange.answer)} />
           </div>
         ))}
         {run.question !== null && <Question text={run.question} />}
-        <AnswerMarkdown text={run.text} />
+        <AnswerMarkdown text={stripPatch(run.text)} />
+        {suggested && <SuggestedChange tabId={tabId} extracted={suggested} />}
         {run.error && (
           <div role="alert" className="my-3 rounded-lg bg-err-soft px-3 py-2 text-err">
             {run.error}

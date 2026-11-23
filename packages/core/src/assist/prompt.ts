@@ -11,6 +11,23 @@ const PREAMBLE = [
   "`{{name}}` is a Narada variable that is filled in when the request is sent.",
 ].join("\n");
 
+const PATCH_EXAMPLE = {
+  method: "POST",
+  url: "{{baseUrl}}/orders",
+  headers: [{ key: "Content-Type", value: "application/json" }],
+  removeHeaders: ["X-Old"],
+  body: { mode: "raw", language: "json", raw: '{"qty": 1}' },
+};
+
+/** How to suggest a change Narada can apply to the request with one click. */
+const PATCH_INSTRUCTIONS = [
+  "## Suggesting a change",
+  "If the request itself should change, end your answer with one fenced `narada-patch` block of JSON holding only the fields to change (any of method, url, headers, removeHeaders, body). Headers are set by name. Auth and scripts cannot be changed this way. Keep `{{variables}}`, and write a secret as `[secret:name]` exactly as you saw it. Leave the block out if the request is fine.",
+  "```narada-patch",
+  JSON.stringify(PATCH_EXAMPLE, null, 2),
+  "```",
+].join("\n");
+
 /** Wraps text in a code fence longer than any run of backticks inside it. */
 export function fence(text: string, language = ""): string {
   const longestRun = Math.max(0, ...(text.match(/`+/g) ?? []).map((run) => run.length));
@@ -112,5 +129,6 @@ export function renderPrompt(context: AgentContext): string {
       `Variables in scope (names only): ${names}`,
     ].join("\n"),
   );
+  if (context.request.protocol === "http") sections.push(PATCH_INSTRUCTIONS);
   return `${sections.join("\n\n")}\n`;
 }

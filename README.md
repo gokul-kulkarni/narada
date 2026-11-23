@@ -76,7 +76,9 @@ To build it yourself instead, see [Development](#development).
   holds no AI account or key. Secret variables, credential headers, auth values and tokens are
   replaced with `[redacted]` first, and the first time you see exactly what will be sent. Claude
   Code runs read-only: it gets only its Read, Grep and Glob tools (no edits, commands or web
-  access), in plan mode with `--restricted`. Ask follow-up questions in the same
+  access), in plan mode with `--restricted`. When it suggests a fix (method, URL,
+  headers or body; never auth), you see it as a diff and "Apply to tab" changes only the open
+  tab, ready to dispatch and save. Ask follow-up questions in the same
   conversation. To let it read the code behind an API, choose a project folder (per collection,
   or a default) in Settings → Agents: Claude Code can read only that folder, and Narada refuses
   the disk root and your home folder. Without one it sees only what it was told. Folders stay on
