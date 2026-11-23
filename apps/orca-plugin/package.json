@@ -1,22 +1,23 @@
 {
   "name": "@narada/orca-plugin",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "private": true,
   "description": "Narada as an Orca sidebar panel: send saved requests with @narada/core.",
   "type": "module",
   "scripts": {
-    "build": "esbuild src/worker.ts --bundle --platform=node --target=node22 --format=esm --external:orca --external:'orca/*' --legal-comments=none --outfile=dist/worker.js",
+    "build": "esbuild src/worker.ts --bundle --platform=node --target=node22 --format=esm --external:orca --external:'orca/*' --banner:js=\"import { createRequire as __narada_createRequire } from 'node:module'; const require = __narada_createRequire(import.meta.url);\" --legal-comments=none --outfile=dist/worker.js",
     "types": "orca plugin types .",
     "typecheck": "orca plugin types . >/dev/null && tsc -p .",
     "lint": "eslint .",
     "test": "orca plugin test . --json",
     "check": "orca plugin check . --json",
     "validate": "orca plugin validate . --json",
-    "bundle:verify": "esbuild src/worker.ts --bundle --platform=node --target=node22 --format=esm --external:orca --external:'orca/*' --legal-comments=none --outfile=.orca/verify/worker.js --log-level=warning && cmp -s dist/worker.js .orca/verify/worker.js || (echo 'dist/worker.js is stale: run pnpm build and commit it' && exit 1)",
+    "bundle:verify": "esbuild src/worker.ts --bundle --platform=node --target=node22 --format=esm --external:orca --external:'orca/*' --banner:js=\"import { createRequire as __narada_createRequire } from 'node:module'; const require = __narada_createRequire(import.meta.url);\" --legal-comments=none --outfile=.orca/verify/worker.js --log-level=warning && cmp -s dist/worker.js .orca/verify/worker.js || (echo 'dist/worker.js is stale: run pnpm build and commit it' && exit 1)",
     "release": "node scripts/release.mjs"
   },
   "dependencies": {
-    "@narada/core": "workspace:*"
+    "@narada/core": "workspace:*",
+    "undici": "^7.30.1"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

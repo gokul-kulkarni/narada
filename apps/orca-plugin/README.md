@@ -31,6 +31,16 @@ Then open the **Narada** panel from Orca's right sidebar.
 - **Secret variables**: Narada keeps them in the OS keychain, which the plugin can't read. The
   panel asks for any it needs and keeps them in the plugin's encrypted secrets.
 
+## HTTPS certificates
+
+Requests to a server whose certificate isn't signed by an authority your computer trusts fail with
+an error such as "self signed certificate in certificate chain". That happens with a dev server's
+self-signed certificate, or on a network whose proxy re-signs HTTPS. In Settings → Plugins → Narada:
+
+- **Extra CA certificates**: a PEM file of authorities to trust as well as the usual ones (your
+  company's root certificate, or the dev server's own). Certificates are still checked.
+- **Verify TLS certificates**: turn off to accept any certificate. Use it only for servers you trust.
+
 ## Not in this version
 
 Pre-request and test scripts (they run only in the app's sandbox), MCP requests, editing form

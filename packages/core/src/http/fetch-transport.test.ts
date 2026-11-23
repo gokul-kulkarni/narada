@@ -106,6 +106,16 @@ describe("sendWithFetch", () => {
     await expect(sendWithFetch({ ...request, timeoutMs: 10 })).rejects.toThrow("Request timed out");
   });
 
+  it("sends with the fetch it is given instead of the platform's", async () => {
+    const platform = vi.fn();
+    vi.stubGlobal("fetch", platform);
+    const given = vi.fn(async () => new Response("ok", { status: 201 }));
+    const response = await sendWithFetch(request, { fetch: given as unknown as typeof fetch });
+    expect(response.status).toBe(201);
+    expect(given).toHaveBeenCalledWith(request.url, expect.objectContaining({ method: "POST" }));
+    expect(platform).not.toHaveBeenCalled();
+  });
+
   it("refuses a signal that is already aborted", async () => {
     await expect(sendWithFetch(request, { signal: AbortSignal.abort() })).rejects.toThrow(
       "Request cancelled",

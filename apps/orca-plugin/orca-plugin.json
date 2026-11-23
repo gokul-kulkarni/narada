@@ -2,7 +2,7 @@
   "manifestVersion": 2,
   "id": "narada",
   "name": "Narada",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Send your saved Narada and Postman collection requests from Orca's sidebar: pick a request and an environment, edit its params, headers and body, read the response, or save a new request from cURL.",
   "author": {
     "name": "Gokul Kulkarni",
@@ -66,6 +66,21 @@
         "default": 30,
         "minimum": 1,
         "maximum": 110
+      },
+      {
+        "key": "verifyTls",
+        "title": "Verify TLS certificates",
+        "description": "Check that HTTPS servers' certificates are signed by an authority this computer trusts. Turn off only for servers you trust, such as a local dev server with a self-signed certificate.",
+        "type": "boolean",
+        "default": true
+      },
+      {
+        "key": "caCertificatesFile",
+        "title": "Extra CA certificates",
+        "description": "A PEM file of certificate authorities to trust as well as the usual ones, such as your company proxy's or a self-signed dev certificate. Certificates are still verified.",
+        "type": "string",
+        "default": "",
+        "placeholder": "~/certs/company-ca.pem"
       }
     ]
   },

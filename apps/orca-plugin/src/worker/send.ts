@@ -18,6 +18,7 @@ import {
   type KeyValue,
 } from "@narada/core/model";
 import { prepareRequest } from "@narada/core/prepare-request";
+import { describeTlsFailure, tlsFetch, type TlsSettings } from "./tls";
 import { buildContext } from "@narada/core/request-context";
 import type { RequestDraft, ResponseSummary, SendInput, SendResult } from "../protocol";
 import { parseHeaderLines } from "../shared/headers-text";
@@ -80,7 +81,7 @@ export function summarizeResponse(response: HttpResponse, sentUrl: string): Resp
 export async function sendSaved(
   workspace: LoadedWorkspace,
   input: SendInput,
-  options: { readonly signal?: AbortSignal; readonly timeoutMs: number },
+  options: { readonly signal?: AbortSignal; readonly timeoutMs: number; readonly tls: TlsSettings },
 ): Promise<SendResult> {
   const collection = workspace.collections.find((c) => c.id === input.collectionId);
   const found = collection && findRequest(collection, input.requestId);
@@ -101,8 +102,16 @@ export async function sendSaved(
     });
     const prepared = prepareRequest(request, { ...context, timeoutMs: options.timeoutMs });
     if (prepared.url === "") return { ok: false, error: "Enter a URL to send the request." };
-    const response = await sendWithFetch(prepared, { signal: options.signal });
-    return { ok: true, response: summarizeResponse(response, prepared.url) };
+    const custom = await tlsFetch(options.tls);
+    try {
+      const response = await sendWithFetch(prepared, {
+        signal: options.signal,
+        fetch: custom?.fetch,
+      });
+      return { ok: true, response: summarizeResponse(response, prepared.url) };
+    } finally {
+      await custom?.close();
+    }
   } catch (error) {
     return { ok: false, error: describeSendError(error) };
   }
@@ -111,5 +120,7 @@ export async function sendSaved(
 /** Node's fetch fails with "fetch failed" and keeps the reason (ECONNREFUSED, …) in `cause`. */
 export function describeSendError(error: unknown): string {
   const cause = error instanceof Error ? error.cause : undefined;
-  return cause ? `${errorMessage(error)}: ${errorMessage(cause)}` : errorMessage(error);
+  const message = cause ? `${errorMessage(error)}: ${errorMessage(cause)}` : errorMessage(error);
+  const tlsHint = describeTlsFailure(error);
+  return tlsHint ? `${message}. ${tlsHint}` : message;
 }

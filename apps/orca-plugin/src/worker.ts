@@ -14,6 +14,7 @@ import { createFsDocumentStore } from "./worker/fs-store";
 import { currentPlatform, desktopDirs, resolveFolder } from "./worker/paths";
 import { sendSaved, type LoadedWorkspace } from "./worker/send";
 import { buildSnapshot } from "./worker/snapshot";
+import type { TlsSettings } from "./worker/tls";
 
 /** Orca waits at most 120 s for a panel request; leave room to answer. */
 const MAX_TIMEOUT_SECONDS = 110;
@@ -29,6 +30,14 @@ const pluginSecrets = (orca: OrcaWorkerApi): SecretStore => ({
 async function stringSetting(orca: OrcaWorkerApi, key: string): Promise<string | null> {
   const value = await orca.settings.get(key);
   return typeof value === "string" ? value : null;
+}
+
+async function tlsSettings(orca: OrcaWorkerApi): Promise<TlsSettings> {
+  const verify = await orca.settings.get("verifyTls");
+  return {
+    verify: verify !== false,
+    caFile: (await stringSetting(orca, "caCertificatesFile")) ?? "",
+  };
 }
 
 async function timeoutMs(orca: OrcaWorkerApi): Promise<number> {
@@ -75,7 +84,11 @@ export default function activate(orca: OrcaWorkerApi): void {
   // Reloads on every send, so edits made in Narada (or synced from Drive) apply at once.
   orca.panels.handle("request.send", async (input, { signal }) => {
     const { workspace } = await load(orca);
-    return sendSaved(workspace, input, { signal, timeoutMs: await timeoutMs(orca) });
+    return sendSaved(workspace, input, {
+      signal,
+      timeoutMs: await timeoutMs(orca),
+      tls: await tlsSettings(orca),
+    });
   });
 
   orca.panels.handle("request.create", async (input) =>

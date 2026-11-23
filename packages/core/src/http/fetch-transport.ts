@@ -18,6 +18,8 @@ export interface SendOptions {
   readonly onProgress?: (partial: HttpResponse) => void;
   /** Aborting stops the request; a body already streaming ends as `incomplete`. */
   readonly signal?: AbortSignal;
+  /** The fetch to send with, e.g. one with its own TLS settings; defaults to the platform's. */
+  readonly fetch?: typeof fetch;
 }
 
 const CANCELLED = "Request cancelled";
@@ -108,7 +110,8 @@ export async function sendWithFetch(
   options.signal?.addEventListener("abort", stop, { once: true });
   try {
     touch();
-    const response = await fetch(request.url, {
+    const send = options.fetch ?? fetch;
+    const response = await send(request.url, {
       method: request.method,
       headers: request.headers.map(([k, v]): [string, string] => [k, v]),
       body: fetchBody(request),

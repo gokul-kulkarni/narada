@@ -7,6 +7,7 @@ import os from "node:os";
 import path from "node:path";
 import { after, before } from "node:test";
 import { assert, mockHost, mountWorker, test } from "orca/testing";
+import { startSelfSignedServer } from "./fixtures/self-signed";
 import type { CreateResult, SendResult, WorkspaceSnapshot } from "./protocol";
 
 const main = (await import(
@@ -242,6 +243,42 @@ test("refuses a bad cURL command or a collection that is gone", async () => {
   const noFolder = await create({ collectionId: "col-1", folderId: "nope", curl: "curl http://a" });
   assert.match(!noFolder.ok ? noFolder.error : "", /folder/);
   await worker.deactivate();
+});
+
+test("sends to a self-signed HTTPS server only as the TLS settings allow", async () => {
+  const tls = await startSelfSignedServer();
+  const sendWith = async (settings: Record<string, unknown>) => {
+    const host = mockHost({ settings: { collectionsFolder: folder, ...settings } });
+    const worker = await mountWorker(main, { host });
+    const snapshot = (await worker.request("workspace.load")) as WorkspaceSnapshot;
+    const list = firstRequestKey(snapshot, "List orders");
+    const result = (await worker.request("request.send", {
+      collectionId: list.collectionId,
+      requestId: list.requestId,
+      environmentId: null,
+      draft: { method: "GET", url: tls.url, headersText: "", bodyText: "" },
+    })) as SendResult;
+    await worker.deactivate();
+    return result;
+  };
+  try {
+    const refused = await sendWith({});
+    assert.equal(refused.ok, false);
+    assert.match(!refused.ok ? refused.error : "", /self-signed/);
+    assert.match(!refused.ok ? refused.error : "", /Verify TLS certificates/);
+
+    const unchecked = await sendWith({ verifyTls: false });
+    assert.ok(unchecked.ok, JSON.stringify(unchecked));
+    assert.equal(unchecked.response.body, '{"secure":true}');
+
+    const trusted = await sendWith({ caCertificatesFile: tls.certFile });
+    assert.ok(trusted.ok, JSON.stringify(trusted));
+
+    const missing = await sendWith({ caCertificatesFile: `${tls.certFile}.missing` });
+    assert.match(!missing.ok ? missing.error : "", /Could not read the CA certificates file/);
+  } finally {
+    await tls.close();
+  }
 });
 
 test("keeps secret values in the plugin's secrets", async () => {
