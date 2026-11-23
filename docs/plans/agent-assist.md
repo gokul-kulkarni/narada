@@ -1,6 +1,8 @@
 # Plan: Agent assist (local agent CLIs + Narada MCP server)
 
-Status (2026-11-23): phases 0, 1a and 1b done except the Gemini adapter.
+Status (2026-11-23): phases 0, 1a, 1b (Claude Code and Codex) and 2a done; 2b (create
+requests) next. Phase 2a was checked end to end: the real Claude Code connected to the running
+app through a temporary `--mcp-config` and called all five tools.
 
 Agent limits, each checked on a real run (opt-in tests `real_claude*`, `real_codex*`):
 

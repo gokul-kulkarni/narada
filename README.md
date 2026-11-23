@@ -88,6 +88,12 @@ To build it yourself instead, see [Development](#development).
   only that folder, and Narada refuses the disk root and your home folder. Without one it sees
   only what it was told. Folders stay on this computer.
 
+- **MCP server for coding agents**: turn it on in Settings → MCP server and Claude Code, Codex,
+  Cursor or any MCP client can read your collections, a saved request, your environments (variable
+  names only), recent history and the open tab's latest response, while they work on the code
+  behind your API. Every answer has secrets removed. It listens only on `127.0.0.1` (port 7377 by
+  default), needs a token kept in your keychain, refuses requests from web pages, and is off until
+  you turn it on. Settings shows the one-line setup for each agent. Read-only for now.
 - **Keyboard**: the shortcuts you know from VS Code and browsers. ⌘P goes to any saved request,
   ⌘⇧P lists every command, ⌘↵ sends, ⌘T / ⌘W / ⌘⇧T open, close and reopen tabs, ⌃Tab and ⌘1–9
   switch tabs, ⌘L jumps to the URL, ⌘B hides the sidebar, ⌘J opens History, ⌘, opens Settings (Ctrl on Windows and
