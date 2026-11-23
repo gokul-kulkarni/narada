@@ -10,6 +10,7 @@ import { useWorkspaceStore } from "../../state/workspace-store";
 import { addFolder, addRequest } from "./collection-actions";
 import { ItemActions } from "./ItemActions";
 import { TreeItems } from "./CollectionTree";
+import { ROW_MOTION, dropHighlight, useDropTarget } from "./drag";
 
 async function exportCollection(collection: Collection) {
   try {
@@ -31,10 +32,14 @@ function CollectionNode({ collection }: { collection: Collection }) {
   const [renaming, setRenaming] = useState(false);
   const { updateCollection, deleteCollection } = useWorkspaceStore.getState();
   const { show } = useUiStore.getState();
+  const drop = useDropTarget({ collectionId: collection.id, folderId: null });
 
   return (
     <li>
-      <div className="group flex items-center gap-1 rounded-lg px-1 py-1 hover:bg-surface-2">
+      <div
+        className={`group flex items-center gap-1 rounded-lg px-1 py-1 hover:bg-surface-2 ${ROW_MOTION} ${dropHighlight(drop["data-drop-target"])}`}
+        {...drop}
+      >
         {renaming ? (
           <InlineRename
             value={collection.name}

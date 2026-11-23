@@ -13,6 +13,8 @@ export type Dialog =
   | { readonly kind: "import"; readonly files?: readonly File[] }
   | { readonly kind: "save"; readonly tabId: string }
   | { readonly kind: "code"; readonly tabId: string }
+  /** Pick where a sidebar request or folder moves to. */
+  | { readonly kind: "move"; readonly collectionId: string; readonly itemId: string }
   /** Confirm a local MCP server command before it first runs on this computer. */
   | { readonly kind: "mcp-trust"; readonly serverId: string }
   /** Show which agent will run and the redacted prompt before it is sent. */
@@ -31,6 +33,8 @@ interface UiState {
   readonly notice: string | null;
   /** Collections to show expanded when they first appear in the sidebar (e.g. just imported). */
   readonly revealed: ReadonlySet<string>;
+  /** A sidebar item that was just moved, so its row can settle into place. */
+  readonly justMoved: string | null;
   show: (view: MainView) => void;
   openPalette: (mode: PaletteMode) => void;
   closePalette: () => void;
@@ -40,6 +44,7 @@ interface UiState {
   closeDialog: () => void;
   notify: (notice: string | null) => void;
   reveal: (collectionIds: readonly string[]) => void;
+  markMoved: (itemId: string) => void;
 }
 
 export const useUiStore = create<UiState>()((set) => ({
@@ -50,6 +55,7 @@ export const useUiStore = create<UiState>()((set) => ({
   dialog: null,
   notice: null,
   revealed: new Set(),
+  justMoved: null,
   show: (view) => set({ view }),
   openPalette: (palette) => set({ palette }),
   closePalette: () => set({ palette: null }),
@@ -59,4 +65,9 @@ export const useUiStore = create<UiState>()((set) => ({
   closeDialog: () => set({ dialog: null }),
   notify: (notice) => set({ notice }),
   reveal: (ids) => set((s) => ({ revealed: new Set([...s.revealed, ...ids]) })),
+  markMoved: (itemId) => {
+    set({ justMoved: itemId });
+    // Long enough for the settle animation, then the row is ordinary again.
+    setTimeout(() => set((s) => (s.justMoved === itemId ? { justMoved: null } : s)), 900);
+  },
 }));

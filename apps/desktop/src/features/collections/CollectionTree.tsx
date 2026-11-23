@@ -13,6 +13,7 @@ import {
   renameCollectionItem,
 } from "./collection-actions";
 import { ItemActions } from "./ItemActions";
+import { ROW_MOTION, dropHighlight, sourceState, useDragSource, useDropTarget } from "./drag";
 
 const ROW = "group flex items-center gap-1 rounded-lg px-1 py-1 hover:bg-surface-2";
 
@@ -35,6 +36,26 @@ function TreeItem({
   const indent = { paddingLeft: `${depth * 12 + 4}px` };
   const id = item.kind === "folder" ? item.id : item.request.id;
   const name = item.kind === "folder" ? item.name : item.request.name;
+  const drop = useDropTarget({
+    collectionId: collection.id,
+    folderId: item.kind === "folder" ? item.id : null,
+  });
+  const drag = useDragSource(
+    { collectionId: collection.id, itemId: id },
+    item.kind === "folder"
+      ? { kind: "folder", name }
+      : { kind: "request", badge: requestBadge(item.request), name },
+  );
+  const settling = useUiStore((s) => s.justMoved === id);
+  const rowState = {
+    "data-dragging": drag.dragging ? "true" : "false",
+    "data-settling": settling ? "true" : "false",
+  };
+  const moveTo = {
+    label: "Move to…",
+    onSelect: () =>
+      useUiStore.getState().openDialog({ kind: "move", collectionId: collection.id, itemId: id }),
+  };
   const rename = renaming && (
     <InlineRename
       value={name}
@@ -50,14 +71,16 @@ function TreeItem({
     return (
       <li>
         <div
-          className={`${ROW} ${activeRequestId === id ? "bg-accent-soft font-semibold text-accent-soft-ink" : ""}`}
+          className={`${ROW} ${ROW_MOTION} ${sourceState(drag.dragging, settling)} ${activeRequestId === id ? "bg-accent-soft font-semibold text-accent-soft-ink" : ""}`}
           style={indent}
+          {...rowState}
         >
           {rename || (
             <button
               type="button"
               className="flex min-w-0 flex-1 gap-2 text-left"
               onClick={() => openSavedRequest(collection.id, item.request)}
+              {...drag.props}
             >
               <span className="w-10 shrink-0 font-mono text-[11px] font-semibold text-accent-text">
                 {requestBadge(item.request)}
@@ -73,6 +96,7 @@ function TreeItem({
                 label: "Duplicate",
                 onSelect: () => duplicateRequest(collection.id, item.request, parentId),
               },
+              moveTo,
               {
                 label: "Delete",
                 danger: true,
@@ -87,13 +111,19 @@ function TreeItem({
 
   return (
     <li>
-      <div className={ROW} style={indent}>
+      <div
+        className={`${ROW} ${ROW_MOTION} ${dropHighlight(drop["data-drop-target"])} ${sourceState(drag.dragging, settling)}`}
+        style={indent}
+        {...rowState}
+        {...drop}
+      >
         {rename || (
           <button
             type="button"
             aria-expanded={open}
             className="flex min-w-0 flex-1 gap-1 text-left"
             onClick={() => setOpen(!open)}
+            {...drag.props}
           >
             <span className="w-3 text-muted">{open ? "▾" : "▸"}</span>
             <span className="truncate font-semibold">{name}</span>
@@ -112,6 +142,7 @@ function TreeItem({
                   .show({ kind: "runner", collectionId: collection.id, folderId: id }),
             },
             { label: "Rename", onSelect: () => setRenaming(true) },
+            moveTo,
             {
               label: "Delete",
               danger: true,

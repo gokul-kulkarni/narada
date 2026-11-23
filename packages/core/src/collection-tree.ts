@@ -157,3 +157,94 @@ export function findFolder(
   }
   return undefined;
 }
+
+function findItemIn(items: readonly CollectionItem[], id: string): CollectionItem | undefined {
+  for (const item of items) {
+    if (item.kind === "request" && item.request.id === id) return item;
+    if (item.kind === "folder") {
+      if (item.id === id) return item;
+      const inner = findItemIn(item.items, id);
+      if (inner) return inner;
+    }
+  }
+  return undefined;
+}
+
+/** The folder holding `id` (null for the collection's top level); undefined if absent. */
+function parentOf(
+  items: readonly CollectionItem[],
+  id: string,
+  parent: string | null = null,
+): string | null | undefined {
+  for (const item of items) {
+    const itemId = item.kind === "folder" ? item.id : item.request.id;
+    if (itemId === id) return parent;
+    if (item.kind === "folder") {
+      const found = parentOf(item.items, id, item.id);
+      if (found !== undefined) return found;
+    }
+  }
+  return undefined;
+}
+
+/** A request or folder anywhere in the collection, by id. */
+export const findItem = (collection: Collection, id: string): CollectionItem | undefined =>
+  findItemIn(collection.items, id);
+
+/** Folder names from the top of the collection down to `folderId`; null if it isn't there. */
+export function folderPath(collection: Collection, folderId: string): string[] | null {
+  const walk = (items: readonly CollectionItem[], path: string[]): string[] | null => {
+    for (const item of items) {
+      if (item.kind !== "folder") continue;
+      const here = [...path, item.name];
+      if (item.id === folderId) return here;
+      const inner = walk(item.items, here);
+      if (inner) return inner;
+    }
+    return null;
+  };
+  return walk(collection.items, []);
+}
+
+/** The ids of the requests in an item: its own, or every request inside a folder. */
+export function requestIdsIn(item: CollectionItem): string[] {
+  return item.kind === "request" ? [item.request.id] : item.items.flatMap(requestIdsIn);
+}
+
+export interface MoveSource {
+  readonly collectionId: string;
+  readonly itemId: string;
+}
+
+export interface MoveTarget {
+  readonly collectionId: string;
+  /** null for the collection's top level. */
+  readonly folderId: string | null;
+}
+
+/**
+ * Moves a request or folder to the top of a collection or into a folder, also across
+ * collections. Returns the changed collections (one, or source and target), or null when the
+ * move makes no sense: unknown item or target, already there, or a folder into itself.
+ */
+export function moveItem(
+  collections: readonly Collection[],
+  from: MoveSource,
+  to: MoveTarget,
+): Collection[] | null {
+  const source = collections.find((c) => c.id === from.collectionId);
+  const target = collections.find((c) => c.id === to.collectionId);
+  const item = source && findItemIn(source.items, from.itemId);
+  if (!source || !target || !item) return null;
+  if (to.folderId !== null) {
+    const folder = findItemIn(target.items, to.folderId);
+    if (folder?.kind !== "folder") return null;
+    if (item.kind === "folder" && findItemIn([item], to.folderId)) return null;
+  }
+  const sameCollection = source.id === target.id;
+  if (sameCollection && parentOf(source.items, from.itemId) === to.folderId) return null;
+
+  const removed = removeItem(source, from.itemId);
+  const added = addItem(sameCollection ? removed : target, to.folderId, item);
+  return sameCollection ? [added] : [removed, added];
+}
