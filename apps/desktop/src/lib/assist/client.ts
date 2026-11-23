@@ -20,25 +20,29 @@ export type AssistEvent =
 
 export interface AssistClient {
   detect(): Promise<readonly DetectedAgent[]>;
-  /** Resolves when the run has ended; its last event is done, error or stopped. */
+  /**
+   * Resolves when the run has ended; its last event is done, error or stopped. With a
+   * `sessionId` the agent continues that conversation (a follow-up question).
+   */
   run(
     agentId: string,
     prompt: string,
     onEvent: (event: AssistEvent) => void,
     signal: AbortSignal,
+    sessionId?: string | null,
   ): Promise<void>;
 }
 
 const tauriAssistClient: AssistClient = {
   detect: () => invoke<DetectedAgent[]>("assist_detect"),
-  async run(agentId, prompt, onEvent, signal) {
+  async run(agentId, prompt, onEvent, signal, sessionId = null) {
     const id = newId();
     const channel = new Channel<AssistEvent>();
     channel.onmessage = onEvent;
     const stop = () => void invoke("assist_cancel", { id });
     signal.addEventListener("abort", stop, { once: true });
     try {
-      await invoke("assist_run", { request: { agentId, prompt }, id, channel });
+      await invoke("assist_run", { request: { agentId, prompt, sessionId }, id, channel });
     } finally {
       signal.removeEventListener("abort", stop);
     }

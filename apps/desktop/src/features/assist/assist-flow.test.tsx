@@ -71,6 +71,26 @@ describe("asking an agent about a delivery", () => {
       preview.value,
       expect.any(Function),
       expect.any(AbortSignal),
+      null,
+    );
+
+    vi.mocked(client.run).mockImplementationOnce(async (_a, _p, onEvent) => {
+      onEvent({ kind: "text", text: "Send it as JSON." });
+      onEvent({ kind: "done", sessionId: "s", costUsd: 0.01 });
+    });
+    fireEvent.change(within(panel).getByLabelText("Follow-up question"), {
+      target: { value: "What body should I send?" },
+    });
+    fireEvent.click(within(panel).getByRole("button", { name: "Ask" }));
+    expect(await within(panel).findByText("Send it as JSON.")).toBeInTheDocument();
+    expect(within(panel).getByText("What body should I send?")).toBeInTheDocument();
+    expect(within(panel).getByText("qty")).toBeInTheDocument(); // the first answer stays
+    expect(client.run).toHaveBeenLastCalledWith(
+      "claude",
+      "What body should I send?",
+      expect.any(Function),
+      expect.any(AbortSignal),
+      "s",
     );
 
     fireEvent.click(within(panel).getByRole("button", { name: "Close answer" }));

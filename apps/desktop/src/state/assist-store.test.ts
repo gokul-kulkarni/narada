@@ -30,6 +30,9 @@ const run = (overrides: Partial<AssistRun> = {}): AssistRun => ({
   afterActivity: false,
   error: null,
   costUsd: null,
+  sessionId: null,
+  question: null,
+  earlier: [],
   ...overrides,
 });
 
@@ -67,6 +70,17 @@ describe("applyEvent", () => {
     );
   });
 
+  it("remembers the session so the conversation can continue", () => {
+    expect(applyEvent(run(), { kind: "started", sessionId: "s-1" }).sessionId).toBe("s-1");
+    expect(
+      applyEvent(run({ sessionId: "s-1" }), { kind: "done", sessionId: null, costUsd: null })
+        .sessionId,
+    ).toBe("s-1");
+    expect(applyEvent(run(), { kind: "done", sessionId: "s-2", costUsd: null }).sessionId).toBe(
+      "s-2",
+    );
+  });
+
   it("finishes with done, error or stopped", () => {
     expect(applyEvent(run(), { kind: "done", sessionId: "s", costUsd: 0.01 })).toMatchObject({
       status: "done",
@@ -77,7 +91,7 @@ describe("applyEvent", () => {
       error: "boom",
     });
     expect(applyEvent(run(), { kind: "stopped" }).status).toBe("stopped");
-    expect(applyEvent(run(), { kind: "started", sessionId: "s" })).toEqual(run());
+    expect(applyEvent(run(), { kind: "started", sessionId: null })).toEqual(run());
   });
 
   it("returns a new run without changing the old one", () => {
@@ -153,6 +167,7 @@ describe("useAssistStore", () => {
       "prompt text",
       expect.any(Function),
       expect.any(AbortSignal),
+      null,
     );
     expect(useAssistStore.getState().runs["tab-1"]).toMatchObject({
       status: "done",
@@ -187,6 +202,51 @@ describe("useAssistStore", () => {
     expect(useAssistStore.getState().runs["tab-1"]?.status).toBe("stopped");
     useAssistStore.getState().dismiss("tab-1");
     expect(useAssistStore.getState().runs["tab-1"]).toBeUndefined();
+  });
+
+  it("continues the conversation with a follow-up, keeping the earlier answer", async () => {
+    const client = fakeClient([
+      { kind: "started", sessionId: "s-1" },
+      { kind: "text", text: "First answer." },
+      { kind: "done", sessionId: "s-1", costUsd: 0.01 },
+    ]);
+    setAssistClient(client);
+    await useAssistStore.getState().start("tab-1", CLAUDE, "prompt");
+    vi.mocked(client.run).mockImplementationOnce(async (_a, _p, onEvent) => {
+      onEvent({ kind: "text", text: "Second answer." });
+      onEvent({ kind: "done", sessionId: "s-1", costUsd: 0.02 });
+    });
+    await useAssistStore.getState().followUp("tab-1", "And the headers?");
+    expect(client.run).toHaveBeenLastCalledWith(
+      "claude",
+      "And the headers?",
+      expect.any(Function),
+      expect.any(AbortSignal),
+      "s-1",
+    );
+    expect(useAssistStore.getState().runs["tab-1"]).toMatchObject({
+      status: "done",
+      question: "And the headers?",
+      text: "Second answer.",
+      earlier: [{ question: null, answer: "First answer." }],
+      sessionId: "s-1",
+    });
+  });
+
+  it("only follows up on a finished conversation that has a session", async () => {
+    const client = fakeClient(null);
+    setAssistClient(client);
+    await useAssistStore.getState().followUp("tab-1", "nothing to follow");
+    expect(client.run).not.toHaveBeenCalled();
+
+    const running = useAssistStore.getState().start("tab-1", CLAUDE, "p");
+    await useAssistStore.getState().followUp("tab-1", "too soon");
+    expect(client.run).toHaveBeenCalledTimes(1);
+    useAssistStore.getState().stop("tab-1");
+    await running;
+    // Stopped before the agent said which session it was: nothing to continue.
+    await useAssistStore.getState().followUp("tab-1", "no session");
+    expect(client.run).toHaveBeenCalledTimes(1);
   });
 
   it("ignores events from a run that was replaced", async () => {

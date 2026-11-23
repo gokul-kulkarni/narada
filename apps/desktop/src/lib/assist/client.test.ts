@@ -66,7 +66,7 @@ describe("the desktop client", () => {
     tauri.channels[0]?.onmessage({ kind: "text", text: "hi" });
     expect(events).toEqual([{ kind: "text", text: "hi" }]);
     const [, args] = tauri.invoke.mock.calls[0] as [string, { request: unknown; id: string }];
-    expect(args.request).toEqual({ agentId: "claude", prompt: "prompt" });
+    expect(args.request).toEqual({ agentId: "claude", prompt: "prompt", sessionId: null });
 
     controller.abort();
     expect(tauri.invoke).toHaveBeenCalledWith("assist_cancel", { id: args.id });

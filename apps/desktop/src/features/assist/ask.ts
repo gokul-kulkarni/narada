@@ -3,7 +3,8 @@ import { useTabsStore } from "../../state/tabs-store";
 import { useUiStore } from "../../state/ui-store";
 import { useWorkspaceStore } from "../../state/workspace-store";
 import type { DetectedAgent } from "../../lib/assist/client";
-import { promptForTab } from "./agent-context";
+import { scrubText } from "@narada/core/assist/scrub";
+import { promptForTab, secretsForTab } from "./agent-context";
 
 /** The redacted prompt for a tab as it is now, or null if it has nothing to ask about. */
 export function currentPrompt(tabId: string): string | null {
@@ -33,4 +34,13 @@ export async function askAgent(tabId: string, agentId?: string): Promise<void> {
   }
   const prompt = currentPrompt(tabId);
   if (prompt) await assist.start(tabId, agent, prompt);
+}
+
+/** Asks a further question in the tab's conversation, with known secret values removed. */
+export async function askFollowUp(tabId: string, question: string): Promise<void> {
+  const text = question.trim();
+  const tab = useTabsStore.getState().tabs.find((t) => t.id === tabId);
+  if (!text || !tab) return;
+  const secrets = secretsForTab(tab, useWorkspaceStore.getState());
+  await useAssistStore.getState().followUp(tabId, scrubText(text, secrets));
 }

@@ -3,9 +3,10 @@ import { newRequest } from "@narada/core/factories";
 import { setAssistClient, type DetectedAgent } from "../../lib/assist/client";
 import { agentFingerprint, useAssistStore } from "../../state/assist-store";
 import { useTabsStore } from "../../state/tabs-store";
+import { useWorkspaceStore } from "../../state/workspace-store";
 import { useUiStore } from "../../state/ui-store";
 import { resetStores } from "../../test/reset-stores";
-import { askAgent } from "./ask";
+import { askAgent, askFollowUp } from "./ask";
 
 const CLAUDE: DetectedAgent = { id: "claude", name: "Claude Code", path: "/c", version: "1" };
 
@@ -58,6 +59,7 @@ describe("askAgent", () => {
       expect.stringContaining("ECONNREFUSED"),
       expect.any(Function),
       expect.any(AbortSignal),
+      null,
     );
   });
 
@@ -69,5 +71,26 @@ describe("askAgent", () => {
     });
     await askAgent(openTab(true));
     expect(useUiStore.getState().dialog?.kind).toBe("assist-preview");
+  });
+
+  it("removes known secret values from a follow-up question", async () => {
+    const followUp = vi.spyOn(useAssistStore.getState(), "followUp").mockResolvedValue();
+    useWorkspaceStore.setState({
+      environments: [
+        {
+          id: "env",
+          name: "dev",
+          variables: [
+            { id: "v", key: "token", value: "sk-live-abcdef", enabled: true, secret: true },
+          ],
+        },
+      ],
+      activeEnvironmentId: "env",
+    });
+    const tabId = openTab(true);
+    await askFollowUp(tabId, "  why is sk-live-abcdef rejected?  ");
+    expect(followUp).toHaveBeenCalledWith(tabId, "why is [secret:token] rejected?");
+    await askFollowUp(tabId, "   ");
+    expect(followUp).toHaveBeenCalledTimes(1);
   });
 });

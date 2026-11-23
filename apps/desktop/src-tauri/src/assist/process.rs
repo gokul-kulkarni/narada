@@ -37,10 +37,11 @@ fn describe(duration: Duration) -> String {
     }
 }
 
-fn command(spec: &AgentSpec, program: &Path, cwd: &Path) -> Command {
+fn command(spec: &AgentSpec, program: &Path, extra_args: &[String], cwd: &Path) -> Command {
     let mut command = Command::new(program);
     command
         .args(spec.args)
+        .args(extra_args)
         .current_dir(cwd)
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
@@ -84,18 +85,31 @@ fn exit_error(name: &str, status: ExitStatus, stderr: &[String]) -> AssistEvent 
     AssistEvent::Error { message }
 }
 
+/// What to run: which agent, from where, with which extra arguments, telling it `prompt`.
+pub struct RunPlan<'a> {
+    pub spec: &'a AgentSpec,
+    pub program: &'a Path,
+    pub extra_args: &'a [String],
+    pub prompt: &'a str,
+    pub cwd: &'a Path,
+}
+
 /// Runs one agent with `prompt` on stdin and reports what it says through `emit`. Ends with
 /// exactly one of Done, Error or Stopped. Returns Err only if the agent could not start.
 pub async fn run_agent(
-    spec: &AgentSpec,
-    program: &Path,
-    prompt: &str,
-    cwd: &Path,
+    plan: RunPlan<'_>,
     limits: RunLimits,
     cancel: oneshot::Receiver<()>,
     mut emit: impl FnMut(AssistEvent),
 ) -> Result<(), String> {
-    let mut child = command(spec, program, cwd)
+    let RunPlan {
+        spec,
+        program,
+        extra_args,
+        prompt,
+        cwd,
+    } = plan;
+    let mut child = command(spec, program, extra_args, cwd)
         .spawn()
         .map_err(|e| format!("Could not start {}: {e}", spec.name))?;
 

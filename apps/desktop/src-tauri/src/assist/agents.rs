@@ -14,6 +14,8 @@ pub struct AgentSpec {
     pub program: &'static str,
     /// Arguments for a one-shot, read-only run; the prompt arrives on stdin.
     pub args: &'static [&'static str],
+    /// The flag that continues an earlier session, if the agent can.
+    pub resume_flag: Option<&'static str>,
     pub parser: fn() -> Box<dyn LineParser>,
 }
 
@@ -37,10 +39,36 @@ pub const AGENTS: &[AgentSpec] = &[AgentSpec {
         "plan",
         "--restricted",
         "--strict-mcp-config",
-        "--no-session-persistence",
     ],
+    resume_flag: Some("--resume"),
     parser: || Box::new(ClaudeParser::default()),
 }];
+
+const MAX_SESSION_ID_LEN: usize = 128;
+
+/// Session ids come back from the UI, so they must not be able to pass as a flag.
+fn is_session_id(id: &str) -> bool {
+    !id.is_empty()
+        && id.len() <= MAX_SESSION_ID_LEN
+        && !id.starts_with('-')
+        && id
+            .chars()
+            .all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_')
+}
+
+/// Arguments beyond `spec.args` for this run: resuming `session_id` when there is one.
+pub fn run_args(spec: &AgentSpec, session_id: Option<&str>) -> Result<Vec<String>, String> {
+    let Some(id) = session_id else {
+        return Ok(vec![]);
+    };
+    let flag = spec
+        .resume_flag
+        .ok_or_else(|| format!("{} cannot continue a conversation.", spec.name))?;
+    if !is_session_id(id) {
+        return Err("That conversation can't be continued; ask again from the start.".into());
+    }
+    Ok(vec![flag.to_owned(), id.to_owned()])
+}
 
 pub fn find_agent(id: &str) -> Option<&'static AgentSpec> {
     AGENTS.iter().find(|agent| agent.id == id)

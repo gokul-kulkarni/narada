@@ -26,6 +26,12 @@ const enabled = <T extends KeyValue>(rows: readonly T[]): T[] =>
   rows.filter((row) => row.enabled && row.key.trim() !== "");
 
 /** Secret environment variables, plus any variable whose name says it holds a credential. */
+export function secretsForTab(tab: RequestTab, workspace: WorkspaceSnapshot): SecretValue[] {
+  const collection = workspace.collections.find((c) => c.id === tab.source?.collectionId);
+  const environment = workspace.environments.find((e) => e.id === workspace.activeEnvironmentId);
+  return secretsIn(workspace.globals, collection, environment);
+}
+
 function secretsIn(
   globals: readonly KeyValue[],
   collection: Collection | undefined,
@@ -60,7 +66,7 @@ export function promptForTab(
     tests: tab.tests,
     environment: environment?.name ?? null,
     variableNames: scopes.flatMap((rows) => enabled(rows).map((row) => row.key)),
-    secrets: secretsIn(workspace.globals, collection, environment),
+    secrets: secretsForTab(tab, workspace),
     question,
   });
   return renderPrompt(context);

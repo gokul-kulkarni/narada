@@ -16,6 +16,8 @@ pub struct AssistRequest {
     pub agent_id: String,
     /// The redacted prompt; it goes to the agent on stdin, never in argv.
     pub prompt: String,
+    /// Continue this earlier session (a follow-up question) instead of starting a new one.
+    pub session_id: Option<String>,
 }
 
 /// Progress of one agent run, in the same shape whichever CLI produced it.

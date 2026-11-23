@@ -1,6 +1,6 @@
-use super::agents::{AGENTS, AgentSpec, find_agent, parse_version};
+use super::agents::{AGENTS, AgentSpec, find_agent, parse_version, run_args};
 use super::claude::{ClaudeParser, describe_tool};
-use super::process::{LineParser, RunLimits, run_agent};
+use super::process::{LineParser, RunLimits, RunPlan, run_agent};
 use super::types::AssistEvent;
 use serde_json::json;
 use std::time::Duration;
@@ -135,6 +135,48 @@ fn claude_runs_read_only_and_reads_the_prompt_from_stdin() {
 }
 
 #[test]
+fn claude_resumes_a_session_for_follow_ups() {
+    let claude = find_agent("claude").unwrap();
+    assert!(
+        !claude.args.contains(&"--no-session-persistence"),
+        "sessions must be kept to resume"
+    );
+    assert_eq!(run_args(claude, None), Ok(vec![]));
+    assert_eq!(
+        run_args(claude, Some("fbe6303d-f6f1-4cd2-b072-9424d9d77c6b")),
+        Ok(vec![
+            "--resume".to_string(),
+            "fbe6303d-f6f1-4cd2-b072-9424d9d77c6b".to_string()
+        ])
+    );
+}
+
+#[test]
+fn rejects_session_ids_that_could_act_as_flags() {
+    let claude = find_agent("claude").unwrap();
+    for bad in ["", "--tools=Bash", "-r", "a b", "x;rm", &"a".repeat(129)] {
+        assert!(run_args(claude, Some(bad)).is_err(), "accepted {bad:?}");
+    }
+}
+
+#[test]
+fn an_agent_without_resume_cannot_follow_up() {
+    const NO_RESUME: AgentSpec = AgentSpec {
+        id: "x",
+        name: "X",
+        program: "x",
+        args: &["-p"],
+        resume_flag: None,
+        parser: || Box::new(ClaudeParser::default()),
+    };
+    assert_eq!(run_args(&NO_RESUME, None), Ok(vec![]));
+    assert_eq!(
+        run_args(&NO_RESUME, Some("abc")),
+        Err("X cannot continue a conversation.".to_string())
+    );
+}
+
+#[test]
 fn parses_versions_from_cli_output() {
     assert_eq!(
         parse_version("2.1.330 (Claude Code)\n"),
@@ -173,7 +215,8 @@ mod fake_cli {
         id: "fake",
         name: "Fake",
         program: "fake",
-        args: &[],
+        args: &["--fixed"],
+        resume_flag: Some("--resume"),
         parser: || Box::new(EchoParser),
     };
 
@@ -193,16 +236,14 @@ mod fake_cli {
         let program = script(&dir, body);
         let events = Arc::new(Mutex::new(Vec::new()));
         let sink = events.clone();
-        let result = run_agent(
-            &SPEC,
-            &program,
-            "line one\nline two",
-            dir.path(),
-            limits,
-            cancel,
-            move |e| sink.lock().unwrap().push(e),
-        )
-        .await;
+        let plan = RunPlan {
+            spec: &SPEC,
+            program: &program,
+            extra_args: &[],
+            prompt: "line one\nline two",
+            cwd: dir.path(),
+        };
+        let result = run_agent(plan, limits, cancel, move |e| sink.lock().unwrap().push(e)).await;
         let events = events.lock().unwrap().clone();
         (result, events)
     }
@@ -233,6 +274,35 @@ mod fake_cli {
                     cost_usd: None
                 },
             ]
+        );
+    }
+
+    #[tokio::test]
+    async fn passes_fixed_and_extra_arguments() {
+        let dir = tempfile::tempdir().unwrap();
+        let program = script(&dir, "cat >/dev/null; echo \"$@\"");
+        let (_keep, cancel) = oneshot::channel();
+        let mut events = Vec::new();
+        let extra = vec!["--resume".to_string(), "s-1".to_string()];
+        run_agent(
+            RunPlan {
+                spec: &SPEC,
+                program: &program,
+                extra_args: &extra,
+                prompt: "p",
+                cwd: dir.path(),
+            },
+            limits(),
+            cancel,
+            |e| events.push(e),
+        )
+        .await
+        .unwrap();
+        assert_eq!(
+            events[0],
+            AssistEvent::Text {
+                text: "--fixed --resume s-1".into()
+            }
         );
     }
 
@@ -318,17 +388,16 @@ async fn real_claude_answers_through_the_parser() {
         timeout: Duration::from_secs(120),
         grace: Duration::from_secs(2),
     };
-    run_agent(
+    let plan = RunPlan {
         spec,
-        &program,
-        "Reply with exactly: narada ok",
-        dir.path(),
-        limits,
-        cancel,
-        |e| events.push(e),
-    )
-    .await
-    .unwrap();
+        program: &program,
+        extra_args: &[],
+        prompt: "Reply with exactly: narada ok",
+        cwd: dir.path(),
+    };
+    run_agent(plan, limits, cancel, |e| events.push(e))
+        .await
+        .unwrap();
     println!("{events:#?}");
     let text: String = events
         .iter()
@@ -339,4 +408,58 @@ async fn real_claude_answers_through_the_parser() {
         .collect();
     assert!(text.contains("narada ok"), "got {text:?}");
     assert!(matches!(events.last(), Some(AssistEvent::Done { .. })));
+}
+
+/// A follow-up continues the same Claude Code session. Costs a little; opt-in like the above.
+#[tokio::test]
+#[ignore]
+async fn real_claude_remembers_across_a_follow_up() {
+    let spec = find_agent("claude").unwrap();
+    let path = crate::shell_env::effective_path().unwrap_or_default();
+    let program = crate::shell_env::find_program(spec.program, &path).expect("claude installed");
+    let dir = tempfile::tempdir().unwrap();
+    let limits = RunLimits {
+        timeout: Duration::from_secs(120),
+        grace: Duration::from_secs(2),
+    };
+    let ask = |prompt: &'static str, extra: Vec<String>| {
+        let program = program.clone();
+        let cwd = dir.path().to_path_buf();
+        async move {
+            let (_keep, cancel) = oneshot::channel();
+            let mut events = Vec::new();
+            let plan = RunPlan {
+                spec,
+                program: &program,
+                extra_args: &extra,
+                prompt,
+                cwd: &cwd,
+            };
+            run_agent(plan, limits, cancel, |e| events.push(e))
+                .await
+                .unwrap();
+            events
+        }
+    };
+    let first = ask("Remember the word pelican. Reply with exactly: ok", vec![]).await;
+    let Some(AssistEvent::Done {
+        session_id: Some(session),
+        ..
+    }) = first.last().cloned()
+    else {
+        panic!("no session: {first:?}");
+    };
+    let second = ask(
+        "Which word did I ask you to remember? One word.",
+        run_args(spec, Some(&session)).unwrap(),
+    )
+    .await;
+    let text: String = second
+        .iter()
+        .filter_map(|e| match e {
+            AssistEvent::Text { text } => Some(text.as_str()),
+            _ => None,
+        })
+        .collect();
+    assert!(text.to_lowercase().contains("pelican"), "got {second:?}");
 }

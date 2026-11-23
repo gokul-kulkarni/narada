@@ -16,6 +16,9 @@ const run = (overrides: Partial<AssistRun> = {}): AssistRun => ({
   afterActivity: false,
   error: null,
   costUsd: null,
+  sessionId: null,
+  question: null,
+  earlier: [],
   ...overrides,
 });
 

@@ -7,6 +7,13 @@ import { getServices } from "./services";
 
 export type RunStatus = "running" | "done" | "error" | "stopped";
 
+/** An earlier question and answer in the same conversation. */
+export interface AssistExchange {
+  /** null for the first question, which is about the response itself. */
+  readonly question: string | null;
+  readonly answer: string;
+}
+
 /** One agent answer about one tab's delivery. */
 export interface AssistRun {
   readonly id: string;
@@ -21,6 +28,11 @@ export interface AssistRun {
   readonly afterActivity: boolean;
   readonly error: string | null;
   readonly costUsd: number | null;
+  /** The agent's session, so a follow-up can continue the conversation. */
+  readonly sessionId: string | null;
+  /** The question this answer is for; null for the first one, about the response. */
+  readonly question: string | null;
+  readonly earlier: readonly AssistExchange[];
 }
 
 /** Stored on this computer only (assist.json), never in the synced folder. */
@@ -54,13 +66,19 @@ function appendText(run: AssistRun, text: string): string {
 export function applyEvent(run: AssistRun, event: AssistEvent): AssistRun {
   switch (event.kind) {
     case "started":
-      return run;
+      return event.sessionId ? { ...run, sessionId: event.sessionId } : run;
     case "text":
       return { ...run, text: appendText(run, event.text), activity: null, afterActivity: false };
     case "activity":
       return { ...run, activity: event.label, afterActivity: true };
     case "done":
-      return { ...run, status: "done", activity: null, costUsd: event.costUsd };
+      return {
+        ...run,
+        status: "done",
+        activity: null,
+        costUsd: event.costUsd,
+        sessionId: event.sessionId ?? run.sessionId,
+      };
     case "error":
       return { ...run, status: "error", activity: null, error: event.message };
     case "stopped":
@@ -80,6 +98,8 @@ interface AssistState {
   /** The user confirmed running `agent`; optionally skip the preview from now on. */
   confirm: (agent: DetectedAgent, skipPreview: boolean) => Promise<void>;
   start: (tabId: string, agent: DetectedAgent, prompt: string) => Promise<void>;
+  /** Asks a further question in the tab's finished conversation. */
+  followUp: (tabId: string, question: string) => Promise<void>;
   stop: (tabId: string) => void;
   dismiss: (tabId: string) => void;
 }
@@ -97,6 +117,43 @@ export const useAssistStore = create<AssistState>()((set, get) => {
       if (current?.id !== runId) return state;
       return { runs: { ...state.runs, [tabId]: update(current) } };
     });
+
+  /** Shows `run` for the tab and streams the agent's reply to `prompt` into it. */
+  const execute = async (
+    tabId: string,
+    run: AssistRun,
+    prompt: string,
+    sessionId: string | null = null,
+  ) => {
+    controllers.get(tabId)?.abort();
+    set((state) => ({ runs: { ...state.runs, [tabId]: run } }));
+    const fail = (message: string) =>
+      updateRun(tabId, run.id, (r) => applyEvent(r, { kind: "error", message }));
+    const client = getAssistClient();
+    if (!client) {
+      fail("Agents need the desktop app.");
+      return;
+    }
+    const controller = new AbortController();
+    controllers.set(tabId, controller);
+    try {
+      await client.run(
+        run.agentId,
+        prompt,
+        (event) => updateRun(tabId, run.id, (r) => applyEvent(r, event)),
+        controller.signal,
+        sessionId,
+      );
+      // An agent that ends without a final word has still finished.
+      updateRun(tabId, run.id, (r) =>
+        r.status === "running" ? { ...r, status: "done", activity: null } : r,
+      );
+    } catch (error) {
+      fail(errorMessage(error));
+    } finally {
+      if (controllers.get(tabId) === controller) controllers.delete(tabId);
+    }
+  };
 
   return {
     agentsStatus: "idle",
@@ -137,8 +194,6 @@ export const useAssistStore = create<AssistState>()((set, get) => {
     },
 
     start: async (tabId, agent, prompt) => {
-      controllers.get(tabId)?.abort();
-      const client = getAssistClient();
       const run: AssistRun = {
         id: newId(),
         tabId,
@@ -150,34 +205,29 @@ export const useAssistStore = create<AssistState>()((set, get) => {
         afterActivity: false,
         error: null,
         costUsd: null,
+        sessionId: null,
+        question: null,
+        earlier: [],
       };
-      set((state) => ({ runs: { ...state.runs, [tabId]: run } }));
-      if (!client) {
-        updateRun(tabId, run.id, (r) =>
-          applyEvent(r, { kind: "error", message: "Agents need the desktop app." }),
-        );
-        return;
-      }
-      const controller = new AbortController();
-      controllers.set(tabId, controller);
-      try {
-        await client.run(
-          agent.id,
-          prompt,
-          (event) => updateRun(tabId, run.id, (r) => applyEvent(r, event)),
-          controller.signal,
-        );
-        // An agent that ends without a final word has still finished.
-        updateRun(tabId, run.id, (r) =>
-          r.status === "running" ? { ...r, status: "done", activity: null } : r,
-        );
-      } catch (error) {
-        updateRun(tabId, run.id, (r) =>
-          applyEvent(r, { kind: "error", message: errorMessage(error) }),
-        );
-      } finally {
-        if (controllers.get(tabId) === controller) controllers.delete(tabId);
-      }
+      await execute(tabId, run, prompt);
+    },
+
+    followUp: async (tabId, question) => {
+      const current = get().runs[tabId];
+      if (!current?.sessionId || current.status === "running") return;
+      const run: AssistRun = {
+        ...current,
+        id: newId(),
+        status: "running",
+        earlier: [...current.earlier, { question: current.question, answer: current.text }],
+        question,
+        text: "",
+        activity: null,
+        afterActivity: false,
+        error: null,
+        costUsd: null,
+      };
+      await execute(tabId, run, question, current.sessionId);
     },
 
     stop: (tabId) => controllers.get(tabId)?.abort(),

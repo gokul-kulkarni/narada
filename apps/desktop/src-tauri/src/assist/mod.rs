@@ -68,21 +68,21 @@ pub async fn assist_run(
     }
     let program = find_program(spec.program, &effective_path().unwrap_or_default())
         .ok_or_else(|| format!("{} is not installed, or not on your PATH.", spec.name))?;
+    let extra_args = agents::run_args(spec, request.session_id.as_deref())?;
     let cwd = agent_workspace(&app)?;
 
     let (stop, stopped) = oneshot::channel();
     state.runs()?.insert(id.clone(), stop);
-    let result = process::run_agent(
+    let plan = process::RunPlan {
         spec,
-        &program,
-        &request.prompt,
-        &cwd,
-        process::DEFAULT_LIMITS,
-        stopped,
-        |event| {
-            let _ = channel.send(event);
-        },
-    )
+        program: &program,
+        extra_args: &extra_args,
+        prompt: &request.prompt,
+        cwd: &cwd,
+    };
+    let result = process::run_agent(plan, process::DEFAULT_LIMITS, stopped, |event| {
+        let _ = channel.send(event);
+    })
     .await;
     state.runs()?.remove(&id);
     result
