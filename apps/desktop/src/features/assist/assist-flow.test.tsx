@@ -61,7 +61,10 @@ describe("asking an agent about a delivery", () => {
     fireEvent.click(within(dialog).getByRole("button", { name: "Send to Claude Code" }));
 
     const panel = await screen.findByRole("complementary", { name: "Claude Code's answer" });
-    expect(await within(panel).findByText("The server needs `qty`.")).toBeInTheDocument();
+    const answer = await within(panel).findByText(
+      (_, el) => el?.tagName === "P" && el.textContent === "The server needs qty.",
+    );
+    expect(within(answer).getByText("qty").tagName).toBe("CODE");
     expect(within(panel).getByText("Done · $0.01")).toBeInTheDocument();
     expect(client.run).toHaveBeenCalledWith(
       "claude",

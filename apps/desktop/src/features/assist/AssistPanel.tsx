@@ -1,6 +1,7 @@
 import { Button } from "../../components/ui";
 import { useAssistStore, type AssistRun } from "../../state/assist-store";
 import { useUiStore } from "../../state/ui-store";
+import { AnswerMarkdown } from "./AnswerMarkdown";
 
 function statusLine(run: AssistRun): string {
   switch (run.status) {
@@ -61,8 +62,8 @@ export function AssistPanel({ tabId }: { tabId: string }) {
           {run.error}
         </div>
       )}
-      <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3 text-sm leading-relaxed break-words whitespace-pre-wrap">
-        {run.text}
+      <div className="min-h-0 flex-1 overflow-y-auto px-4 py-1 text-sm leading-relaxed break-words">
+        <AnswerMarkdown text={run.text} />
       </div>
       <p className="shrink-0 border-t border-line-soft px-4 py-2 text-xs text-muted">
         Read-only: {run.agentName} can read and search files but cannot change them or run commands.
