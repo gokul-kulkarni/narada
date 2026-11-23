@@ -1,7 +1,9 @@
 import type { CreatePlan } from "@narada/core/mcp-server/create";
 import { Modal } from "../../components/Modal";
 import { Button } from "../../components/ui";
-import { useMcpApprovalStore } from "../../state/mcp-approval-store";
+import type { UpdatePlan } from "@narada/core/mcp-server/update";
+import { useMcpApprovalStore, type ApprovalSubject } from "../../state/mcp-approval-store";
+import { ChangeList } from "../assist/ChangeList";
 
 function New() {
   return (
@@ -68,38 +70,120 @@ function PlanTree({ plan }: { plan: CreatePlan }) {
   );
 }
 
-/** Asks the user before an agent adds anything to their workspace; one request at a time. */
+function CreateBody({ plan }: { plan: CreatePlan }) {
+  return (
+    <>
+      <p>
+        Nothing that exists changes; this only adds. It is saved to your collection files like any
+        other change.
+      </p>
+      <PlanTree plan={plan} />
+      {plan.replacedSecrets.length > 0 && (
+        <p className="text-muted">
+          Credentials were kept out of the files. You'll need to set:{" "}
+          {plan.replacedSecrets.join(", ")}.
+        </p>
+      )}
+      {plan.missingVariables.length > 0 && (
+        <p className="text-muted">Not defined yet: {plan.missingVariables.join(", ")}.</p>
+      )}
+    </>
+  );
+}
+
+function UpdateBody({ plan }: { plan: UpdatePlan }) {
+  return (
+    <>
+      <p>
+        <b>
+          {plan.collectionName} / {plan.requestName}
+        </b>{" "}
+        will be saved with these changes. Nothing else in it changes.
+      </p>
+      <ChangeList changes={plan.changes} />
+      {plan.replacedSecrets.length > 0 && (
+        <p className="text-muted">
+          Credentials were kept out of the file. You'll need to set:{" "}
+          {plan.replacedSecrets.join(", ")}.
+        </p>
+      )}
+      {plan.warnings.map((warning) => (
+        <p key={warning} className="text-muted">
+          {warning}
+        </p>
+      ))}
+    </>
+  );
+}
+
+function SendBody({ subject }: { subject: Extract<ApprovalSubject, { kind: "send" }> }) {
+  const { request } = subject;
+  return (
+    <>
+      <p>
+        It runs like Dispatch: with your{" "}
+        {subject.environment ? `"${subject.environment}"` : "current"} environment, auth and
+        scripts, and can change data on the server. The response goes back to the agent with secrets
+        removed.
+      </p>
+      <div className="flex flex-col gap-1 rounded-lg bg-surface-2 p-3 font-mono text-[13px] break-all">
+        <span>
+          <b>{request.method}</b> {request.url}
+        </span>
+        <span className="text-muted">
+          {subject.host ? `to ${subject.host}` : "host not known until variables are filled in"} ·{" "}
+          {subject.saved ? `saved request "${request.name}"` : "one-off request, not saved"}
+        </span>
+      </div>
+    </>
+  );
+}
+
+const TITLES: Record<ApprovalSubject["kind"], string> = {
+  create: "wants to add to Narada",
+  update: "wants to change a request",
+  send: "wants to send a request",
+};
+
+const APPROVE: Record<ApprovalSubject["kind"], string> = {
+  create: "Add",
+  update: "Apply",
+  send: "Send",
+};
+
+/** What "Allow for this session" covers, if anything, for this subject. */
+function sessionLabel(subject: ApprovalSubject): string | null {
+  if (subject.kind === "create") return "Allow for this session";
+  if (subject.kind === "send" && subject.host)
+    return `Allow sending to ${subject.host} this session`;
+  return null;
+}
+
+/** Asks the user before an agent adds, changes or sends anything; one request at a time. */
 export function ApprovalDialog() {
   const pending = useMcpApprovalStore((s) => s.queue[0]);
   if (!pending) return null;
-  const { plan } = pending;
+  const { subject } = pending;
   const decide = useMcpApprovalStore.getState().decide;
   const who = pending.client ?? "A coding agent";
+  const session = sessionLabel(subject);
 
   return (
-    <Modal title={`${who} wants to add to Narada`} onClose={() => decide(pending.id, "cancel")}>
+    <Modal title={`${who} ${TITLES[subject.kind]}`} onClose={() => decide(pending.id, "cancel")}>
       <div className="flex flex-col gap-4 text-sm">
-        <p>
-          Nothing that exists changes; this only adds. It is saved to your collection files like any
-          other change. The agent waits about a minute for your answer.
-        </p>
-        <PlanTree plan={plan} />
-        {plan.replacedSecrets.length > 0 && (
-          <p className="text-muted">
-            Credentials were kept out of the files. You'll need to set:{" "}
-            {plan.replacedSecrets.join(", ")}.
-          </p>
-        )}
-        {plan.missingVariables.length > 0 && (
-          <p className="text-muted">Not defined yet: {plan.missingVariables.join(", ")}.</p>
-        )}
+        {subject.kind === "create" && <CreateBody plan={subject.plan} />}
+        {subject.kind === "update" && <UpdateBody plan={subject.plan} />}
+        {subject.kind === "send" && <SendBody subject={subject} />}
+        <p className="text-xs text-muted">The agent waits about a minute for your answer.</p>
         <div className="flex flex-wrap justify-end gap-2">
           <Button onClick={() => decide(pending.id, "cancel")}>Cancel</Button>
-          <Button variant="ghost" onClick={() => decide(pending.id, "allow-session")}>
-            Allow for this session
-          </Button>
-          <Button variant="primary" onClick={() => decide(pending.id, "add")}>
-            Add
+          {session && (
+            <Button variant="ghost" onClick={() => decide(pending.id, "allow-session")}>
+              {session}
+            </Button>
+          )}
+          <Button variant="primary" onClick={() => decide(pending.id, "approve")}>
+            {APPROVE[subject.kind]}
           </Button>
         </div>
       </div>

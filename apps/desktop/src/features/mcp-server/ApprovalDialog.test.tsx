@@ -42,7 +42,7 @@ describe("ApprovalDialog", () => {
     render(<ApprovalDialog />);
     let approved: Promise<boolean> = Promise.resolve(false);
     act(() => {
-      approved = useMcpApprovalStore.getState().request("Claude Code", plan);
+      approved = useMcpApprovalStore.getState().request("Claude Code", { kind: "create", plan });
     });
     const dialog = screen.getByRole("dialog", { name: "Claude Code wants to add to Narada" });
     const tree = within(dialog).getByRole("tree", { name: "What will be added" });
@@ -62,8 +62,8 @@ describe("ApprovalDialog", () => {
     let first: Promise<boolean> = Promise.resolve(true);
     let second: Promise<boolean> = Promise.resolve(false);
     act(() => {
-      first = useMcpApprovalStore.getState().request(null, plan);
-      second = useMcpApprovalStore.getState().request(null, plan);
+      first = useMcpApprovalStore.getState().request(null, { kind: "create", plan });
+      second = useMcpApprovalStore.getState().request(null, { kind: "create", plan });
     });
     fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
     expect(await first).toBe(false);
@@ -73,5 +73,58 @@ describe("ApprovalDialog", () => {
     fireEvent.click(screen.getByRole("button", { name: "Allow for this session" }));
     expect(await second).toBe(true);
     expect(useMcpApprovalStore.getState().allowedForSession).toBe(true);
+  });
+
+  it("shows a change to a saved request as a diff, with no session-wide option", async () => {
+    render(<ApprovalDialog />);
+    const before = newRequest({ name: "Create order", method: "GET" });
+    let approved: Promise<boolean> = Promise.resolve(false);
+    act(() => {
+      approved = useMcpApprovalStore.getState().request("Codex", {
+        kind: "update",
+        plan: {
+          collectionId: "c1",
+          collectionName: "Shop",
+          requestId: before.id,
+          requestName: "Create order",
+          before,
+          after: { ...before, method: "POST" },
+          changes: [{ label: "Method", before: "GET", after: "POST" }],
+          warnings: [],
+          replacedSecrets: ["token"],
+        },
+      });
+    });
+    const dialog = screen.getByRole("dialog", { name: "Codex wants to change a request" });
+    expect(within(dialog).getByText("Shop / Create order")).toBeInTheDocument();
+    expect(within(dialog).getByText("GET")).toBeInTheDocument();
+    expect(within(dialog).getByText("POST")).toBeInTheDocument();
+    expect(within(dialog).getByText(/You'll need to set: token/)).toBeInTheDocument();
+    expect(within(dialog).queryByRole("button", { name: /Allow/ })).toBeNull();
+    fireEvent.click(within(dialog).getByRole("button", { name: "Apply" }));
+    expect(await approved).toBe(true);
+  });
+
+  it("shows where a request will be sent, and can allow that host for the session", async () => {
+    render(<ApprovalDialog />);
+    let approved: Promise<boolean> = Promise.resolve(false);
+    act(() => {
+      approved = useMcpApprovalStore.getState().request("Claude Code", {
+        kind: "send",
+        request: newRequest({ name: "Orders", method: "DELETE", url: "{{baseUrl}}/orders/1" }),
+        host: "shop.dev",
+        environment: "dev",
+        saved: true,
+      });
+    });
+    const dialog = screen.getByRole("dialog", { name: "Claude Code wants to send a request" });
+    expect(within(dialog).getByText("DELETE")).toBeInTheDocument();
+    expect(within(dialog).getByText(/^to shop.dev/)).toBeInTheDocument();
+    expect(within(dialog).getByText(/"dev"/)).toBeInTheDocument();
+    fireEvent.click(
+      within(dialog).getByRole("button", { name: "Allow sending to shop.dev this session" }),
+    );
+    expect(await approved).toBe(true);
+    expect(useMcpApprovalStore.getState().allowedHosts.has("shop.dev")).toBe(true);
   });
 });

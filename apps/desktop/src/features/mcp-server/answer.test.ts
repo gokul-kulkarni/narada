@@ -112,7 +112,7 @@ describe("answerToolCall", () => {
   });
 
   describe("creating", () => {
-    const decideNext = async (decision: "add" | "cancel") => {
+    const decideNext = async (decision: "approve" | "cancel") => {
       await vi.waitFor(() => expect(useMcpApprovalStore.getState().queue).toHaveLength(1));
       const [pending] = useMcpApprovalStore.getState().queue;
       useMcpApprovalStore.getState().decide(pending?.id ?? "", decision);
@@ -130,7 +130,7 @@ describe("answerToolCall", () => {
         },
         "Claude Code",
       );
-      const pending = await decideNext("add");
+      const pending = await decideNext("approve");
       expect(pending?.client).toBe("Claude Code");
       const result = await answer;
       expect(result).toMatchObject({
@@ -158,7 +158,7 @@ describe("answerToolCall", () => {
     it("creates a new collection", async () => {
       seed();
       const answer = answerToolCall("create_collection", { name: "Billing" }, null);
-      await decideNext("add");
+      await decideNext("approve");
       expect(await answer).toMatchObject({
         result: { collection: { name: "Billing", created: true } },
       });
@@ -177,6 +177,100 @@ describe("answerToolCall", () => {
         error: expect.stringMatching(/^requests: /),
       });
       expect(useMcpApprovalStore.getState().queue).toEqual([]);
+    });
+  });
+
+  describe("changing and sending", () => {
+    const decide = async (decision: "approve" | "cancel") => {
+      await vi.waitFor(() => expect(useMcpApprovalStore.getState().queue).toHaveLength(1));
+      const [pending] = useMcpApprovalStore.getState().queue;
+      useMcpApprovalStore.getState().decide(pending?.id ?? "", decision);
+      return pending;
+    };
+
+    it("saves an approved change and refreshes the request's clean tab", async () => {
+      const request = seed();
+      const tabId = useTabsStore
+        .getState()
+        .openRequest(request, { collectionId: "c1", requestId: "r1" });
+      const answer = answerToolCall(
+        "update_request",
+        { requestId: "r1", changes: { method: "PUT" } },
+        "Codex",
+      );
+      const pending = await decide("approve");
+      expect(pending?.subject.kind).toBe("update");
+      expect(await answer).toMatchObject({ result: { request: { id: "r1", method: "PUT" } } });
+      expect(JSON.stringify(useWorkspaceStore.getState().collections)).toContain('"method":"PUT"');
+      expect(useTabsStore.getState().tabs.find((t) => t.id === tabId)?.request).toMatchObject({
+        method: "PUT",
+      });
+      expect(useUiStore.getState().notice).toBe('Updated "Orders" in Shop.');
+    });
+
+    it("changes nothing when the user declines a change", async () => {
+      seed();
+      const before = useWorkspaceStore.getState().collections;
+      const answer = answerToolCall("update_request", {
+        requestId: "r1",
+        changes: { method: "PUT" },
+      });
+      await decide("cancel");
+      expect(await answer).toEqual({ error: "The user declined, so nothing changed." });
+      expect(useWorkspaceStore.getState().collections).toBe(before);
+    });
+
+    it("sends an approved request like Dispatch and returns the redacted response", async () => {
+      seed();
+      useWorkspaceStore.setState((s) => ({
+        environments: s.environments.map((e) => ({
+          ...e,
+          variables: [
+            ...e.variables,
+            { id: "b", key: "baseUrl", value: "https://shop.dev", enabled: true, secret: false },
+          ],
+        })),
+      }));
+      const fetchMock = vi
+        .spyOn(globalThis, "fetch")
+        .mockResolvedValue(new Response(`{"error":"bad ${SECRET}"}`, { status: 401 }));
+      const answer = answerToolCall("send_request", { requestId: "r1" }, "Claude Code");
+      const pending = await decide("approve");
+      expect(pending?.subject).toMatchObject({
+        kind: "send",
+        host: "shop.dev",
+        environment: "dev",
+        saved: true,
+      });
+      const result = await answer;
+      expect(result).toMatchObject({
+        result: { outcome: { kind: "http", response: { status: 401 } } },
+      });
+      expect(JSON.stringify(result)).not.toContain(SECRET);
+      expect(fetchMock.mock.calls[0]?.[0]).toBe("https://shop.dev/orders");
+      expect(selectActiveTab(useTabsStore.getState())?.delivery).not.toBeNull();
+      vi.restoreAllMocks();
+    });
+
+    it("refuses to send over the user's unsaved edits, and sends nothing when declined", async () => {
+      const request = seed();
+      const tabId = useTabsStore
+        .getState()
+        .openRequest(request, { collectionId: "c1", requestId: "r1" });
+      useTabsStore.getState().patchTab(tabId, { dirty: true });
+      expect(await answerToolCall("send_request", { requestId: "r1" })).toEqual({
+        error:
+          "The user has unsaved changes to this request in Narada. Ask them to save or discard them first.",
+      });
+      useTabsStore.getState().patchTab(tabId, { dirty: false });
+      const fetchMock = vi.spyOn(globalThis, "fetch");
+      const answer = answerToolCall("send_request", {
+        request: { name: "Probe", url: "http://localhost:9/x" },
+      });
+      await decide("cancel");
+      expect(await answer).toEqual({ error: "The user declined, so nothing was sent." });
+      expect(fetchMock).not.toHaveBeenCalled();
+      vi.restoreAllMocks();
     });
   });
 });

@@ -15,12 +15,17 @@ import {
   type ToolResult,
   type ToolWorkspace,
 } from "@narada/core/mcp-server/tools";
+import { hostOf, parseSendArgs, type SendArgsResult } from "@narada/core/mcp-server/send";
+import { applyUpdate, planUpdate, type UpdateResult } from "@narada/core/mcp-server/update";
+import { resolveTemplate } from "@narada/core/variables";
+import { dispatchTab } from "../../protocols/registry";
 import { useHistoryStore } from "../../state/history-store";
 import { useMcpApprovalStore } from "../../state/mcp-approval-store";
 import { selectActiveTab, useTabsStore } from "../../state/tabs-store";
 import { useUiStore } from "../../state/ui-store";
-import { useWorkspaceStore } from "../../state/workspace-store";
+import { selectActiveEnvironment, useWorkspaceStore } from "../../state/workspace-store";
 import { contextForTab } from "../assist/agent-context";
+import { pipelineInputFor } from "../workspace/context";
 
 function workspace(): ToolWorkspace {
   const { collections, environments, globals, activeEnvironmentId } = useWorkspaceStore.getState();
@@ -58,7 +63,9 @@ async function create(
 ): Promise<ToolResult> {
   if ("error" in planned) return planned;
   const { plan } = planned;
-  const approved = await useMcpApprovalStore.getState().request(client, plan, callId);
+  const approved = await useMcpApprovalStore
+    .getState()
+    .request(client, { kind: "create", plan }, callId);
   if (!approved) return { error: "The user declined, so nothing was added." };
 
   const store = useWorkspaceStore.getState();
@@ -77,6 +84,71 @@ async function create(
     });
   }
   return { result: createResult(plan, applied) };
+}
+
+/** Asks the user to approve the diff, then saves the request and refreshes a clean tab of it. */
+async function update(
+  planned: UpdateResult,
+  client: string | null,
+  callId: string | null,
+): Promise<ToolResult> {
+  if ("error" in planned) return planned;
+  const { plan } = planned;
+  const approved = await useMcpApprovalStore
+    .getState()
+    .request(client, { kind: "update", plan }, callId);
+  if (!approved) return { error: "The user declined, so nothing changed." };
+
+  await useWorkspaceStore
+    .getState()
+    .updateCollection(plan.collectionId, (c) => applyUpdate(c, plan));
+  const tabs = useTabsStore.getState();
+  tabs.tabs
+    .filter((tab) => tab.source?.requestId === plan.requestId && !tab.dirty)
+    .forEach((tab) => tabs.patchTab(tab.id, { request: plan.after }));
+  useUiStore.getState().notify(`Updated "${plan.requestName}" in ${plan.collectionName}.`);
+  return getRequest(workspace(), { requestId: plan.requestId });
+}
+
+/** Asks the user, then sends the request like Dispatch in a tab of its own and reports back. */
+async function send(
+  parsed: SendArgsResult,
+  client: string | null,
+  callId: string | null,
+): Promise<ToolResult> {
+  if ("error" in parsed) return parsed;
+  const { target } = parsed;
+  const source =
+    target.kind === "saved"
+      ? { collectionId: target.collectionId, requestId: target.request.id }
+      : null;
+  const open =
+    source && useTabsStore.getState().tabs.find((t) => t.source?.requestId === source.requestId);
+  if (open?.dirty) {
+    return {
+      error:
+        "The user has unsaved changes to this request in Narada. Ask them to save or discard them first.",
+    };
+  }
+  const { scopes } = pipelineInputFor(source?.collectionId ?? null, source?.requestId ?? null);
+  const environment = selectActiveEnvironment(useWorkspaceStore.getState())?.name ?? null;
+  const subject = {
+    kind: "send" as const,
+    request: target.request,
+    host: hostOf(resolveTemplate(target.request.url, scopes)),
+    environment,
+    saved: target.kind === "saved",
+  };
+  const approved = await useMcpApprovalStore.getState().request(client, subject, callId);
+  if (!approved) return { error: "The user declined, so nothing was sent." };
+
+  const tabId = useTabsStore.getState().openRequest(target.request, source);
+  const tab = useTabsStore.getState().tabs.find((t) => t.id === tabId);
+  if (!tab) return { error: "Narada could not open the request." };
+  await dispatchTab(tab);
+  const sent = useTabsStore.getState().tabs.find((t) => t.id === tabId);
+  const context = sent && contextForTab(sent, useWorkspaceStore.getState());
+  return context ? { result: context } : { error: "The request was not sent." };
 }
 
 /** Answers one tool call from a connected agent with what the app holds, secrets removed. */
@@ -103,6 +175,10 @@ export async function answerToolCall(
       return create(planCreateFolder(workspace(), args), client, callId);
     case "create_collection":
       return create(planCreateCollection(workspace(), args), client, callId);
+    case "update_request":
+      return update(planUpdate(workspace(), args), client, callId);
+    case "send_request":
+      return send(parseSendArgs(workspace(), args), client, callId);
     default:
       return { error: `Narada has no tool "${tool}".` };
   }
