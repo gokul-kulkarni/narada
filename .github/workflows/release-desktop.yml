@@ -4,7 +4,8 @@
 #
 # The tag must match "version" in apps/desktop/src-tauri/tauri.conf.json.
 #
-# macOS builds are not signed or notarized unless these repository secrets are set (an Apple
+# macOS builds are signed ad hoc (bundle.macOS.signingIdentity "-" in tauri.conf.json), so
+# macOS offers "Open Anyway". They are not notarized unless these repository secrets are set (an Apple
 # Developer ID): APPLE_CERTIFICATE, APPLE_CERTIFICATE_PASSWORD, APPLE_SIGNING_IDENTITY, APPLE_ID,
 # APPLE_PASSWORD, APPLE_TEAM_ID. Add them to the tauri-action step's env when you have them.
 name: Release desktop app
@@ -90,3 +91,9 @@ jobs:
             - **Linux**: `.AppImage`, `.deb` or `.rpm`
           releaseDraft: true
           prerelease: false
+
+      # An app whose signature doesn't verify is reported as "damaged" on Apple Silicon, and
+      # macOS offers no way to open it.
+      - name: Check the macOS app's signature
+        if: runner.os == 'macOS'
+        run: codesign --verify --deep --strict --verbose=2 "apps/desktop/src-tauri/target/${{ matrix.target }}/release/bundle/macos/Narada.app"
