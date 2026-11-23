@@ -10,12 +10,10 @@ export const getStorageDir = (): Promise<string> =>
 export const setStorageDir = (path: string | null): Promise<string> =>
   invoke<string>("set_storage_dir", { path });
 
-export async function pickFolder(): Promise<string | null> {
-  const picked = await open({
-    directory: true,
-    multiple: false,
-    title: "Choose a folder for Collections and Environments",
-  });
+export async function pickFolder(
+  title = "Choose a folder for Collections and Environments",
+): Promise<string | null> {
+  const picked = await open({ directory: true, multiple: false, title });
   return typeof picked === "string" ? picked : null;
 }
 

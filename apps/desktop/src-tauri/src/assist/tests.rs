@@ -463,3 +463,49 @@ async fn real_claude_remembers_across_a_follow_up() {
         .collect();
     assert!(text.to_lowercase().contains("pelican"), "got {second:?}");
 }
+
+mod project_folder {
+    use super::super::folder::project_folder;
+
+    #[test]
+    fn accepts_an_existing_folder_inside_home() {
+        let home = tempfile::tempdir().unwrap();
+        let project = home.path().join("shop-api");
+        std::fs::create_dir(&project).unwrap();
+        let chosen = project_folder(project.to_str().unwrap(), home.path()).unwrap();
+        assert_eq!(chosen, project.canonicalize().unwrap());
+    }
+
+    #[test]
+    fn refuses_folders_that_would_expose_too_much_or_do_not_exist() {
+        let home = tempfile::tempdir().unwrap();
+        let file = home.path().join("file.txt");
+        std::fs::write(&file, "x").unwrap();
+        let cases = [
+            ("relative/path", "Choose a full folder path."),
+            (
+                "/",
+                "Choose a project folder, not the whole disk or your home folder.",
+            ),
+            (
+                home.path().to_str().unwrap(),
+                "Choose a project folder, not the whole disk or your home folder.",
+            ),
+            (
+                file.to_str().unwrap(),
+                "That project folder doesn't exist any more.",
+            ),
+            (
+                "/definitely/not/here",
+                "That project folder doesn't exist any more.",
+            ),
+        ];
+        for (path, message) in cases {
+            assert_eq!(
+                project_folder(path, home.path()),
+                Err(message.to_string()),
+                "{path}"
+            );
+        }
+    }
+}

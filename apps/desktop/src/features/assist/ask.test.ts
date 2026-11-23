@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { newRequest } from "@narada/core/factories";
-import { setAssistClient, type DetectedAgent } from "../../lib/assist/client";
+import { setAssistClient, type AssistClient, type DetectedAgent } from "../../lib/assist/client";
 import { agentFingerprint, useAssistStore } from "../../state/assist-store";
 import { useTabsStore } from "../../state/tabs-store";
 import { useWorkspaceStore } from "../../state/workspace-store";
@@ -49,24 +49,37 @@ describe("askAgent", () => {
 
     useUiStore.getState().closeDialog();
     useAssistStore.setState({
-      settings: { trusted: [agentFingerprint(CLAUDE)], skipPreview: true },
+      settings: {
+        trusted: [agentFingerprint(CLAUDE)],
+        skipPreview: true,
+        defaultFolder: null,
+        collectionFolders: {},
+      },
       settingsLoaded: true,
     });
     await askAgent(tabId);
     expect(useUiStore.getState().dialog).toBeNull();
     expect(run).toHaveBeenCalledWith(
-      "claude",
-      expect.stringContaining("ECONNREFUSED"),
+      {
+        agentId: "claude",
+        prompt: expect.stringContaining("ECONNREFUSED"),
+        sessionId: null,
+        cwd: null,
+      },
       expect.any(Function),
       expect.any(AbortSignal),
-      null,
     );
   });
 
   it("previews again when the agent's path or version changed", async () => {
     setAssistClient({ detect: vi.fn(async () => [CLAUDE]), run: vi.fn() });
     useAssistStore.setState({
-      settings: { trusted: ["/c@0"], skipPreview: true },
+      settings: {
+        trusted: ["/c@0"],
+        skipPreview: true,
+        defaultFolder: null,
+        collectionFolders: {},
+      },
       settingsLoaded: true,
     });
     await askAgent(openTab(true));
@@ -92,5 +105,27 @@ describe("askAgent", () => {
     expect(followUp).toHaveBeenCalledWith(tabId, "why is [secret:token] rejected?");
     await askFollowUp(tabId, "   ");
     expect(followUp).toHaveBeenCalledTimes(1);
+  });
+
+  it("runs in the collection's project folder, else the default one", async () => {
+    const run = vi.fn<AssistClient["run"]>(async () => {});
+    setAssistClient({ detect: vi.fn(async () => [CLAUDE]), run });
+    useAssistStore.setState({
+      settings: {
+        trusted: [agentFingerprint(CLAUDE)],
+        skipPreview: true,
+        defaultFolder: "/work",
+        collectionFolders: { shop: "/work/shop" },
+      },
+      settingsLoaded: true,
+    });
+    const saved = useTabsStore.getState().openRequest(newRequest({ url: "https://x.dev/a" }), {
+      collectionId: "shop",
+      requestId: "r1",
+    });
+    useTabsStore.getState().patchTab(saved, { error: "ECONNREFUSED" });
+    await askAgent(saved);
+    await askAgent(openTab(true));
+    expect(run.mock.calls.map(([request]) => request.cwd)).toEqual(["/work/shop", "/work"]);
   });
 });

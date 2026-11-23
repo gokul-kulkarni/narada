@@ -77,8 +77,10 @@ To build it yourself instead, see [Development](#development).
   replaced with `[redacted]` first, and the first time you see exactly what will be sent. Claude
   Code runs read-only: it gets only its Read, Grep and Glob tools (no edits, commands or web
   access), in plan mode with `--restricted`. Ask follow-up questions in the same
-  conversation; Claude Code keeps these sessions under Narada's own empty working folder, not
-  your projects.
+  conversation. To let it read the code behind an API, choose a project folder (per collection,
+  or a default) in Settings → Agents: Claude Code can read only that folder, and Narada refuses
+  the disk root and your home folder. Without one it sees only what it was told. Folders stay on
+  this computer.
 - **Keyboard**: the shortcuts you know from VS Code and browsers. ⌘P goes to any saved request,
   ⌘⇧P lists every command, ⌘↵ sends, ⌘T / ⌘W / ⌘⇧T open, close and reopen tabs, ⌃Tab and ⌘1–9
   switch tabs, ⌘L jumps to the URL, ⌘B hides the sidebar, ⌘J opens History, ⌘, opens Settings (Ctrl on Windows and

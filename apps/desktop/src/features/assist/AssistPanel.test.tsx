@@ -19,6 +19,7 @@ const run = (overrides: Partial<AssistRun> = {}): AssistRun => ({
   sessionId: null,
   question: null,
   earlier: [],
+  cwd: null,
   ...overrides,
 });
 
@@ -73,5 +74,13 @@ describe("AssistPanel", () => {
     writeText.mockRejectedValueOnce(new Error("denied"));
     fireEvent.click(screen.getByRole("button", { name: "Copy" }));
     await waitFor(() => expect(useUiStore.getState().notice).toBe("Could not copy the answer."));
+  });
+
+  it("says which folder the agent could read", () => {
+    render(<AssistPanel tabId="tab-1" />);
+    show({ status: "done" });
+    expect(screen.getByText(/only what it was told/)).toBeInTheDocument();
+    show({ status: "done", cwd: "/work/shop" });
+    expect(screen.getByText("/work/shop").tagName).toBe("CODE");
   });
 });

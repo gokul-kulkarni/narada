@@ -1,9 +1,18 @@
 import { create } from "zustand";
-import { z } from "zod";
 import { errorMessage } from "@narada/core/format";
 import { newId } from "@narada/core/ids";
 import { getAssistClient, type AssistEvent, type DetectedAgent } from "../lib/assist/client";
+import {
+  DEFAULT_SETTINGS,
+  SETTINGS_FILE,
+  agentFingerprint,
+  parseSettings,
+  withFolder,
+  type AssistSettings,
+} from "./assist-settings";
 import { getServices } from "./services";
+
+export { agentFingerprint, parseSettings, type AssistSettings } from "./assist-settings";
 
 export type RunStatus = "running" | "done" | "error" | "stopped";
 
@@ -33,28 +42,8 @@ export interface AssistRun {
   /** The question this answer is for; null for the first one, about the response. */
   readonly question: string | null;
   readonly earlier: readonly AssistExchange[];
-}
-
-/** Stored on this computer only (assist.json), never in the synced folder. */
-export interface AssistSettings {
-  /** Agents the user confirmed, by `agentFingerprint`; a new path or version asks again. */
-  readonly trusted: readonly string[];
-  readonly skipPreview: boolean;
-}
-
-const SETTINGS_FILE = "assist.json";
-const DEFAULT_SETTINGS: AssistSettings = { trusted: [], skipPreview: false };
-const settingsSchema = z.object({ trusted: z.array(z.string()), skipPreview: z.boolean() });
-
-export const agentFingerprint = (agent: DetectedAgent): string => `${agent.path}@${agent.version}`;
-
-export function parseSettings(content: string | null): AssistSettings {
-  try {
-    const parsed = settingsSchema.safeParse(JSON.parse(content ?? "null"));
-    return parsed.success ? parsed.data : DEFAULT_SETTINGS;
-  } catch {
-    return DEFAULT_SETTINGS;
-  }
+  /** The project folder the agent may read (null: an empty folder); follow-ups reuse it. */
+  readonly cwd: string | null;
 }
 
 function appendText(run: AssistRun, text: string): string {
@@ -94,10 +83,20 @@ interface AssistState {
   /** The answer shown beside each tab's delivery, by tab id. */
   readonly runs: Readonly<Record<string, AssistRun>>;
   detect: () => Promise<readonly DetectedAgent[]>;
+  /** Looks for agents again, e.g. after the user installed one. */
+  redetect: () => Promise<readonly DetectedAgent[]>;
   loadSettings: () => Promise<AssistSettings>;
   /** The user confirmed running `agent`; optionally skip the preview from now on. */
   confirm: (agent: DetectedAgent, skipPreview: boolean) => Promise<void>;
-  start: (tabId: string, agent: DetectedAgent, prompt: string) => Promise<void>;
+  setSkipPreview: (skipPreview: boolean) => Promise<void>;
+  /** Sets or clears (null) a collection's project folder, or the default with a null id. */
+  setFolder: (collectionId: string | null, folder: string | null) => Promise<void>;
+  start: (
+    tabId: string,
+    agent: DetectedAgent,
+    prompt: string,
+    cwd?: string | null,
+  ) => Promise<void>;
   /** Asks a further question in the tab's finished conversation. */
   followUp: (tabId: string, question: string) => Promise<void>;
   stop: (tabId: string) => void;
@@ -138,11 +137,9 @@ export const useAssistStore = create<AssistState>()((set, get) => {
     controllers.set(tabId, controller);
     try {
       await client.run(
-        run.agentId,
-        prompt,
+        { agentId: run.agentId, prompt, sessionId, cwd: run.cwd },
         (event) => updateRun(tabId, run.id, (r) => applyEvent(r, event)),
         controller.signal,
-        sessionId,
       );
       // An agent that ends without a final word has still finished.
       updateRun(tabId, run.id, (r) =>
@@ -153,6 +150,13 @@ export const useAssistStore = create<AssistState>()((set, get) => {
     } finally {
       if (controllers.get(tabId) === controller) controllers.delete(tabId);
     }
+  };
+
+  /** Applies a change to the settings and saves them on this computer. */
+  const saveSettings = async (change: (settings: AssistSettings) => AssistSettings) => {
+    const settings = change(await get().loadSettings());
+    set({ settings });
+    await getServices().documents.writeLocal(SETTINGS_FILE, JSON.stringify(settings));
   };
 
   return {
@@ -175,6 +179,11 @@ export const useAssistStore = create<AssistState>()((set, get) => {
       return detecting;
     },
 
+    redetect: () => {
+      if (get().agentsStatus === "ready") set({ agentsStatus: "idle" });
+      return get().detect();
+    },
+
     loadSettings: async () => {
       if (get().settingsLoaded) return get().settings;
       const settings = parseSettings(await getServices().documents.readLocal(SETTINGS_FILE));
@@ -182,18 +191,22 @@ export const useAssistStore = create<AssistState>()((set, get) => {
       return settings;
     },
 
-    confirm: async (agent, skipPreview) => {
-      const current = await get().loadSettings();
-      const print = agentFingerprint(agent);
-      const settings: AssistSettings = {
-        trusted: current.trusted.includes(print) ? current.trusted : [...current.trusted, print],
-        skipPreview: current.skipPreview || skipPreview,
-      };
-      set({ settings });
-      await getServices().documents.writeLocal(SETTINGS_FILE, JSON.stringify(settings));
-    },
+    confirm: (agent, skipPreview) =>
+      saveSettings((current) => {
+        const print = agentFingerprint(agent);
+        return {
+          ...current,
+          trusted: current.trusted.includes(print) ? current.trusted : [...current.trusted, print],
+          skipPreview: current.skipPreview || skipPreview,
+        };
+      }),
 
-    start: async (tabId, agent, prompt) => {
+    setSkipPreview: (skipPreview) => saveSettings((current) => ({ ...current, skipPreview })),
+
+    setFolder: (collectionId, folder) =>
+      saveSettings((current) => withFolder(current, collectionId, folder)),
+
+    start: async (tabId, agent, prompt, cwd = null) => {
       const run: AssistRun = {
         id: newId(),
         tabId,
@@ -208,6 +221,7 @@ export const useAssistStore = create<AssistState>()((set, get) => {
         sessionId: null,
         question: null,
         earlier: [],
+        cwd,
       };
       await execute(tabId, run, prompt);
     },

@@ -18,31 +18,37 @@ export type AssistEvent =
   | { readonly kind: "error"; readonly message: string }
   | { readonly kind: "stopped" };
 
+/** One run of an agent (mirrors the Rust `AssistRequest`). */
+export interface AssistRunRequest {
+  readonly agentId: string;
+  /** Redacted before it gets here; sent to the agent on stdin. */
+  readonly prompt: string;
+  /** Continue this conversation (a follow-up question); null starts a new one. */
+  readonly sessionId: string | null;
+  /** The project folder the agent may read; null for an empty folder. */
+  readonly cwd: string | null;
+}
+
 export interface AssistClient {
   detect(): Promise<readonly DetectedAgent[]>;
-  /**
-   * Resolves when the run has ended; its last event is done, error or stopped. With a
-   * `sessionId` the agent continues that conversation (a follow-up question).
-   */
+  /** Resolves when the run has ended; its last event is done, error or stopped. */
   run(
-    agentId: string,
-    prompt: string,
+    request: AssistRunRequest,
     onEvent: (event: AssistEvent) => void,
     signal: AbortSignal,
-    sessionId?: string | null,
   ): Promise<void>;
 }
 
 const tauriAssistClient: AssistClient = {
   detect: () => invoke<DetectedAgent[]>("assist_detect"),
-  async run(agentId, prompt, onEvent, signal, sessionId = null) {
+  async run(request, onEvent, signal) {
     const id = newId();
     const channel = new Channel<AssistEvent>();
     channel.onmessage = onEvent;
     const stop = () => void invoke("assist_cancel", { id });
     signal.addEventListener("abort", stop, { once: true });
     try {
-      await invoke("assist_run", { request: { agentId, prompt, sessionId }, id, channel });
+      await invoke("assist_run", { request, id, channel });
     } finally {
       signal.removeEventListener("abort", stop);
     }

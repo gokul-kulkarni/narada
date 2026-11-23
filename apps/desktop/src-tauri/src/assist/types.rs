@@ -18,6 +18,8 @@ pub struct AssistRequest {
     pub prompt: String,
     /// Continue this earlier session (a follow-up question) instead of starting a new one.
     pub session_id: Option<String>,
+    /// The project folder the agent may read; none means an empty folder of Narada's own.
+    pub cwd: Option<String>,
 }
 
 /// Progress of one agent run, in the same shape whichever CLI produced it.

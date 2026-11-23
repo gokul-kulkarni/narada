@@ -33,6 +33,7 @@ const run = (overrides: Partial<AssistRun> = {}): AssistRun => ({
   sessionId: null,
   question: null,
   earlier: [],
+  cwd: null,
   ...overrides,
 });
 
@@ -40,7 +41,7 @@ const run = (overrides: Partial<AssistRun> = {}): AssistRun => ({
 function fakeClient(events: readonly AssistEvent[] | null, agents = [CLAUDE]): AssistClient {
   return {
     detect: vi.fn(async () => agents),
-    run: vi.fn(async (_agentId, _prompt, onEvent, signal) => {
+    run: vi.fn(async (_request, onEvent, signal) => {
       if (events) {
         events.forEach(onEvent);
         return;
@@ -101,14 +102,33 @@ describe("applyEvent", () => {
   });
 });
 
+const DEFAULTS = { trusted: [], skipPreview: false, defaultFolder: null, collectionFolders: {} };
+
 describe("parseSettings", () => {
-  it("reads saved settings and falls back for anything unreadable", () => {
+  it("reads saved settings, including files saved before folders existed", () => {
     expect(parseSettings('{"trusted":["a"],"skipPreview":true}')).toEqual({
+      ...DEFAULTS,
       trusted: ["a"],
       skipPreview: true,
     });
-    for (const bad of [null, "not json", '{"trusted":"x"}', "[]"]) {
-      expect(parseSettings(bad)).toEqual({ trusted: [], skipPreview: false });
+    const full = {
+      trusted: [],
+      skipPreview: false,
+      defaultFolder: "/work",
+      collectionFolders: { c1: "/work/shop" },
+    };
+    expect(parseSettings(JSON.stringify(full))).toEqual(full);
+  });
+
+  it("falls back to defaults for anything unreadable", () => {
+    for (const bad of [
+      null,
+      "not json",
+      '{"trusted":"x"}',
+      "[]",
+      '{"collectionFolders":{"c":1}}',
+    ]) {
+      expect(parseSettings(bad)).toEqual(DEFAULTS);
     }
   });
 });
@@ -143,15 +163,48 @@ describe("useAssistStore", () => {
     const documents = createMemoryDocumentStore();
     setServices({ ...getServices(), documents });
     await useAssistStore.getState().confirm(CLAUDE, true);
-    expect(parseSettings(await documents.readLocal("assist.json"))).toEqual({
-      trusted: [agentFingerprint(CLAUDE)],
-      skipPreview: true,
-    });
+    const expected = { ...DEFAULTS, trusted: [agentFingerprint(CLAUDE)], skipPreview: true };
+    expect(parseSettings(await documents.readLocal("assist.json"))).toEqual(expected);
     useAssistStore.setState({ settingsLoaded: false });
-    expect(await useAssistStore.getState().loadSettings()).toEqual({
-      trusted: [agentFingerprint(CLAUDE)],
+    expect(await useAssistStore.getState().loadSettings()).toEqual(expected);
+  });
+
+  it("saves project folders and the preview choice", async () => {
+    const documents = createMemoryDocumentStore();
+    setServices({ ...getServices(), documents });
+    const store = useAssistStore.getState();
+    await store.setFolder(null, "/work");
+    await store.setFolder("c1", "/work/shop");
+    await store.setFolder("c2", "/work/old");
+    await store.setFolder("c2", null);
+    await store.setSkipPreview(true);
+    expect(parseSettings(await documents.readLocal("assist.json"))).toEqual({
+      ...DEFAULTS,
       skipPreview: true,
+      defaultFolder: "/work",
+      collectionFolders: { c1: "/work/shop" },
     });
+    await useAssistStore.getState().setFolder(null, null);
+    expect(useAssistStore.getState().settings.defaultFolder).toBeNull();
+  });
+
+  it("looks for agents again on request", async () => {
+    const client = fakeClient([]);
+    setAssistClient(client);
+    await useAssistStore.getState().detect();
+    await useAssistStore.getState().redetect();
+    expect(client.detect).toHaveBeenCalledTimes(2);
+  });
+
+  it("runs in the project folder and follows up in the same one", async () => {
+    const client = fakeClient([{ kind: "done", sessionId: "s-1", costUsd: null }]);
+    setAssistClient(client);
+    await useAssistStore.getState().start("tab-1", CLAUDE, "p", "/work/shop");
+    await useAssistStore.getState().followUp("tab-1", "more?");
+    expect(vi.mocked(client.run).mock.calls.map(([request]) => request.cwd)).toEqual([
+      "/work/shop",
+      "/work/shop",
+    ]);
   });
 
   it("streams a run into the tab's answer", async () => {
@@ -163,11 +216,9 @@ describe("useAssistStore", () => {
     setAssistClient(client);
     await useAssistStore.getState().start("tab-1", CLAUDE, "prompt text");
     expect(client.run).toHaveBeenCalledWith(
-      "claude",
-      "prompt text",
+      { agentId: "claude", prompt: "prompt text", sessionId: null, cwd: null },
       expect.any(Function),
       expect.any(AbortSignal),
-      null,
     );
     expect(useAssistStore.getState().runs["tab-1"]).toMatchObject({
       status: "done",
@@ -212,17 +263,15 @@ describe("useAssistStore", () => {
     ]);
     setAssistClient(client);
     await useAssistStore.getState().start("tab-1", CLAUDE, "prompt");
-    vi.mocked(client.run).mockImplementationOnce(async (_a, _p, onEvent) => {
+    vi.mocked(client.run).mockImplementationOnce(async (_r, onEvent) => {
       onEvent({ kind: "text", text: "Second answer." });
       onEvent({ kind: "done", sessionId: "s-1", costUsd: 0.02 });
     });
     await useAssistStore.getState().followUp("tab-1", "And the headers?");
     expect(client.run).toHaveBeenLastCalledWith(
-      "claude",
-      "And the headers?",
+      { agentId: "claude", prompt: "And the headers?", sessionId: "s-1", cwd: null },
       expect.any(Function),
       expect.any(AbortSignal),
-      "s-1",
     );
     expect(useAssistStore.getState().runs["tab-1"]).toMatchObject({
       status: "done",
@@ -253,7 +302,7 @@ describe("useAssistStore", () => {
     let late: ((event: AssistEvent) => void) | undefined;
     setAssistClient({
       detect: vi.fn(async () => [CLAUDE]),
-      run: vi.fn(async (_a, _p, onEvent) => {
+      run: vi.fn(async (_r, onEvent) => {
         late ??= onEvent;
       }),
     });

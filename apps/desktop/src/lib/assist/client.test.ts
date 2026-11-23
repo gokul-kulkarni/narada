@@ -56,17 +56,13 @@ describe("the desktop client", () => {
     });
     const events: unknown[] = [];
     const controller = new AbortController();
-    const running = getAssistClient()?.run(
-      "claude",
-      "prompt",
-      (e) => events.push(e),
-      controller.signal,
-    );
+    const request = { agentId: "claude", prompt: "prompt", sessionId: null, cwd: "/work/shop" };
+    const running = getAssistClient()?.run(request, (e) => events.push(e), controller.signal);
 
     tauri.channels[0]?.onmessage({ kind: "text", text: "hi" });
     expect(events).toEqual([{ kind: "text", text: "hi" }]);
     const [, args] = tauri.invoke.mock.calls[0] as [string, { request: unknown; id: string }];
-    expect(args.request).toEqual({ agentId: "claude", prompt: "prompt", sessionId: null });
+    expect(args.request).toEqual(request);
 
     controller.abort();
     expect(tauri.invoke).toHaveBeenCalledWith("assist_cancel", { id: args.id });

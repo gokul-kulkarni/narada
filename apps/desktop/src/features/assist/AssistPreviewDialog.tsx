@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { Modal } from "../../components/Modal";
 import { Button, TextArea } from "../../components/ui";
 import { useAssistStore } from "../../state/assist-store";
-import { currentPrompt } from "./ask";
+import { currentFolder, currentPrompt } from "./ask";
 
 interface Props {
   readonly tabId: string;
@@ -14,6 +14,7 @@ interface Props {
 export function AssistPreviewDialog({ tabId, agentId, onClose }: Props) {
   const agent = useAssistStore((s) => s.agents.find((a) => a.id === agentId));
   const prompt = useMemo(() => currentPrompt(tabId), [tabId]);
+  const folder = useMemo(() => currentFolder(tabId), [tabId]);
   const [skipPreview, setSkipPreview] = useState(false);
   if (!agent || prompt === null) return null;
 
@@ -21,7 +22,7 @@ export function AssistPreviewDialog({ tabId, agentId, onClose }: Props) {
     onClose();
     const { confirm, start } = useAssistStore.getState();
     await confirm(agent, skipPreview);
-    await start(tabId, agent, prompt);
+    await start(tabId, agent, prompt, folder);
   };
 
   return (
@@ -37,6 +38,16 @@ export function AssistPreviewDialog({ tabId, agentId, onClose }: Props) {
           <code className="rounded bg-surface-2 px-1.5 py-0.5 font-mono text-[13px] break-all">
             {agent.path}
           </code>
+        </p>
+        <p className="flex flex-wrap items-baseline gap-2 text-muted">
+          Folder it may read:
+          {folder ? (
+            <code className="rounded bg-surface-2 px-1.5 py-0.5 font-mono text-[13px] break-all">
+              {folder}
+            </code>
+          ) : (
+            <span>none (an empty folder). Choose a project folder in Settings → Agents.</span>
+          )}
         </p>
         <p className="text-muted">
           Secret variables and credentials are replaced with [redacted]. Check that nothing else

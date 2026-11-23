@@ -16,7 +16,7 @@ const CLAUDE: DetectedAgent = {
 function installAgent(events: readonly AssistEvent[], agents = [CLAUDE]) {
   const client: AssistClient = {
     detect: vi.fn(async () => agents),
-    run: vi.fn(async (_agentId, _prompt, onEvent) => events.forEach(onEvent)),
+    run: vi.fn(async (_request, onEvent) => events.forEach(onEvent)),
   };
   setAssistClient(client);
   return client;
@@ -67,14 +67,12 @@ describe("asking an agent about a delivery", () => {
     expect(within(answer).getByText("qty").tagName).toBe("CODE");
     expect(within(panel).getByText("Done · $0.01")).toBeInTheDocument();
     expect(client.run).toHaveBeenCalledWith(
-      "claude",
-      preview.value,
+      { agentId: "claude", prompt: preview.value, sessionId: null, cwd: null },
       expect.any(Function),
       expect.any(AbortSignal),
-      null,
     );
 
-    vi.mocked(client.run).mockImplementationOnce(async (_a, _p, onEvent) => {
+    vi.mocked(client.run).mockImplementationOnce(async (_r, onEvent) => {
       onEvent({ kind: "text", text: "Send it as JSON." });
       onEvent({ kind: "done", sessionId: "s", costUsd: 0.01 });
     });
@@ -86,11 +84,9 @@ describe("asking an agent about a delivery", () => {
     expect(within(panel).getByText("What body should I send?")).toBeInTheDocument();
     expect(within(panel).getByText("qty")).toBeInTheDocument(); // the first answer stays
     expect(client.run).toHaveBeenLastCalledWith(
-      "claude",
-      "What body should I send?",
+      { agentId: "claude", prompt: "What body should I send?", sessionId: "s", cwd: null },
       expect.any(Function),
       expect.any(AbortSignal),
-      "s",
     );
 
     fireEvent.click(within(panel).getByRole("button", { name: "Close answer" }));
@@ -138,7 +134,7 @@ describe("asking an agent about a delivery", () => {
     const dialog = await screen.findByRole("dialog");
     fireEvent.click(within(dialog).getByRole("button", { name: "Send to Claude Code" }));
     await waitFor(() => expect(client.run).toHaveBeenCalled());
-    const prompt = vi.mocked(client.run).mock.calls[0]?.[1] ?? "";
+    const prompt = vi.mocked(client.run).mock.calls[0]?.[0].prompt ?? "";
     expect(prompt).not.toContain("sk-very-secret-1");
     expect(prompt).toContain("[secret:token]");
   });

@@ -1,3 +1,4 @@
+import { folderFor } from "../../state/assist-settings";
 import { agentFingerprint, useAssistStore } from "../../state/assist-store";
 import { useTabsStore } from "../../state/tabs-store";
 import { useUiStore } from "../../state/ui-store";
@@ -10,6 +11,12 @@ import { promptForTab, secretsForTab } from "./agent-context";
 export function currentPrompt(tabId: string): string | null {
   const tab = useTabsStore.getState().tabs.find((t) => t.id === tabId);
   return tab ? promptForTab(tab, useWorkspaceStore.getState()) : null;
+}
+
+/** The project folder the agent may read for this tab (null: an empty folder). */
+export function currentFolder(tabId: string): string | null {
+  const tab = useTabsStore.getState().tabs.find((t) => t.id === tabId);
+  return folderFor(useAssistStore.getState().settings, tab?.source?.collectionId ?? null);
 }
 
 /** Starts the agent on the tab's delivery: straight away, or after the preview when needed. */
@@ -33,7 +40,7 @@ export async function askAgent(tabId: string, agentId?: string): Promise<void> {
     return;
   }
   const prompt = currentPrompt(tabId);
-  if (prompt) await assist.start(tabId, agent, prompt);
+  if (prompt) await assist.start(tabId, agent, prompt, currentFolder(tabId));
 }
 
 /** Asks a further question in the tab's conversation, with known secret values removed. */

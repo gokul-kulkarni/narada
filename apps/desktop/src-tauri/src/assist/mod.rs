@@ -3,6 +3,7 @@
 
 mod agents;
 mod claude;
+mod folder;
 mod process;
 mod types;
 
@@ -69,7 +70,16 @@ pub async fn assist_run(
     let program = find_program(spec.program, &effective_path().unwrap_or_default())
         .ok_or_else(|| format!("{} is not installed, or not on your PATH.", spec.name))?;
     let extra_args = agents::run_args(spec, request.session_id.as_deref())?;
-    let cwd = agent_workspace(&app)?;
+    let cwd = match request.cwd.as_deref() {
+        Some(path) => {
+            let home = app
+                .path()
+                .home_dir()
+                .map_err(|e| format!("No home folder: {e}"))?;
+            folder::project_folder(path, &home)?
+        }
+        None => agent_workspace(&app)?,
+    };
 
     let (stop, stopped) = oneshot::channel();
     state.runs()?.insert(id.clone(), stop);
