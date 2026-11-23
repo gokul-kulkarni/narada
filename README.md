@@ -70,6 +70,37 @@ To build it yourself instead, see [Development](#development).
   requests, and MCP requests save into collections. Import servers by pasting the `mcpServers`
   config used by Claude Desktop, Cursor and others. A local command must be confirmed on each
   computer before it first runs (and again if it changes), since server files can arrive by sync.
+- **Ask an agent**: when a request fails (not delivered, 4xx/5xx, an MCP tool error or a failed
+  test), "Ask Claude Code" (or Codex) sends a description of the request and response to the
+  agent you already have installed and signed in to, and shows its answer beside the response.
+  Narada holds no AI account or key. Secret variables, credential headers, auth values and tokens
+  are replaced with `[redacted]` first, and the first time you see exactly what will be sent.
+  The agent runs read-only with no network:
+  - **Claude Code** gets only its Read, Grep and Glob tools, in plan mode with `--restricted`.
+  - **Codex** runs in a permissions profile that may read only the project folder (and the
+    system and temp folders a shell needs), with network, web search, browser, apps and MCP
+    servers off.
+
+  When it suggests a fix (method, URL, headers or body; never auth), you see it as a diff and
+  "Apply to tab" changes only the open tab, ready to dispatch and save. Ask follow-up questions
+  in the same conversation. To let it read the code behind an API, choose a project folder (per
+  collection, or a default) in Settings → Agents, where you also pick the agent: it can read
+  only that folder, and Narada refuses the disk root and your home folder. Without one it sees
+  only what it was told. Folders stay on this computer.
+
+- **MCP server for coding agents**: turn it on in Settings → MCP server and Claude Code, Codex,
+  Cursor or any MCP client can work with Narada while it works on the code behind your API. It can
+  read your collections, a saved request, your environments (variable names only), recent history
+  and the open tab's latest response, always with secrets removed. It can also, each only after
+  you approve in Narada: add requests, folders and collections (for example one per route it
+  finds, via the `requests_from_code` prompt; existing requests never change), change a saved
+  request's method, URL, headers or body (you see the exact diff; never auth), and send a saved or
+  one-off request exactly as Dispatch would (you see where it goes; you can allow a host for the
+  session). Literal credentials it writes become `{{variables}}`. Narada comes to the front when
+  it asks, since agents wait only about a minute; one that gives up has its request withdrawn. It
+  listens only on `127.0.0.1` (port 7377 by default), needs a token kept in your keychain,
+  refuses requests from web pages, and is off until you turn it on. Settings shows the one-line
+  setup for each agent and recent activity.
 - **Keyboard**: the shortcuts you know from VS Code and browsers. ⌘P goes to any saved request,
   ⌘⇧P lists every command, ⌘↵ sends, ⌘T / ⌘W / ⌘⇧T open, close and reopen tabs, ⌃Tab and ⌘1–9
   switch tabs, ⌘L jumps to the URL, ⌘B hides the sidebar, ⌘J opens History, ⌘, opens Settings (Ctrl on Windows and
@@ -173,6 +204,11 @@ apps/desktop/             the Tauri desktop app
 - Only these HTTP methods are supported; custom methods are imported as GET.
 - OAuth 2.0 supports the client-credentials grant only.
 - Scripts can make network calls (`fetch`) from their Worker; only run scripts you trust.
+- Asking an agent: Claude Code and Codex only (Gemini CLI not yet), and only in the desktop app.
+  Redaction is best-effort: a token pasted into a body as plain text, with no telling name, may
+  not be caught, which is what the preview is for. Codex answers arrive whole rather than word by
+  word, can also read the temp folders, and is refused in a project folder with its own
+  `.codex/config.toml` (whose settings could loosen the limits).
 - MCP: no OAuth sign-in for remote servers yet (use a header token), no sampling, roots or
   elicitation, and the collection runner skips MCP requests. The browser build (`pnpm dev`)
   supports remote servers only, and only those that allow CORS.

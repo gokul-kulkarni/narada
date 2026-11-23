@@ -1,5 +1,11 @@
 export type DocumentKind = "collections" | "environments" | "mcp";
-export type LocalFile = "history.json" | "globals.json" | "sync-state.json" | "mcp-trust.json";
+export type LocalFile =
+  | "history.json"
+  | "globals.json"
+  | "sync-state.json"
+  | "mcp-trust.json"
+  | "assist.json"
+  | "mcp-server.json";
 
 export interface StoredDocument {
   readonly fileName: string;

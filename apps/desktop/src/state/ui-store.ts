@@ -14,7 +14,9 @@ export type Dialog =
   | { readonly kind: "save"; readonly tabId: string }
   | { readonly kind: "code"; readonly tabId: string }
   /** Confirm a local MCP server command before it first runs on this computer. */
-  | { readonly kind: "mcp-trust"; readonly serverId: string };
+  | { readonly kind: "mcp-trust"; readonly serverId: string }
+  /** Show which agent will run and the redacted prompt before it is sent. */
+  | { readonly kind: "assist-preview"; readonly tabId: string; readonly agentId: string };
 
 /** ⌘P searches saved requests; ⌘⇧P searches commands. */
 export type PaletteMode = "requests" | "commands";

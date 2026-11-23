@@ -1,0 +1,9 @@
+{"type":"thread.started","thread_id":"01a20791-5d9a-75a0-9d57-74fe6495ff06"}
+{"type":"turn.started"}
+{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"I'll read the handler first."}}
+{"type":"item.started","item":{"id":"item_1","type":"command_execution","command":"/bin/zsh -lc 'cat src/orders.ts'","aggregated_output":"","exit_code":null,"status":"in_progress"}}
+{"type":"item.completed","item":{"id":"item_1","type":"command_execution","command":"/bin/zsh -lc 'cat src/orders.ts'","aggregated_output":"export ...\n","exit_code":0,"status":"completed"}}
+{"type":"item.started","item":{"id":"item_2","type":"reasoning","text":""}}
+{"type":"item.completed","item":{"id":"item_3","type":"agent_message","text":"The handler requires `qty`."}}
+not json
+{"type":"turn.completed","usage":{"input_tokens":29147,"cached_input_tokens":25600,"cache_write_input_tokens":0,"output_tokens":97,"reasoning_output_tokens":0}}

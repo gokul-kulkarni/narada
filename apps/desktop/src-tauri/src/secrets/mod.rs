@@ -48,17 +48,27 @@ pub fn delete(key: &str) -> Result<(), String> {
     }
 }
 
-#[tauri::command]
-pub fn secret_get(key: String) -> Result<Option<String>, String> {
-    get(&key)
+/// Runs a keychain call off the main thread. A keychain read can wait on a macOS prompt, and a
+/// synchronous command would freeze the whole window until the user answers it.
+async fn off_main_thread<T: Send + 'static>(
+    call: impl FnOnce() -> Result<T, String> + Send + 'static,
+) -> Result<T, String> {
+    tokio::task::spawn_blocking(call)
+        .await
+        .map_err(|e| format!("Keychain access failed: {e}"))?
 }
 
 #[tauri::command]
-pub fn secret_set(key: String, value: String) -> Result<(), String> {
-    set(&key, &value)
+pub async fn secret_get(key: String) -> Result<Option<String>, String> {
+    off_main_thread(move || get(&key)).await
 }
 
 #[tauri::command]
-pub fn secret_delete(key: String) -> Result<(), String> {
-    delete(&key)
+pub async fn secret_set(key: String, value: String) -> Result<(), String> {
+    off_main_thread(move || set(&key, &value)).await
+}
+
+#[tauri::command]
+pub async fn secret_delete(key: String) -> Result<(), String> {
+    off_main_thread(move || delete(&key)).await
 }

@@ -7,34 +7,15 @@ use rmcp::transport::streamable_http_client::StreamableHttpClientTransportConfig
 use rmcp::transport::{StreamableHttpClientTransport, TokioChildProcess};
 use std::collections::HashMap;
 use std::process::Stdio;
-use std::sync::OnceLock;
 use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio::process::Command;
 
 pub type Session = RunningService<RoleClient, Notifier>;
 
-/// Apps opened from the Finder get a bare PATH, so `npx`, `uvx` and friends would not be
-/// found. Ask the login shell for the PATH the user sees in a terminal, once.
-fn login_path() -> Option<&'static str> {
-    static PATH: OnceLock<Option<String>> = OnceLock::new();
-    PATH.get_or_init(|| {
-        let shell = std::env::var("SHELL").unwrap_or_else(|_| "/bin/zsh".into());
-        let output = std::process::Command::new(shell)
-            .args(["-l", "-c", "printf %s \"$PATH\""])
-            .stdin(Stdio::null())
-            .stderr(Stdio::null())
-            .output()
-            .ok()?;
-        let path = String::from_utf8(output.stdout).ok()?;
-        (!path.trim().is_empty()).then_some(path)
-    })
-    .as_deref()
-}
-
 fn command(program: &str, args: &[String], env: &[(String, String)], cwd: Option<&str>) -> Command {
     let mut command = Command::new(program);
     command.args(args);
-    if let Some(path) = login_path() {
+    if let Some(path) = crate::shell_env::login_path() {
         command.env("PATH", path);
     }
     command.envs(env.iter().map(|(k, v)| (k.as_str(), v.as_str())));

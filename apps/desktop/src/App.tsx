@@ -1,6 +1,7 @@
 import { HistoryPanel } from "./features/history/HistoryPanel";
 import { CommandPalette } from "./features/shortcuts/CommandPalette";
 import { useShortcuts } from "./features/shortcuts/use-shortcuts";
+import { ApprovalDialog } from "./features/mcp-server/ApprovalDialog";
 import { Dialogs } from "./features/workspace/Dialogs";
 import { MainView } from "./features/workspace/MainView";
 import { Notices } from "./features/workspace/Notices";
@@ -41,6 +42,7 @@ function App() {
       <HistoryPanel />
       <StatusBar />
       <Dialogs />
+      <ApprovalDialog />
       <CommandPalette />
     </div>
   );
