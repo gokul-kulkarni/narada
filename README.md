@@ -89,16 +89,18 @@ To build it yourself instead, see [Development](#development).
   only what it was told. Folders stay on this computer.
 
 - **MCP server for coding agents**: turn it on in Settings → MCP server and Claude Code, Codex,
-  Cursor or any MCP client can read your collections, a saved request, your environments (variable
-  names only), recent history and the open tab's latest response, while they work on the code
-  behind your API. Every answer has secrets removed. Agents can also add requests, folders and
-  collections, for example one request per route they find (the `requests_from_code` prompt):
-  Narada shows you exactly what will be added and adds nothing until you approve; existing
-  requests never change, and literal credentials become `{{variables}}`. Agents wait about a
-  minute for your answer; if one gives up, the request is withdrawn. It listens only on
-  `127.0.0.1` (port 7377 by default), needs a token kept in your keychain, refuses requests from
-  web pages, and is off until you turn it on. Settings shows the one-line setup for each agent
-  and recent activity.
+  Cursor or any MCP client can work with Narada while it works on the code behind your API. It can
+  read your collections, a saved request, your environments (variable names only), recent history
+  and the open tab's latest response, always with secrets removed. It can also, each only after
+  you approve in Narada: add requests, folders and collections (for example one per route it
+  finds, via the `requests_from_code` prompt; existing requests never change), change a saved
+  request's method, URL, headers or body (you see the exact diff; never auth), and send a saved or
+  one-off request exactly as Dispatch would (you see where it goes; you can allow a host for the
+  session). Literal credentials it writes become `{{variables}}`. Narada comes to the front when
+  it asks, since agents wait only about a minute; one that gives up has its request withdrawn. It
+  listens only on `127.0.0.1` (port 7377 by default), needs a token kept in your keychain,
+  refuses requests from web pages, and is off until you turn it on. Settings shows the one-line
+  setup for each agent and recent activity.
 - **Keyboard**: the shortcuts you know from VS Code and browsers. ⌘P goes to any saved request,
   ⌘⇧P lists every command, ⌘↵ sends, ⌘T / ⌘W / ⌘⇧T open, close and reopen tabs, ⌃Tab and ⌘1–9
   switch tabs, ⌘L jumps to the URL, ⌘B hides the sidebar, ⌘J opens History, ⌘, opens Settings (Ctrl on Windows and
