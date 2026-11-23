@@ -40,6 +40,8 @@ Google Drive. See [STRATEGY.md](STRATEGY.md) for the plan and roadmap.
   computer before it first runs (and again if it changes), since server files can arrive by sync.
 - **Code**: generate cURL, JavaScript `fetch` and Python `requests`. Import cURL commands.
 - **Google Drive sync**: two-way sync with a `narada` folder in your Drive.
+- **HTTPS certificates**: trust extra certificate authorities from a PEM file (a company proxy's
+  root, a dev server's self-signed certificate), or turn certificate checks off, in Settings.
 
 ## Data layout
 

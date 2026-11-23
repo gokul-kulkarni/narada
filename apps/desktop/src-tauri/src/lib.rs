@@ -17,12 +17,16 @@ pub fn run() {
         .manage(mcp::McpState::default())
         .setup(|app| {
             let storage = storage::StorageState::init(app.handle())?;
+            let tls = http::tls::TlsConfig::from(&storage.settings());
+            app.state::<http::HttpState>().configure_at_startup(&tls);
             app.manage(storage);
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
             http::send_request,
             http::cancel_request,
+            http::tls::get_tls_settings,
+            http::tls::set_tls_settings,
             mcp::mcp_connect,
             mcp::mcp_list,
             mcp::mcp_run,

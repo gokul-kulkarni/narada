@@ -11,6 +11,11 @@ pub struct Settings {
     /// Google OAuth "Desktop app" client, needed only for Drive API sync.
     pub google_client_id: Option<String>,
     pub google_client_secret: Option<String>,
+    /// Accept any HTTPS certificate, like Postman with SSL verification off. Off by default.
+    pub accept_invalid_certs: bool,
+    /// A PEM file of certificate authorities trusted alongside the system's (a company proxy's
+    /// root, or a dev server's self-signed certificate).
+    pub ca_certificates_file: Option<PathBuf>,
 }
 
 pub fn load(path: &Path) -> Result<Settings, String> {
@@ -42,6 +47,16 @@ mod tests {
         };
         save(&path, &settings).unwrap();
         assert_eq!(load(&path).unwrap(), settings);
+    }
+
+    #[test]
+    fn reads_files_written_before_the_tls_settings() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("settings.json");
+        std::fs::write(&path, r#"{"storageDir":"/x"}"#).unwrap();
+        let settings = load(&path).unwrap();
+        assert!(!settings.accept_invalid_certs);
+        assert_eq!(settings.ca_certificates_file, None);
     }
 
     #[test]

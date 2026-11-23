@@ -1,15 +1,17 @@
+pub mod tls;
 mod types;
 mod utf8;
 
 pub use types::{HttpRequest, HttpResponse, RequestBody, StreamEvent};
 
-use reqwest::{Client, Method, RequestBuilder, Response, multipart};
+use reqwest::{Client, Method, RequestBuilder, Response, cookie::Jar, multipart};
 use std::collections::HashMap;
 use std::future::Future;
 use std::pin::Pin;
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex, RwLock};
 use std::time::{Duration, Instant};
 use tauri::ipc::Channel;
+use tls::{CERTIFICATE_HINT, TlsConfig, build_client, certificate_problem};
 use tokio::sync::oneshot;
 use tokio::time::timeout;
 use utf8::Utf8Stream;
@@ -29,22 +31,58 @@ fn idle_message(limit: Duration) -> String {
 }
 
 /// Shared client so cookies persist between requests, like Postman's cookie jar, plus a
-/// way to stop each request in flight.
+/// way to stop each request in flight. The client is rebuilt when the TLS settings change;
+/// the cookie jar is kept.
 pub struct HttpState {
-    client: Client,
+    client: RwLock<Client>,
+    jar: Arc<Jar>,
+    tls_problem: Mutex<Option<String>>,
     in_flight: Mutex<HashMap<String, oneshot::Sender<()>>>,
 }
 
 impl HttpState {
     pub fn new() -> Result<Self, String> {
-        let client = Client::builder()
-            .cookie_store(true)
-            .build()
-            .map_err(|e| format!("Failed to create HTTP client: {e}"))?;
+        let jar = Arc::new(Jar::default());
         Ok(Self {
-            client,
+            client: RwLock::new(build_client(jar.clone(), &TlsConfig::default())?),
+            jar,
+            tls_problem: Mutex::new(None),
             in_flight: Mutex::new(HashMap::new()),
         })
+    }
+
+    /// Rebuilds the client with these TLS settings; on error the current client stays.
+    pub fn configure(&self, tls: &TlsConfig) -> Result<(), String> {
+        let client = build_client(self.jar.clone(), tls)?;
+        *self
+            .client
+            .write()
+            .map_err(|_| "HTTP client is unavailable")? = client;
+        *self
+            .tls_problem
+            .lock()
+            .map_err(|_| "HTTP client is unavailable")? = None;
+        Ok(())
+    }
+
+    /// Applies the saved settings at startup, remembering why if they can't be applied.
+    pub fn configure_at_startup(&self, tls: &TlsConfig) {
+        if let Err(problem) = self.configure(tls) {
+            if let Ok(mut slot) = self.tls_problem.lock() {
+                *slot = Some(problem);
+            }
+        }
+    }
+
+    pub fn tls_problem(&self) -> Option<String> {
+        self.tls_problem.lock().ok().and_then(|p| p.clone())
+    }
+
+    fn client(&self) -> Result<Client, String> {
+        self.client
+            .read()
+            .map(|c| c.clone())
+            .map_err(|_| "HTTP client is unavailable".to_string())
     }
 
     fn in_flight(
@@ -197,6 +235,8 @@ pub async fn send(
 fn describe_error(error: reqwest::Error) -> String {
     if error.is_timeout() {
         "Request timed out".to_string()
+    } else if let Some(problem) = certificate_problem(&error) {
+        format!("Could not connect: {problem}. {CERTIFICATE_HINT}")
     } else if error.is_connect() {
         format!("Could not connect: {error}")
     } else {
@@ -220,7 +260,8 @@ pub async fn send_request(
             std::future::pending::<()>().await;
         }
     };
-    let result = send(&state.client, request, cancel, |event| {
+    let client = state.client()?;
+    let result = send(&client, request, cancel, |event| {
         let _ = channel.send(event);
     })
     .await;
