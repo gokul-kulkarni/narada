@@ -33,7 +33,9 @@ function Destination({
 /** The header strip of the delivery on screen: where it went, then its status. */
 function Header({ children }: { children: ReactNode }) {
   return (
-    <div className="flex shrink-0 items-center gap-3 border-b border-line-soft bg-surface px-5 py-2">
+    // Wraps rather than squeezing the destination away when space is tight (e.g. an agent's
+    // answer is open beside the response).
+    <div className="flex shrink-0 flex-wrap items-center gap-x-3 gap-y-2 border-b border-line-soft bg-surface px-5 py-2">
       {children}
     </div>
   );
