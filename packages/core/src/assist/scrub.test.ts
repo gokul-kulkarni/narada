@@ -78,7 +78,9 @@ describe("scrubText", () => {
   });
 
   it("hides JWTs", () => {
-    const jwt = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxIn0.c2lnbmF0dXJl";
+    // Built at run time so secret scanners don't mistake the test token for a real one.
+    const part = (value: unknown) => Buffer.from(JSON.stringify(value)).toString("base64url");
+    const jwt = [part({ alg: "HS256" }), part({ sub: "1" }), "not-a-signature"].join(".");
     expect(scrubText(`token is ${jwt}.`, [])).toBe(`token is ${REDACTED}.`);
   });
 
