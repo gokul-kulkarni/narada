@@ -32,6 +32,7 @@ export function resetStores(): DocumentStore {
     dialog: null,
     notice: null,
     revealed: new Set(),
+    justMoved: null,
   });
   useWorkspaceStore.setState({
     loaded: false,

@@ -94,6 +94,9 @@ export function moveCollectionItem(from: MoveSource, to: MoveTarget): boolean {
       );
   }
   const name = item.kind === "folder" ? item.name : item.request.name;
-  useUiStore.getState().notify(`Moved "${name}" to ${destinationLabel(collections, to)}.`);
+  const ui = useUiStore.getState();
+  ui.reveal([to.collectionId]);
+  ui.markMoved(from.itemId);
+  ui.notify(`Moved "${name}" to ${destinationLabel(collections, to)}.`);
   return true;
 }

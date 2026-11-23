@@ -1,5 +1,5 @@
 import { act, fireEvent, render, screen, within } from "@testing-library/react";
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { newCollection, newRequest } from "@narada/core/factories";
 import type { Collection, CollectionItem } from "@narada/core/model";
 import { useTabsStore } from "../../state/tabs-store";
@@ -39,7 +39,10 @@ function seed() {
 /** A DataTransfer good enough for jsdom's drag events. */
 function dataTransfer() {
   const data = new Map<string, string>();
+  const images: Element[] = [];
   return {
+    images,
+    setDragImage: (element: Element) => images.push(element.cloneNode(true) as Element),
     effectAllowed: "",
     dropEffect: "",
     get types() {
@@ -63,6 +66,8 @@ describe("moving requests and folders", () => {
   beforeEach(() => {
     resetStores();
     seed();
+    // A card from an earlier test may still wait for its one-frame removal.
+    document.querySelectorAll("body > [data-drag-card]").forEach((card) => card.remove());
   });
 
   it("drags a request onto another folder", () => {
@@ -122,5 +127,42 @@ describe("moving requests and folders", () => {
     fireEvent.change(destination, { target: { value: "billing::inv" } });
     fireEvent.click(screen.getByRole("button", { name: "Move" }));
     expect(names("billing")).toEqual([{ invoices: [{ users: ["Create order"] }] }]);
+  });
+
+  it("drags a card, dims the row it came from, and settles the row where it lands", () => {
+    vi.useFakeTimers();
+    render(<CollectionsPanel />);
+    const transfer = dataTransfer();
+    const row = within(tree()).getByRole("button", { name: /^GET\s*Create order$/ });
+    fireEvent.dragStart(row, { dataTransfer: transfer, clientX: 40, clientY: 60 });
+
+    const [card] = transfer.images;
+    expect(card?.textContent).toBe("GETCreate order");
+    expect(card?.getAttribute("data-drag-card")).toBe("request");
+    act(() => vi.runAllTimers());
+    expect(document.querySelector("body > [data-drag-card]")).toBeNull(); // only drawn for the snapshot
+    expect(row.closest("[data-dragging]")).toHaveAttribute("data-dragging", "true");
+
+    fireEvent.drop(within(tree()).getByRole("button", { name: /^▾\s*orders$/ }), {
+      dataTransfer: transfer,
+    });
+    fireEvent.dragEnd(row);
+    const moved = within(tree())
+      .getByRole("button", { name: /^GET\s*Create order$/ })
+      .closest("[data-settling]");
+    expect(moved).toHaveAttribute("data-settling", "true");
+    act(() => vi.advanceTimersByTime(1000));
+    expect(moved).toHaveAttribute("data-settling", "false");
+    vi.useRealTimers();
+  });
+
+  it("drags a folder as a folder card", () => {
+    render(<CollectionsPanel />);
+    const transfer = dataTransfer();
+    fireEvent.dragStart(within(tree()).getByRole("button", { name: /^▾\s*users$/ }), {
+      dataTransfer: transfer,
+    });
+    expect(transfer.images[0]?.getAttribute("data-drag-card")).toBe("folder");
+    expect(transfer.images[0]?.textContent).toContain("users");
   });
 });

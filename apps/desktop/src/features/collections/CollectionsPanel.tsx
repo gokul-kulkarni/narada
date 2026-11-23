@@ -10,7 +10,7 @@ import { useWorkspaceStore } from "../../state/workspace-store";
 import { addFolder, addRequest } from "./collection-actions";
 import { ItemActions } from "./ItemActions";
 import { TreeItems } from "./CollectionTree";
-import { dropHighlight, useDropTarget } from "./drag";
+import { ROW_MOTION, dropHighlight, useDropTarget } from "./drag";
 
 async function exportCollection(collection: Collection) {
   try {
@@ -37,7 +37,7 @@ function CollectionNode({ collection }: { collection: Collection }) {
   return (
     <li>
       <div
-        className={`group flex items-center gap-1 rounded-lg px-1 py-1 hover:bg-surface-2 ${dropHighlight(drop["data-drop-target"])}`}
+        className={`group flex items-center gap-1 rounded-lg px-1 py-1 hover:bg-surface-2 ${ROW_MOTION} ${dropHighlight(drop["data-drop-target"])}`}
         {...drop}
       >
         {renaming ? (
