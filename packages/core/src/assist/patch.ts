@@ -98,18 +98,23 @@ function clean(raw: z.infer<typeof patchSchema>): ExtractedPatch {
   return { patch: Object.keys(patch).length > 0 ? patch : null, warnings };
 }
 
+/** A patch given as a value (e.g. MCP tool arguments), checked like one in an answer. */
+export function parsePatch(value: unknown): ExtractedPatch {
+  const parsed = patchSchema.safeParse(value);
+  if (!parsed.success) return { patch: null, warnings: [UNREADABLE] };
+  const result = clean(parsed.data);
+  return result.patch || result.warnings.length > 0
+    ? result
+    : { patch: null, warnings: [UNREADABLE] };
+}
+
 /** The suggested change in an answer: its last narada-patch block, checked; null if none. */
 export function extractPatch(text: string): ExtractedPatch | null {
   const blocks = [...text.matchAll(BLOCK)];
   const last = blocks.at(-1)?.[1];
   if (last === undefined) return null;
   try {
-    const parsed = patchSchema.safeParse(JSON.parse(last));
-    if (!parsed.success) return { patch: null, warnings: [UNREADABLE] };
-    const result = clean(parsed.data);
-    return result.patch || result.warnings.length > 0
-      ? result
-      : { patch: null, warnings: [UNREADABLE] };
+    return parsePatch(JSON.parse(last));
   } catch {
     return { patch: null, warnings: [UNREADABLE] };
   }

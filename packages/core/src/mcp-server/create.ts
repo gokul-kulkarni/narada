@@ -44,7 +44,7 @@ export interface PlannedRequest {
 export type PlanResult = { readonly plan: CreatePlan } | { readonly error: string };
 
 const name = z.string().trim().min(1).max(200);
-const newRequestSchema = z.object({
+export const newRequestSchema = z.object({
   name,
   method: z.enum(HTTP_METHODS).default("GET"),
   url: z.string().trim().min(1).max(8192),
@@ -65,7 +65,7 @@ const createCollectionArgs = z.object({
 const MAX_DEPTH = 10;
 const VARIABLE = /\{\{\s*([^{}\s]+)\s*\}\}/g;
 
-function describeIssue(error: z.ZodError): string {
+export function describeIssue(error: z.ZodError): string {
   const [issue] = error.issues;
   return issue ? `${issue.path.join(".") || "arguments"}: ${issue.message}` : "Invalid arguments.";
 }
