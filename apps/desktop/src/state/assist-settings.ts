@@ -10,6 +10,8 @@ export interface AssistSettings {
   readonly defaultFolder: string | null;
   /** Project folders by collection id. */
   readonly collectionFolders: Readonly<Record<string, string>>;
+  /** The agent to ask when several are installed; null for the first one found. */
+  readonly defaultAgent: string | null;
 }
 
 export const SETTINGS_FILE = "assist.json";
@@ -19,6 +21,7 @@ export const DEFAULT_SETTINGS: AssistSettings = {
   skipPreview: false,
   defaultFolder: null,
   collectionFolders: {},
+  defaultAgent: null,
 };
 
 // Fields added later default, so files saved by earlier versions still load.
@@ -27,6 +30,7 @@ const settingsSchema = z.object({
   skipPreview: z.boolean(),
   defaultFolder: z.string().nullable().default(null),
   collectionFolders: z.record(z.string(), z.string()).default({}),
+  defaultAgent: z.string().nullable().default(null),
 });
 
 export const agentFingerprint = (agent: DetectedAgent): string => `${agent.path}@${agent.version}`;
@@ -60,3 +64,9 @@ export function withFolder(
 export const folderFor = (settings: AssistSettings, collectionId: string | null): string | null =>
   (collectionId !== null ? settings.collectionFolders[collectionId] : undefined) ??
   settings.defaultFolder;
+
+/** The agent to ask: the one chosen in Settings if it is installed, else the first found. */
+export const preferredAgent = (
+  agents: readonly DetectedAgent[],
+  settings: AssistSettings,
+): DetectedAgent | undefined => agents.find((a) => a.id === settings.defaultAgent) ?? agents[0];

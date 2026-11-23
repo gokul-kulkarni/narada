@@ -89,6 +89,7 @@ interface AssistState {
   /** The user confirmed running `agent`; optionally skip the preview from now on. */
   confirm: (agent: DetectedAgent, skipPreview: boolean) => Promise<void>;
   setSkipPreview: (skipPreview: boolean) => Promise<void>;
+  setDefaultAgent: (agentId: string) => Promise<void>;
   /** Sets or clears (null) a collection's project folder, or the default with a null id. */
   setFolder: (collectionId: string | null, folder: string | null) => Promise<void>;
   start: (
@@ -202,6 +203,8 @@ export const useAssistStore = create<AssistState>()((set, get) => {
       }),
 
     setSkipPreview: (skipPreview) => saveSettings((current) => ({ ...current, skipPreview })),
+
+    setDefaultAgent: (defaultAgent) => saveSettings((current) => ({ ...current, defaultAgent })),
 
     setFolder: (collectionId, folder) =>
       saveSettings((current) => withFolder(current, collectionId, folder)),

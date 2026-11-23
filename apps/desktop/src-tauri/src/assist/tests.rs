@@ -1,5 +1,6 @@
 use super::agents::{AGENTS, AgentSpec, find_agent, parse_version, run_args};
 use super::claude::{ClaudeParser, describe_tool};
+use super::codex::{CodexParser, describe_command};
 use super::process::{LineParser, RunLimits, RunPlan, run_agent};
 use super::types::AssistEvent;
 use serde_json::json;
@@ -106,7 +107,8 @@ fn describes_tools_in_plain_words() {
 #[test]
 fn claude_runs_read_only_and_reads_the_prompt_from_stdin() {
     let claude = find_agent("claude").expect("claude is a known agent");
-    let args = claude.args;
+    let owned = (claude.new_args)();
+    let args: Vec<&str> = owned.iter().map(String::as_str).collect();
     for flag in [
         "-p",
         "--permission-mode",
@@ -130,32 +132,37 @@ fn claude_runs_read_only_and_reads_the_prompt_from_stdin() {
         Some("Read,Grep,Glob"),
         "only read-only tools, no WebSearch"
     );
-    assert!(AGENTS.iter().all(|agent| !agent.args.is_empty()));
+    assert!(AGENTS.iter().all(|agent| !(agent.new_args)().is_empty()));
     assert!(find_agent("nope").is_none());
 }
 
 #[test]
 fn claude_resumes_a_session_for_follow_ups() {
     let claude = find_agent("claude").unwrap();
+    let fresh = (claude.new_args)();
     assert!(
-        !claude.args.contains(&"--no-session-persistence"),
+        !fresh.iter().any(|a| a == "--no-session-persistence"),
         "sessions must be kept to resume"
     );
-    assert_eq!(run_args(claude, None), Ok(vec![]));
+    assert_eq!(run_args(claude, None), Ok(fresh.clone()));
+    let resumed = run_args(claude, Some("fbe6303d-f6f1-4cd2-b072-9424d9d77c6b")).unwrap();
+    assert_eq!(resumed[..fresh.len()], fresh[..]);
     assert_eq!(
-        run_args(claude, Some("fbe6303d-f6f1-4cd2-b072-9424d9d77c6b")),
-        Ok(vec![
-            "--resume".to_string(),
-            "fbe6303d-f6f1-4cd2-b072-9424d9d77c6b".to_string()
-        ])
+        resumed[fresh.len()..],
+        ["--resume", "fbe6303d-f6f1-4cd2-b072-9424d9d77c6b"]
     );
 }
 
 #[test]
 fn rejects_session_ids_that_could_act_as_flags() {
-    let claude = find_agent("claude").unwrap();
-    for bad in ["", "--tools=Bash", "-r", "a b", "x;rm", &"a".repeat(129)] {
-        assert!(run_args(claude, Some(bad)).is_err(), "accepted {bad:?}");
+    for agent in AGENTS {
+        for bad in ["", "--tools=Bash", "-r", "a b", "x;rm", &"a".repeat(129)] {
+            assert!(
+                run_args(agent, Some(bad)).is_err(),
+                "{} accepted {bad:?}",
+                agent.id
+            );
+        }
     }
 }
 
@@ -165,14 +172,132 @@ fn an_agent_without_resume_cannot_follow_up() {
         id: "x",
         name: "X",
         program: "x",
-        args: &["-p"],
-        resume_flag: None,
+        new_args: || vec!["-p".into()],
+        resume_args: None,
+        project_config: None,
         parser: || Box::new(ClaudeParser::default()),
     };
-    assert_eq!(run_args(&NO_RESUME, None), Ok(vec![]));
+    assert_eq!(run_args(&NO_RESUME, None), Ok(vec!["-p".to_string()]));
     assert_eq!(
         run_args(&NO_RESUME, Some("abc")),
         Err("X cannot continue a conversation.".to_string())
+    );
+}
+
+// --- Codex --------------------------------------------------------------------------------
+
+const CODEX_FIXTURE: &str = include_str!("fixtures/codex-stream.jsonl");
+
+#[test]
+fn codex_parser_reports_messages_commands_and_the_thread() {
+    let mut parser = CodexParser::default();
+    let events: Vec<AssistEvent> = CODEX_FIXTURE.lines().flat_map(|l| parser.line(l)).collect();
+    assert_eq!(
+        events,
+        vec![
+            AssistEvent::Started {
+                session_id: Some("01a20791-5d9a-75a0-9d57-74fe6495ff06".into())
+            },
+            AssistEvent::Text {
+                text: "I'll read the handler first.".into()
+            },
+            AssistEvent::Activity {
+                label: "Running cat src/orders.ts".into()
+            },
+            AssistEvent::Text {
+                text: "\n\nThe handler requires `qty`.".into()
+            },
+            AssistEvent::Done {
+                session_id: Some("01a20791-5d9a-75a0-9d57-74fe6495ff06".into()),
+                cost_usd: None
+            },
+        ]
+    );
+}
+
+#[test]
+fn codex_parser_reports_a_failed_turn_once() {
+    let mut parser = CodexParser::default();
+    let lines = [
+        r#"{"type":"error","message":"Your access token could not be refreshed."}"#,
+        r#"{"type":"turn.failed","error":{"message":"Your access token could not be refreshed."}}"#,
+    ];
+    let events: Vec<AssistEvent> = lines.iter().flat_map(|l| parser.line(l)).collect();
+    assert_eq!(
+        events,
+        vec![AssistEvent::Error {
+            message: "Your access token could not be refreshed.".into()
+        }]
+    );
+}
+
+#[test]
+fn describes_codex_commands_without_the_shell_wrapper() {
+    assert_eq!(
+        describe_command("/bin/zsh -lc 'cat src/orders.ts'"),
+        "Running cat src/orders.ts"
+    );
+    assert_eq!(describe_command("bash -lc ls"), "Running ls");
+    assert_eq!(describe_command("rg qty"), "Running rg qty");
+}
+
+#[test]
+fn codex_runs_in_a_read_only_profile_without_network_tools() {
+    let codex = find_agent("codex").expect("codex is a known agent");
+    let args = (codex.new_args)();
+    assert_eq!(args.first().map(String::as_str), Some("exec"));
+    assert_eq!(
+        args.last().map(String::as_str),
+        Some("-"),
+        "prompt on stdin"
+    );
+    let joined = args.join(" ");
+    for needed in [
+        "--json",
+        "--ignore-user-config",
+        "--ignore-rules",
+        r#"default_permissions="narada""#,
+        r#"permissions.narada.filesystem={":minimal"="read", ":workspace_roots"={"."="read"}}"#,
+        r#"web_search="disabled""#,
+        "mcp_servers={}",
+        "--disable browser_use",
+        "--disable browser_use_external",
+        "--disable in_app_browser",
+        "--disable apps",
+        "--disable image_generation",
+    ] {
+        assert!(joined.contains(needed), "missing {needed}");
+    }
+    // --sandbox (or sandbox_mode) would switch Codex back to its legacy sandbox, which reads
+    // the whole disk, and the custom profile would be ignored.
+    for forbidden in [
+        "--sandbox",
+        "sandbox_mode",
+        "dangerously",
+        "--trust",
+        "--full-auto",
+        "write",
+    ] {
+        assert!(!joined.contains(forbidden), "has {forbidden}");
+    }
+    assert!(
+        !args.iter().any(|a| a == "--ephemeral"),
+        "sessions must be kept to resume"
+    );
+    assert_eq!(codex.project_config, Some(".codex/config.toml"));
+}
+
+#[test]
+fn codex_resumes_with_the_same_limits() {
+    let codex = find_agent("codex").unwrap();
+    let fresh = (codex.new_args)();
+    let resumed = run_args(codex, Some("01a20791-5d9a-75a0-9d57-74fe6495ff06")).unwrap();
+    let options = &fresh[1..fresh.len() - 1];
+    assert_eq!(resumed[..2], ["exec", "resume"]);
+    assert_eq!(&resumed[2..2 + options.len()], options);
+    assert_eq!(
+        resumed[2 + options.len()..],
+        ["01a20791-5d9a-75a0-9d57-74fe6495ff06", "-"]
     );
 }
 
@@ -215,8 +340,9 @@ mod fake_cli {
         id: "fake",
         name: "Fake",
         program: "fake",
-        args: &["--fixed"],
-        resume_flag: Some("--resume"),
+        new_args: || vec!["--fixed".into()],
+        resume_args: Some(|id| vec!["--fixed".into(), "--resume".into(), id.into()]),
+        project_config: None,
         parser: || Box::new(EchoParser),
     };
 
@@ -239,7 +365,7 @@ mod fake_cli {
         let plan = RunPlan {
             spec: &SPEC,
             program: &program,
-            extra_args: &[],
+            args: &[],
             prompt: "line one\nline two",
             cwd: dir.path(),
         };
@@ -283,12 +409,12 @@ mod fake_cli {
         let program = script(&dir, "cat >/dev/null; echo \"$@\"");
         let (_keep, cancel) = oneshot::channel();
         let mut events = Vec::new();
-        let extra = vec!["--resume".to_string(), "s-1".to_string()];
+        let extra = run_args(&SPEC, Some("s-1")).unwrap();
         run_agent(
             RunPlan {
                 spec: &SPEC,
                 program: &program,
-                extra_args: &extra,
+                args: &extra,
                 prompt: "p",
                 cwd: dir.path(),
             },
@@ -388,10 +514,11 @@ async fn real_claude_answers_through_the_parser() {
         timeout: Duration::from_secs(120),
         grace: Duration::from_secs(2),
     };
+    let args = run_args(spec, None).unwrap();
     let plan = RunPlan {
         spec,
         program: &program,
-        extra_args: &[],
+        args: &args,
         prompt: "Reply with exactly: narada ok",
         cwd: dir.path(),
     };
@@ -431,7 +558,7 @@ async fn real_claude_remembers_across_a_follow_up() {
             let plan = RunPlan {
                 spec,
                 program: &program,
-                extra_args: &extra,
+                args: &extra,
                 prompt,
                 cwd: &cwd,
             };
@@ -441,7 +568,11 @@ async fn real_claude_remembers_across_a_follow_up() {
             events
         }
     };
-    let first = ask("Remember the word pelican. Reply with exactly: ok", vec![]).await;
+    let first = ask(
+        "Remember the word pelican. Reply with exactly: ok",
+        run_args(spec, None).unwrap(),
+    )
+    .await;
     let Some(AssistEvent::Done {
         session_id: Some(session),
         ..
@@ -508,4 +639,115 @@ mod project_folder {
             );
         }
     }
+}
+
+mod codex_project_config {
+    use super::super::folder::has_project_config;
+
+    #[test]
+    fn finds_codex_settings_in_the_folder_or_a_parent_up_to_home() {
+        let home = tempfile::tempdir().unwrap();
+        let project = home.path().join("work/shop/api");
+        std::fs::create_dir_all(&project).unwrap();
+        let rel = ".codex/config.toml";
+        assert!(!has_project_config(&project, rel, home.path()));
+
+        // The user's own ~/.codex/config.toml is skipped with --ignore-user-config.
+        std::fs::create_dir_all(home.path().join(".codex")).unwrap();
+        std::fs::write(home.path().join(rel), "model = \"x\"").unwrap();
+        assert!(!has_project_config(&project, rel, home.path()));
+
+        std::fs::create_dir_all(home.path().join("work/shop/.codex")).unwrap();
+        std::fs::write(
+            home.path().join("work/shop").join(rel),
+            "sandbox_mode = \"danger-full-access\"",
+        )
+        .unwrap();
+        assert!(has_project_config(&project, rel, home.path()));
+    }
+}
+
+/// Runs the real Codex with Narada's arguments: it reads inside its folder, is refused
+/// outside it, and a follow-up continues the thread. Uses your account; opt-in:
+/// `cargo test real_codex -- --ignored --nocapture`.
+#[tokio::test]
+#[ignore]
+async fn real_codex_stays_in_its_folder_and_follows_up() {
+    let spec = find_agent("codex").unwrap();
+    let path = crate::shell_env::effective_path().unwrap_or_default();
+    let program = crate::shell_env::find_program(spec.program, &path).expect("codex installed");
+    // Outside the temp folders, which Codex's shell may always read.
+    let home = std::env::var("HOME").unwrap();
+    let base = tempfile::tempdir_in(&home).unwrap();
+    let project = base.path().join("proj");
+    let outside = base.path().join("outside");
+    std::fs::create_dir_all(&project).unwrap();
+    std::fs::create_dir_all(&outside).unwrap();
+    std::fs::write(project.join("inside.txt"), "inside-4410").unwrap();
+    std::fs::write(outside.join("note.txt"), "canary-7731").unwrap();
+    let limits = RunLimits {
+        timeout: Duration::from_secs(240),
+        grace: Duration::from_secs(2),
+    };
+    let run = |prompt: String, args: Vec<String>| {
+        let program = program.clone();
+        let cwd = project.clone();
+        async move {
+            let (_keep, cancel) = oneshot::channel();
+            let mut events = Vec::new();
+            let plan = RunPlan {
+                spec,
+                program: &program,
+                args: &args,
+                prompt: &prompt,
+                cwd: &cwd,
+            };
+            run_agent(plan, limits, cancel, |e| events.push(e))
+                .await
+                .unwrap();
+            events
+        }
+    };
+    let text_of = |events: &[AssistEvent]| -> String {
+        events
+            .iter()
+            .filter_map(|e| match e {
+                AssistEvent::Text { text } => Some(text.as_str()),
+                _ => None,
+            })
+            .collect()
+    };
+    let note = outside.join("note.txt");
+    let first = run(
+        format!(
+            "Use shell commands: cat inside.txt, then cat {}. Reply exactly as INSIDE=<output>; OUTSIDE=<output or error>. Also remember the word pelican.",
+            note.display()
+        ),
+        run_args(spec, None).unwrap(),
+    )
+    .await;
+    println!("{first:#?}");
+    let answer = text_of(&first);
+    assert!(
+        answer.contains("inside-4410"),
+        "could not read inside: {answer}"
+    );
+    assert!(
+        !answer.contains("canary-7731"),
+        "read outside its folder: {answer}"
+    );
+    let Some(AssistEvent::Done {
+        session_id: Some(thread),
+        ..
+    }) = first.last().cloned()
+    else {
+        panic!("no thread: {first:?}");
+    };
+    let second = run(
+        "Which word did I ask you to remember? One word.".into(),
+        run_args(spec, Some(&thread)).unwrap(),
+    )
+    .await;
+    println!("{second:#?}");
+    assert!(text_of(&second).to_lowercase().contains("pelican"));
 }

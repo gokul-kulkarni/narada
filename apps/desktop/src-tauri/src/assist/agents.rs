@@ -1,4 +1,5 @@
 use super::claude::ClaudeParser;
+use super::codex::CodexParser;
 use super::process::LineParser;
 use super::types::DetectedAgent;
 use crate::shell_env::find_program;
@@ -7,42 +8,104 @@ use tokio::process::Command;
 
 const VERSION_TIMEOUT: Duration = Duration::from_secs(5);
 
-/// How to run one agent CLI. Adding an agent is a new entry here plus its parser.
+/// How to run one agent CLI. Adding an agent is a new entry here plus its parser, and only
+/// after its read-only limits were checked on a real run (see docs/plans/agent-assist.md).
 pub struct AgentSpec {
     pub id: &'static str,
     pub name: &'static str,
     pub program: &'static str,
-    /// Arguments for a one-shot, read-only run; the prompt arrives on stdin.
-    pub args: &'static [&'static str],
-    /// The flag that continues an earlier session, if the agent can.
-    pub resume_flag: Option<&'static str>,
+    /// Arguments for a new read-only conversation; the prompt arrives on stdin.
+    pub new_args: fn() -> Vec<String>,
+    /// Arguments that continue session `id` with the same limits, if the agent can.
+    pub resume_args: Option<fn(&str) -> Vec<String>>,
+    /// A settings file that, found in the project folder or a parent, could loosen the limits.
+    pub project_config: Option<&'static str>,
     pub parser: fn() -> Box<dyn LineParser>,
 }
 
-pub const AGENTS: &[AgentSpec] = &[AgentSpec {
-    id: "claude",
-    name: "Claude Code",
-    program: "claude",
-    args: &[
-        "-p",
-        "--output-format",
-        "stream-json",
-        "--verbose",
-        "--include-partial-messages",
-        // Read and search only. `--tools` is the allowlist: without it Claude Code still has
-        // WebSearch (a way to send data out if a response carries injected instructions),
-        // Edit/Write, subagents and more. Plan mode and `--restricted` are a second layer, and
-        // keep the user's own settings, hooks and MCP servers out of it.
-        "--tools",
-        "Read,Grep,Glob",
-        "--permission-mode",
-        "plan",
-        "--restricted",
-        "--strict-mcp-config",
-    ],
-    resume_flag: Some("--resume"),
-    parser: || Box::new(ClaudeParser::default()),
-}];
+fn strings(parts: &[&str]) -> Vec<String> {
+    parts.iter().map(|part| (*part).to_owned()).collect()
+}
+
+const CLAUDE_ARGS: &[&str] = &[
+    "-p",
+    "--output-format",
+    "stream-json",
+    "--verbose",
+    "--include-partial-messages",
+    // Read and search only. `--tools` is the allowlist: without it Claude Code still has
+    // WebSearch (a way to send data out if a response carries injected instructions),
+    // Edit/Write, subagents and more. Plan mode and `--restricted` are a second layer, and
+    // keep the user's own settings, hooks and MCP servers out of it. Its file tools stay
+    // inside the working folder.
+    "--tools",
+    "Read,Grep,Glob",
+    "--permission-mode",
+    "plan",
+    "--restricted",
+    "--strict-mcp-config",
+];
+
+/// Codex runs shell commands, so the limits are its sandbox's: a permissions profile that
+/// may read only the working folder (plus the system paths a shell needs, which include the
+/// temp folders) with no network, and no web search, browser, apps or MCP servers.
+/// Never `--sandbox`/`sandbox_mode`: either switches Codex back to its legacy sandbox, whose
+/// read-only mode reads the whole disk, and the profile is ignored. Checked on codex-cli 0.171.
+/// An unknown `--disable` name is a hard error, so a renamed feature fails loudly.
+const CODEX_OPTIONS: &[&str] = &[
+    "--json",
+    "--skip-git-repo-check",
+    "--ignore-user-config",
+    "--ignore-rules",
+    "-c",
+    r#"default_permissions="narada""#,
+    "-c",
+    r#"permissions.narada.filesystem={":minimal"="read", ":workspace_roots"={"."="read"}}"#,
+    "-c",
+    r#"web_search="disabled""#,
+    "-c",
+    "mcp_servers={}",
+    "--disable",
+    "browser_use",
+    "--disable",
+    "browser_use_external",
+    "--disable",
+    "in_app_browser",
+    "--disable",
+    "apps",
+    "--disable",
+    "image_generation",
+];
+
+pub const AGENTS: &[AgentSpec] = &[
+    AgentSpec {
+        id: "claude",
+        name: "Claude Code",
+        program: "claude",
+        new_args: || strings(CLAUDE_ARGS),
+        resume_args: Some(|id| [strings(CLAUDE_ARGS), strings(&["--resume", id])].concat()),
+        project_config: None,
+        parser: || Box::new(ClaudeParser::default()),
+    },
+    AgentSpec {
+        id: "codex",
+        name: "Codex",
+        program: "codex",
+        new_args: || [strings(&["exec"]), strings(CODEX_OPTIONS), strings(&["-"])].concat(),
+        resume_args: Some(|id| {
+            [
+                strings(&["exec", "resume"]),
+                strings(CODEX_OPTIONS),
+                strings(&[id, "-"]),
+            ]
+            .concat()
+        }),
+        // A trusted project's Codex settings load even so, and `sandbox_mode` there would
+        // replace the profile above.
+        project_config: Some(".codex/config.toml"),
+        parser: || Box::new(CodexParser::default()),
+    },
+];
 
 const MAX_SESSION_ID_LEN: usize = 128;
 
@@ -56,18 +119,18 @@ fn is_session_id(id: &str) -> bool {
             .all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_')
 }
 
-/// Arguments beyond `spec.args` for this run: resuming `session_id` when there is one.
+/// The full arguments for this run: a new conversation, or continuing `session_id`.
 pub fn run_args(spec: &AgentSpec, session_id: Option<&str>) -> Result<Vec<String>, String> {
     let Some(id) = session_id else {
-        return Ok(vec![]);
+        return Ok((spec.new_args)());
     };
-    let flag = spec
-        .resume_flag
+    let resume = spec
+        .resume_args
         .ok_or_else(|| format!("{} cannot continue a conversation.", spec.name))?;
     if !is_session_id(id) {
         return Err("That conversation can't be continued; ask again from the start.".into());
     }
-    Ok(vec![flag.to_owned(), id.to_owned()])
+    Ok(resume(id))
 }
 
 pub fn find_agent(id: &str) -> Option<&'static AgentSpec> {

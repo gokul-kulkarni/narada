@@ -110,9 +110,9 @@ export function AssistPanel({ tabId }: { tabId: string }) {
       </div>
       {canFollowUp && <FollowUp tabId={tabId} />}
       <p className="shrink-0 border-t border-line-soft px-4 py-2 text-xs text-muted">
-        Read-only: {run.agentName} can read and search{" "}
+        Read-only: {run.agentName} can read{" "}
         {run.cwd ? <code className="font-mono break-all">{run.cwd}</code> : "only what it was told"}{" "}
-        but cannot change files or run commands.
+        but cannot change files or reach the network.
       </p>
     </aside>
   );

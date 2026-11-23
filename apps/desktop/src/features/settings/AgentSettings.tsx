@@ -3,6 +3,7 @@ import { Card } from "../../components/page";
 import { Button } from "../../components/ui";
 import { getAssistClient } from "../../lib/assist/client";
 import { pickFolder } from "../../lib/settings-api";
+import { preferredAgent } from "../../state/assist-settings";
 import { useAssistStore } from "../../state/assist-store";
 import { useWorkspaceStore } from "../../state/workspace-store";
 
@@ -62,7 +63,7 @@ export function AgentSettings() {
   }, [available]);
 
   const description =
-    "Ask an installed coding agent about a failed response. It runs read-only, on your own account, with secrets removed from what it is told.";
+    "Ask an installed coding agent (Claude Code or Codex) about a failed response. It runs read-only with no network, on your own account, with secrets removed from what it is told.";
   if (!available) {
     return (
       <Card label="Agents" title="Agents" description={description}>
@@ -78,7 +79,7 @@ export function AgentSettings() {
           <span className="text-sm text-muted">Looking for agents…</span>
         ) : agents.length === 0 ? (
           <span className="text-sm text-muted">
-            No coding agent found. Install Claude Code, then click Refresh.
+            No coding agent found. Install Claude Code or Codex, then click Refresh.
           </span>
         ) : (
           <ul className="flex flex-col gap-1">
@@ -100,6 +101,27 @@ export function AgentSettings() {
           Refresh
         </Button>
       </div>
+
+      {agents.length > 1 && (
+        <div
+          role="radiogroup"
+          aria-label="Ask with"
+          className="flex flex-wrap items-center gap-3 text-sm"
+        >
+          <span className="font-semibold">Ask with</span>
+          {agents.map((agent) => (
+            <label key={agent.id} className="flex items-center gap-1.5">
+              <input
+                type="radio"
+                name="assist-agent"
+                checked={preferredAgent(agents, settings)?.id === agent.id}
+                onChange={() => void useAssistStore.getState().setDefaultAgent(agent.id)}
+              />
+              {agent.name}
+            </label>
+          ))}
+        </div>
+      )}
 
       <label className="flex items-center gap-2 text-sm">
         <input

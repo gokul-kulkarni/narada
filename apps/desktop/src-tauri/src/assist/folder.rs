@@ -21,3 +21,14 @@ pub fn project_folder(path: &str, home: &Path) -> Result<PathBuf, String> {
     }
     Ok(folder)
 }
+
+/// Whether `relative` (e.g. `.codex/config.toml`) exists in `folder` or a parent, stopping
+/// before the home folder, whose own settings file is the user's and is handled separately.
+pub fn has_project_config(folder: &Path, relative: &str, home: &Path) -> bool {
+    let canonical = |path: &Path| path.canonicalize().unwrap_or_else(|_| path.to_path_buf());
+    let (folder, home) = (canonical(folder), canonical(home));
+    folder
+        .ancestors()
+        .take_while(|dir| *dir != home)
+        .any(|dir| dir.join(relative).is_file())
+}

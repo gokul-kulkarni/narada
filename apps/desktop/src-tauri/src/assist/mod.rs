@@ -3,6 +3,7 @@
 
 mod agents;
 mod claude;
+mod codex;
 mod folder;
 mod process;
 mod types;
@@ -69,24 +70,31 @@ pub async fn assist_run(
     }
     let program = find_program(spec.program, &effective_path().unwrap_or_default())
         .ok_or_else(|| format!("{} is not installed, or not on your PATH.", spec.name))?;
-    let extra_args = agents::run_args(spec, request.session_id.as_deref())?;
+    let args = agents::run_args(spec, request.session_id.as_deref())?;
+    let home = app
+        .path()
+        .home_dir()
+        .map_err(|e| format!("No home folder: {e}"))?;
     let cwd = match request.cwd.as_deref() {
-        Some(path) => {
-            let home = app
-                .path()
-                .home_dir()
-                .map_err(|e| format!("No home folder: {e}"))?;
-            folder::project_folder(path, &home)?
-        }
+        Some(path) => folder::project_folder(path, &home)?,
         None => agent_workspace(&app)?,
     };
+    let loosening = spec
+        .project_config
+        .filter(|config| folder::has_project_config(&cwd, config, &home));
+    if let Some(config) = loosening {
+        return Err(format!(
+            "This project folder has its own {} settings ({config}), which could loosen Narada's read-only limits. Choose another folder or another agent.",
+            spec.name
+        ));
+    }
 
     let (stop, stopped) = oneshot::channel();
     state.runs()?.insert(id.clone(), stop);
     let plan = process::RunPlan {
         spec,
         program: &program,
-        extra_args: &extra_args,
+        args: &args,
         prompt: &request.prompt,
         cwd: &cwd,
     };

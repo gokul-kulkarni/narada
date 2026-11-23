@@ -30,8 +30,7 @@ export function AssistPreviewDialog({ tabId, agentId, onClose }: Props) {
       <div className="flex flex-col gap-4 text-sm">
         <p>
           Narada will run <b>{agent.name}</b> {agent.version} on this computer, signed in as you,
-          and send it the text below. It can read and search files but cannot change them or run
-          commands.
+          and send it the text below. It can only read: it cannot change files or reach the network.
         </p>
         <p className="flex flex-wrap items-baseline gap-2 text-muted">
           Program:

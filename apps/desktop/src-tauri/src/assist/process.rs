@@ -37,11 +37,10 @@ fn describe(duration: Duration) -> String {
     }
 }
 
-fn command(spec: &AgentSpec, program: &Path, extra_args: &[String], cwd: &Path) -> Command {
+fn command(program: &Path, args: &[String], cwd: &Path) -> Command {
     let mut command = Command::new(program);
     command
-        .args(spec.args)
-        .args(extra_args)
+        .args(args)
         .current_dir(cwd)
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
@@ -89,7 +88,8 @@ fn exit_error(name: &str, status: ExitStatus, stderr: &[String]) -> AssistEvent 
 pub struct RunPlan<'a> {
     pub spec: &'a AgentSpec,
     pub program: &'a Path,
-    pub extra_args: &'a [String],
+    /// The full arguments, from `agents::run_args`.
+    pub args: &'a [String],
     pub prompt: &'a str,
     pub cwd: &'a Path,
 }
@@ -105,11 +105,11 @@ pub async fn run_agent(
     let RunPlan {
         spec,
         program,
-        extra_args,
+        args,
         prompt,
         cwd,
     } = plan;
-    let mut child = command(spec, program, extra_args, cwd)
+    let mut child = command(program, args, cwd)
         .spawn()
         .map_err(|e| format!("Could not start {}: {e}", spec.name))?;
 

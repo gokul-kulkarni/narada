@@ -1,4 +1,4 @@
-import { folderFor } from "../../state/assist-settings";
+import { folderFor, preferredAgent } from "../../state/assist-settings";
 import { agentFingerprint, useAssistStore } from "../../state/assist-store";
 import { useTabsStore } from "../../state/tabs-store";
 import { useUiStore } from "../../state/ui-store";
@@ -26,15 +26,15 @@ export async function askAgent(tabId: string, agentId?: string): Promise<void> {
     return;
   }
   const assist = useAssistStore.getState();
-  const agents = await assist.detect();
-  const agent: DetectedAgent | undefined = agents.find((a) => a.id === agentId) ?? agents[0];
+  const [agents, settings] = await Promise.all([assist.detect(), assist.loadSettings()]);
+  const agent: DetectedAgent | undefined =
+    agents.find((a) => a.id === agentId) ?? preferredAgent(agents, settings);
   if (!agent) {
     useUiStore
       .getState()
-      .notify("No coding agent found. Install Claude Code to ask about a response.");
+      .notify("No coding agent found. Install Claude Code or Codex to ask about a response.");
     return;
   }
-  const settings = await assist.loadSettings();
   if (!settings.skipPreview || !settings.trusted.includes(agentFingerprint(agent))) {
     useUiStore.getState().openDialog({ kind: "assist-preview", tabId, agentId: agent.id });
     return;

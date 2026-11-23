@@ -102,7 +102,13 @@ describe("applyEvent", () => {
   });
 });
 
-const DEFAULTS = { trusted: [], skipPreview: false, defaultFolder: null, collectionFolders: {} };
+const DEFAULTS = {
+  trusted: [],
+  skipPreview: false,
+  defaultFolder: null,
+  collectionFolders: {},
+  defaultAgent: null,
+};
 
 describe("parseSettings", () => {
   it("reads saved settings, including files saved before folders existed", () => {
@@ -116,6 +122,7 @@ describe("parseSettings", () => {
       skipPreview: false,
       defaultFolder: "/work",
       collectionFolders: { c1: "/work/shop" },
+      defaultAgent: "codex",
     };
     expect(parseSettings(JSON.stringify(full))).toEqual(full);
   });
@@ -186,6 +193,13 @@ describe("useAssistStore", () => {
     });
     await useAssistStore.getState().setFolder(null, null);
     expect(useAssistStore.getState().settings.defaultFolder).toBeNull();
+  });
+
+  it("remembers which agent to ask", async () => {
+    const documents = createMemoryDocumentStore();
+    setServices({ ...getServices(), documents });
+    await useAssistStore.getState().setDefaultAgent("codex");
+    expect(parseSettings(await documents.readLocal("assist.json")).defaultAgent).toBe("codex");
   });
 
   it("looks for agents again on request", async () => {

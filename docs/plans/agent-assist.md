@@ -1,15 +1,21 @@
 # Plan: Agent assist (local agent CLIs + Narada MCP server)
 
-Status (2026-11-23): phases 0 and 1a done. 1b done except the Codex and Gemini adapters:
-Markdown answers, follow-ups, Settings → Agents, project folders and suggested fixes shipped.
+Status (2026-11-23): phases 0, 1a and 1b done except the Gemini adapter.
 
-Codex/Gemini are on hold until they can be run here. Their docs leave the safety boundary
-unproven: `codex exec`'s read-only sandbox can still run commands that read the whole disk,
-and it is unclear whether web search can be turned off; Gemini's stream-json event shapes and
-what `--approval-mode plan` allows in headless mode are not documented. Claude Code's boundary
-(Read/Grep/Glob, working folder only, no network) was verified by running it; any new agent
-must be verified the same way before it ships. Covers option 1 (Narada calls the user's agent CLI) and
-option 2 (the user's agent connects to Narada over MCP).
+Agent limits, each checked on a real run (opt-in tests `real_claude*`, `real_codex*`):
+
+- Claude Code 2.1.330: `--tools Read,Grep,Glob`, plan mode, `--restricted`. File tools stay in
+  the working folder; no network tools.
+- Codex 0.171.0: a custom permissions profile (`:minimal` + working folder, read only) with
+  `web_search` disabled, browser/apps/image features disabled and no MCP servers. Commands are
+  refused outside the folder ("Operation not permitted") and have no network. Caveats: `:minimal`
+  includes the temp folders (denying them breaks the shell); `--sandbox`/`sandbox_mode` must
+  never be used (legacy sandbox reads the whole disk and replaces the profile), so Narada refuses
+  folders with a `.codex/config.toml`; `exec resume` takes no `-C`, so the process folder is the
+  workspace.
+- Gemini CLI: not installed; its stream-json shapes and what `--approval-mode plan` allows
+  headless are undocumented. Verify on a real run before adding it. Covers option 1 (Narada calls the user's agent CLI) and
+  option 2 (the user's agent connects to Narada over MCP).
 
 ## Goals and non-goals
 

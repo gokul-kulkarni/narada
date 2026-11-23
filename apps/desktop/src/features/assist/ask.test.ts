@@ -54,6 +54,7 @@ describe("askAgent", () => {
         skipPreview: true,
         defaultFolder: null,
         collectionFolders: {},
+        defaultAgent: null,
       },
       settingsLoaded: true,
     });
@@ -79,6 +80,7 @@ describe("askAgent", () => {
         skipPreview: true,
         defaultFolder: null,
         collectionFolders: {},
+        defaultAgent: null,
       },
       settingsLoaded: true,
     });
@@ -116,6 +118,7 @@ describe("askAgent", () => {
         skipPreview: true,
         defaultFolder: "/work",
         collectionFolders: { shop: "/work/shop" },
+        defaultAgent: null,
       },
       settingsLoaded: true,
     });
@@ -127,5 +130,23 @@ describe("askAgent", () => {
     await askAgent(saved);
     await askAgent(openTab(true));
     expect(run.mock.calls.map(([request]) => request.cwd)).toEqual(["/work/shop", "/work"]);
+  });
+
+  it("asks the agent chosen in Settings", async () => {
+    const run = vi.fn<AssistClient["run"]>(async () => {});
+    const CODEX: DetectedAgent = { id: "codex", name: "Codex", path: "/x", version: "0.171.0" };
+    setAssistClient({ detect: vi.fn(async () => [CLAUDE, CODEX]), run });
+    useAssistStore.setState({
+      settings: {
+        trusted: [agentFingerprint(CODEX)],
+        skipPreview: true,
+        defaultFolder: null,
+        collectionFolders: {},
+        defaultAgent: "codex",
+      },
+      settingsLoaded: true,
+    });
+    await askAgent(openTab(true));
+    expect(run.mock.calls[0]?.[0].agentId).toBe("codex");
   });
 });

@@ -49,7 +49,13 @@ describe("AgentSettings", () => {
   it("turns the preview back on", async () => {
     setAssistClient({ detect: vi.fn(async () => [CLAUDE]), run: vi.fn() });
     useAssistStore.setState({
-      settings: { trusted: [], skipPreview: true, defaultFolder: null, collectionFolders: {} },
+      settings: {
+        trusted: [],
+        skipPreview: true,
+        defaultFolder: null,
+        collectionFolders: {},
+        defaultAgent: null,
+      },
       settingsLoaded: true,
     });
     render(<AgentSettings />);
@@ -83,5 +89,27 @@ describe("AgentSettings", () => {
     fireEvent.click(within(defaults).getByRole("button", { name: "Choose…" }));
     await waitFor(() => expect(settingsApi.pickFolder).toHaveBeenCalledTimes(3));
     expect(useAssistStore.getState().settings.defaultFolder).toBe("/work");
+  });
+
+  it("chooses which agent to ask when more than one is installed", async () => {
+    const codex: DetectedAgent = {
+      id: "codex",
+      name: "Codex",
+      path: "/bin/codex",
+      version: "0.171.0",
+    };
+    setAssistClient({ detect: vi.fn(async () => [CLAUDE, codex]), run: vi.fn() });
+    render(<AgentSettings />);
+    const choice = await screen.findByRole("radiogroup", { name: "Ask with" });
+    expect(within(choice).getByRole("radio", { name: "Claude Code" })).toBeChecked();
+    fireEvent.click(within(choice).getByRole("radio", { name: "Codex" }));
+    await waitFor(() => expect(useAssistStore.getState().settings.defaultAgent).toBe("codex"));
+  });
+
+  it("offers no choice with a single agent", async () => {
+    setAssistClient({ detect: vi.fn(async () => [CLAUDE]), run: vi.fn() });
+    render(<AgentSettings />);
+    await screen.findByText("Claude Code 2.1.330");
+    expect(screen.queryByRole("radiogroup", { name: "Ask with" })).toBeNull();
   });
 });
