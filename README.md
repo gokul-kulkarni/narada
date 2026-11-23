@@ -19,10 +19,20 @@ Download the installer for your computer from the
 | Windows             | `Narada_<version>_x64-setup.exe` (or the `.msi`)        |
 | Linux               | `.AppImage`, `.deb` (Debian, Ubuntu) or `.rpm` (Fedora) |
 
-**macOS:** open the `.dmg` and drag Narada to Applications. The app isn't notarized by Apple
-yet, so the first time macOS says it can't check it for malware. Open **System Settings →
-Privacy & Security**, scroll to Narada and choose **Open Anyway**, or run
-`xattr -dr com.apple.quarantine /Applications/Narada.app` once.
+**macOS:** the easiest way is Homebrew, which also gets past the warning below:
+
+```sh
+brew trust gokul-kulkarni/narada
+brew install --cask gokul-kulkarni/narada/narada
+```
+
+Or open the `.dmg` and drag Narada to Applications. The app isn't notarized by Apple yet, so
+macOS says it "is damaged and can't be opened" (older versions say it can't check it for
+malware). The app is fine: remove the download flag once in Terminal, then open it:
+
+```sh
+xattr -dr com.apple.quarantine /Applications/Narada.app
+```
 
 **Windows:** SmartScreen may say it protected your PC, because the installer isn't signed yet:
 choose **More info → Run anyway**.
