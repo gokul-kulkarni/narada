@@ -1,6 +1,14 @@
 # Plan: Agent assist (local agent CLIs + Narada MCP server)
 
-Status: phase 0 and 1a done (2026-11-23); 1b next. Covers option 1 (Narada calls the user's agent CLI) and
+Status (2026-11-23): phases 0 and 1a done. 1b done except the Codex and Gemini adapters:
+Markdown answers, follow-ups, Settings → Agents, project folders and suggested fixes shipped.
+
+Codex/Gemini are on hold until they can be run here. Their docs leave the safety boundary
+unproven: `codex exec`'s read-only sandbox can still run commands that read the whole disk,
+and it is unclear whether web search can be turned off; Gemini's stream-json event shapes and
+what `--approval-mode plan` allows in headless mode are not documented. Claude Code's boundary
+(Read/Grep/Glob, working folder only, no network) was verified by running it; any new agent
+must be verified the same way before it ships. Covers option 1 (Narada calls the user's agent CLI) and
 option 2 (the user's agent connects to Narada over MCP).
 
 ## Goals and non-goals
