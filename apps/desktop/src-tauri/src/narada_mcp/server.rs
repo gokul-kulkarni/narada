@@ -110,6 +110,44 @@ pub struct CreateCollectionArgs {
     pub variables: Option<Vec<PairArg>>,
 }
 
+/// Fields to change in a saved request; anything left out stays as it is.
+#[derive(Deserialize, Serialize, schemars::JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct ChangesArg {
+    /// GET, POST, PUT, PATCH, DELETE, HEAD or OPTIONS.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub method: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub url: Option<String>,
+    /// Headers to set by name (added if missing). Keep "[secret:name]" as you saw it.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub headers: Option<Vec<PairArg>>,
+    /// Header names to remove.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub remove_headers: Option<Vec<String>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub body: Option<BodyArg>,
+}
+
+#[derive(Deserialize, Serialize, schemars::JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct UpdateRequestArgs {
+    /// The saved request's id, as listed by list_collections.
+    pub request_id: String,
+    pub changes: ChangesArg,
+}
+
+#[derive(Deserialize, Serialize, schemars::JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct SendRequestArgs {
+    /// A saved request's id, as listed by list_collections. Give this or `request`.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub request_id: Option<String>,
+    /// A one-off request that is not saved. Give this or `requestId`.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub request: Option<NewRequestArg>,
+}
+
 #[derive(Deserialize, schemars::JsonSchema)]
 pub struct FromCodeArgs {
     /// The collection to add the requests to; made if missing. Defaults to one named after the project.
@@ -297,6 +335,30 @@ impl NaradaServer {
         context: RequestContext<RoleServer>,
     ) -> Result<CallToolResult, ErrorData> {
         self.forward("create_collection", args(arguments), &context)
+            .await
+    }
+
+    #[tool(
+        description = "Change a saved HTTP request's method, URL, headers or body (never auth). The user approves the exact diff in Narada first. Returns the new request (secrets removed)."
+    )]
+    async fn update_request(
+        &self,
+        Parameters(arguments): Parameters<UpdateRequestArgs>,
+        context: RequestContext<RoleServer>,
+    ) -> Result<CallToolResult, ErrorData> {
+        self.forward("update_request", args(arguments), &context)
+            .await
+    }
+
+    #[tool(
+        description = "Send a saved HTTP request, or a one-off one, with the active environment, scripts and auth, exactly as Narada would. The user approves first (it can change data on the server). Returns the response or error and test results, secrets removed."
+    )]
+    async fn send_request(
+        &self,
+        Parameters(arguments): Parameters<SendRequestArgs>,
+        context: RequestContext<RoleServer>,
+    ) -> Result<CallToolResult, ErrorData> {
+        self.forward("send_request", args(arguments), &context)
             .await
     }
 }

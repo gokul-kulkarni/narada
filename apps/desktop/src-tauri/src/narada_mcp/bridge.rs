@@ -71,7 +71,10 @@ const APPROVAL_TIMEOUT: Duration = Duration::from_secs(5 * 60);
 
 /// How long a tool call may wait for the app's answer.
 pub fn answer_timeout(tool: &str) -> Duration {
-    if tool.starts_with("create_") {
+    if ["create_", "update_", "send_"]
+        .iter()
+        .any(|prefix| tool.starts_with(prefix))
+    {
         APPROVAL_TIMEOUT
     } else {
         READ_TIMEOUT

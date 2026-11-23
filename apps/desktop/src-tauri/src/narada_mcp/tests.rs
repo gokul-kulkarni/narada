@@ -132,7 +132,9 @@ async fn lists_its_tools_and_forwards_calls_to_the_app() {
             "get_request",
             "list_collections",
             "list_environments",
-            "list_history"
+            "list_history",
+            "send_request",
+            "update_request"
         ]
     );
 
@@ -204,7 +206,20 @@ async fn lists_its_tools_and_forwards_calls_to_the_app() {
     )
     .await
     .unwrap();
+    let update = json!({
+        "requestId": "r1",
+        "changes": { "method": "POST", "removeHeaders": ["X-Old"] }
+    });
+    run(&session, call("update_request", update.clone()), timeout)
+        .await
+        .unwrap();
+    let send = json!({ "requestId": "r1" });
+    run(&session, call("send_request", send.clone()), timeout)
+        .await
+        .unwrap();
     let calls = bridge.calls.lock().unwrap().clone();
+    assert_eq!(calls[5], ("update_request".to_owned(), update));
+    assert_eq!(calls[6], ("send_request".to_owned(), send));
     assert_eq!(calls[3], ("create_request".to_owned(), request));
     assert_eq!(
         calls[4],
@@ -316,6 +331,8 @@ mod timeouts {
             answer_timeout("create_collection"),
             Duration::from_secs(300)
         );
+        assert_eq!(answer_timeout("update_request"), Duration::from_secs(300));
+        assert_eq!(answer_timeout("send_request"), Duration::from_secs(300));
     }
 }
 
