@@ -1,5 +1,7 @@
 mod http;
 mod mcp;
+#[cfg(target_os = "macos")]
+mod menu;
 mod secrets;
 mod storage;
 mod sync;
@@ -9,7 +11,10 @@ use tauri::Manager;
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let http_state = http::HttpState::new().expect("failed to initialise HTTP client");
-    tauri::Builder::default()
+    let builder = tauri::Builder::default();
+    #[cfg(target_os = "macos")]
+    let builder = builder.menu(menu::build).on_menu_event(menu::on_event);
+    builder
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_updater::Builder::new().build())

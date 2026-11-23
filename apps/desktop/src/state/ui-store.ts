@@ -16,13 +16,21 @@ export type Dialog =
   /** Confirm a local MCP server command before it first runs on this computer. */
   | { readonly kind: "mcp-trust"; readonly serverId: string };
 
+/** ⌘P searches saved requests; ⌘⇧P searches commands. */
+export type PaletteMode = "requests" | "commands";
+
 interface UiState {
   readonly view: MainView;
+  readonly palette: PaletteMode | null;
+  readonly sidebarHidden: boolean;
   readonly dialog: Dialog | null;
   readonly notice: string | null;
   /** Collections to show expanded when they first appear in the sidebar (e.g. just imported). */
   readonly revealed: ReadonlySet<string>;
   show: (view: MainView) => void;
+  openPalette: (mode: PaletteMode) => void;
+  closePalette: () => void;
+  toggleSidebar: () => void;
   openDialog: (dialog: Dialog) => void;
   closeDialog: () => void;
   notify: (notice: string | null) => void;
@@ -31,10 +39,15 @@ interface UiState {
 
 export const useUiStore = create<UiState>()((set) => ({
   view: { kind: "requests" },
+  palette: null,
+  sidebarHidden: false,
   dialog: null,
   notice: null,
   revealed: new Set(),
   show: (view) => set({ view }),
+  openPalette: (palette) => set({ palette }),
+  closePalette: () => set({ palette: null }),
+  toggleSidebar: () => set((s) => ({ sidebarHidden: !s.sidebarHidden })),
   openDialog: (dialog) => set({ dialog }),
   closeDialog: () => set({ dialog: null }),
   notify: (notice) => set({ notice }),

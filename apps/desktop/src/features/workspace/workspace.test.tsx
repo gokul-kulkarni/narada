@@ -62,7 +62,7 @@ describe("collections and environments", () => {
     menuItem("New Collection", "Add request");
     fireEvent.change(screen.getByLabelText("URL"), { target: { value: "https://a.dev/x" } });
     expect(screen.getByLabelText("unsaved")).toBeInTheDocument();
-    fireEvent.keyDown(window, { key: "s", metaKey: true });
+    fireEvent.keyDown(window, { key: "s", ctrlKey: true });
     await waitFor(() => expect(screen.queryByLabelText("unsaved")).toBeNull());
     const [doc] = await documents.list("collections");
     expect(JSON.parse(doc.content).item[0].request.url).toBe("https://a.dev/x");

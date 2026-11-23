@@ -26,13 +26,18 @@ export interface RequestTab {
 interface TabsState {
   readonly tabs: readonly RequestTab[];
   readonly activeTabId: string | null;
+  /** Recently closed tabs, newest last, for "Reopen closed tab". */
+  readonly closed: readonly RequestTab[];
   openNew: () => string;
   openRequest: (request: RequestDef, source: RequestSource | null) => string;
   close: (tabId: string) => void;
+  reopenClosed: () => void;
   activate: (tabId: string) => void;
   updateRequest: (tabId: string, update: (request: RequestDef) => RequestDef) => void;
   patchTab: (tabId: string, patch: Partial<Omit<RequestTab, "id">>) => void;
 }
+
+const MAX_CLOSED = 20;
 
 const createTab = (request: RequestDef, source: RequestSource | null): RequestTab => ({
   id: newId(),
@@ -56,6 +61,7 @@ const mapTab = (
 export const useTabsStore = create<TabsState>()((set, get) => ({
   tabs: [],
   activeTabId: null,
+  closed: [],
 
   openNew: () => get().openRequest(newRequest(), null),
 
@@ -80,8 +86,25 @@ export const useTabsStore = create<TabsState>()((set, get) => ({
         state.activeTabId === tabId
           ? (tabs[Math.min(index, tabs.length - 1)]?.id ?? null)
           : state.activeTabId;
-      return { tabs, activeTabId };
+      const gone = state.tabs[index];
+      const closed = gone
+        ? [...state.closed, { ...gone, loading: false, partial: null }].slice(-MAX_CLOSED)
+        : state.closed;
+      return { tabs, activeTabId, closed };
     }),
+
+  reopenClosed: () => {
+    const last = get().closed.at(-1);
+    if (!last) return;
+    set((state) => ({ closed: state.closed.slice(0, -1) }));
+    const open =
+      last.source && get().tabs.find((t) => t.source?.requestId === last.source?.requestId);
+    if (open) {
+      set({ activeTabId: open.id });
+      return;
+    }
+    set((state) => ({ tabs: [...state.tabs, last], activeTabId: last.id }));
+  },
 
   activate: (tabId) => set({ activeTabId: tabId }),
 

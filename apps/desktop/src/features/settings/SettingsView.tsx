@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { Page, PAGE_TITLE } from "../../components/page";
 import { DriveSettings } from "./DriveSettings";
+import { ShortcutSettings } from "./ShortcutSettings";
 import { StorageSettings } from "./StorageSettings";
 import { ThemeSettings } from "./ThemeSettings";
 import { TlsSettings } from "./TlsSettings";
@@ -12,6 +13,7 @@ export function SettingsView({ extra }: { extra?: ReactNode }) {
       <ThemeSettings />
       <StorageSettings />
       <DriveSettings />
+      <ShortcutSettings />
       <TlsSettings />
       <UpdateSettings />
       {extra}

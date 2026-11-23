@@ -16,10 +16,12 @@ export function resetStores(): DocumentStore {
   const documents = createMemoryDocumentStore();
   setServices({ documents, secrets: createMemorySecretStore() });
   localStorage.clear();
-  useTabsStore.setState({ tabs: [], activeTabId: null });
+  useTabsStore.setState({ tabs: [], activeTabId: null, closed: [] });
   useHistoryStore.setState({ entries: [] });
   useUiStore.setState({
     view: { kind: "requests" },
+    palette: null,
+    sidebarHidden: false,
     dialog: null,
     notice: null,
     revealed: new Set(),

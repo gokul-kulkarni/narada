@@ -3,13 +3,15 @@ import { selectActiveTab, useTabsStore } from "../../state/tabs-store";
 import { useUiStore } from "../../state/ui-store";
 import { useWorkspaceStore } from "../../state/workspace-store";
 import { DeliverTo } from "../environments/EnvironmentsPanel";
+import { formatKeys } from "../shortcuts/keys";
 
 function Breadcrumb() {
   const tab = useTabsStore(selectActiveTab);
   const collectionName = useWorkspaceStore(
     (s) => s.collections.find((c) => c.id === tab?.source?.collectionId)?.name,
   );
-  if (!tab) return null;
+  const onRequests = useUiStore((s) => s.view.kind === "requests");
+  if (!tab || !onRequests) return null;
   return (
     <span className="min-w-0 truncate text-sm text-muted">
       {collectionName ? `${collectionName} › ` : "Unsaved › "}
@@ -28,10 +30,22 @@ export function TopBar() {
         </button>
       </h1>
       <Breadcrumb />
-      <div className="ml-auto flex items-center gap-2">
+      <button
+        type="button"
+        onClick={() => useUiStore.getState().openPalette("requests")}
+        className="ml-auto flex w-64 items-center justify-between rounded-lg border border-line bg-canvas px-3 py-1.5 text-sm text-muted hover:border-accent hover:text-ink"
+      >
+        Go to request…
+        <kbd className="font-mono text-xs">{formatKeys("mod+p")}</kbd>
+      </button>
+      <div className="flex items-center gap-2">
         <DeliverTo />
         <Button onClick={() => openDialog({ kind: "import" })}>Import</Button>
-        <Button aria-label="Settings" onClick={() => show({ kind: "settings" })}>
+        <Button
+          aria-label="Settings"
+          title={`Settings (${formatKeys("mod+,")})`}
+          onClick={() => show({ kind: "settings" })}
+        >
           ⚙
         </Button>
       </div>

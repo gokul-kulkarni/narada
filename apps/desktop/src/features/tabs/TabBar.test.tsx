@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { newRequest } from "@narada/core/factories";
 import { useHistoryStore } from "../../state/history-store";
 import { useTabsStore } from "../../state/tabs-store";
+import { useUiStore } from "../../state/ui-store";
 import { HistoryList } from "../history/HistoryList";
 import { TabBar } from "./TabBar";
 import { asHttp } from "../../test/http";
@@ -21,6 +22,18 @@ describe("TabBar and HistoryList", () => {
     expect(useTabsStore.getState().activeTabId).toBe(a);
     fireEvent.click(screen.getByRole("button", { name: "Close A" }));
     expect(useTabsStore.getState().tabs.map((t) => t.request.name)).toEqual(["B"]);
+  });
+
+  it("leads back to the request from Settings", () => {
+    const a = useTabsStore.getState().openRequest(newRequest({ name: "A" }), null);
+    useUiStore.getState().show({ kind: "settings" });
+    render(<TabBar />);
+    // Not highlighted while Settings is on screen.
+    expect(screen.getByRole("tab", { name: /A/ })).toHaveAttribute("aria-selected", "false");
+    fireEvent.click(screen.getByRole("tab", { name: /A/ }));
+    expect(useUiStore.getState().view).toEqual({ kind: "requests" });
+    expect(useTabsStore.getState().activeTabId).toBe(a);
+    expect(screen.getByRole("tab", { name: /A/ })).toHaveAttribute("aria-selected", "true");
   });
 
   it("reopens history entries in a new tab and clears history", () => {

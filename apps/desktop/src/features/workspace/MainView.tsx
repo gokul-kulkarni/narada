@@ -4,9 +4,20 @@ import { EnvironmentEditor, GlobalsEditor } from "../environments/EnvironmentEdi
 import { McpServerView } from "../mcp/McpServerView";
 import { RunnerView } from "../runner/RunnerView";
 import { SettingsView } from "../settings/SettingsView";
+import { TabBar } from "../tabs/TabBar";
 import { RequestWorkspace } from "./RequestWorkspace";
 
+/** The open-request tabs stay on every screen, so a tab always leads back to its request. */
 export function MainView() {
+  return (
+    <>
+      <TabBar />
+      <CurrentView />
+    </>
+  );
+}
+
+function CurrentView() {
   const view = useUiStore((s) => s.view);
   switch (view.kind) {
     case "requests":

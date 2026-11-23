@@ -5,6 +5,7 @@ import { AuthEditor } from "./AuthEditor";
 import { BodyEditor } from "./BodyEditor";
 import { KeyValueEditor } from "./KeyValueEditor";
 import { ParamsEditor } from "./ParamsEditor";
+import { formatKeys } from "../shortcuts/keys";
 
 type Section = "params" | "headers" | "body" | "auth" | "scripts";
 
@@ -79,7 +80,13 @@ export function RequestEditor({
           value={request.url}
           onChange={(e) => onChange((r) => ({ ...r, url: e.target.value }))}
         />
-        <Button type="submit" variant="primary" className="px-5 py-2" disabled={loading}>
+        <Button
+          type="submit"
+          variant="primary"
+          className="px-5 py-2"
+          disabled={loading}
+          title={`Send (${formatKeys("mod+enter")})`}
+        >
           {loading ? "Dispatching…" : "Dispatch"}
         </Button>
       </form>
