@@ -13,6 +13,8 @@ export type Dialog =
   | { readonly kind: "import"; readonly files?: readonly File[] }
   | { readonly kind: "save"; readonly tabId: string }
   | { readonly kind: "code"; readonly tabId: string }
+  /** Pick where a sidebar request or folder moves to. */
+  | { readonly kind: "move"; readonly collectionId: string; readonly itemId: string }
   /** Confirm a local MCP server command before it first runs on this computer. */
   | { readonly kind: "mcp-trust"; readonly serverId: string }
   /** Show which agent will run and the redacted prompt before it is sent. */

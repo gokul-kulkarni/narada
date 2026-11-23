@@ -3,6 +3,7 @@ import { CodeDialog } from "../codegen/CodeDialog";
 import { SaveRequestDialog } from "../collections/SaveRequestDialog";
 import { ImportDialog } from "../import/ImportDialog";
 import { TrustDialog } from "../mcp/TrustDialog";
+import { MoveDialog } from "../collections/MoveDialog";
 import { AssistPreviewDialog } from "../assist/AssistPreviewDialog";
 
 export function Dialogs() {
@@ -16,6 +17,10 @@ export function Dialogs() {
       return <SaveRequestDialog tabId={dialog.tabId} onClose={close} />;
     case "code":
       return <CodeDialog tabId={dialog.tabId} onClose={close} />;
+    case "move":
+      return (
+        <MoveDialog collectionId={dialog.collectionId} itemId={dialog.itemId} onClose={close} />
+      );
     case "mcp-trust":
       return <TrustDialog serverId={dialog.serverId} onClose={close} />;
     case "assist-preview":

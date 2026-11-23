@@ -13,6 +13,7 @@ import {
   renameCollectionItem,
 } from "./collection-actions";
 import { ItemActions } from "./ItemActions";
+import { dragSource, dropHighlight, useDropTarget } from "./drag";
 
 const ROW = "group flex items-center gap-1 rounded-lg px-1 py-1 hover:bg-surface-2";
 
@@ -33,6 +34,15 @@ function TreeItem({
     (s) => s.tabs.find((t) => t.id === s.activeTabId)?.source?.requestId,
   );
   const indent = { paddingLeft: `${depth * 12 + 4}px` };
+  const drop = useDropTarget({
+    collectionId: collection.id,
+    folderId: item.kind === "folder" ? item.id : null,
+  });
+  const moveTo = {
+    label: "Move to…",
+    onSelect: () =>
+      useUiStore.getState().openDialog({ kind: "move", collectionId: collection.id, itemId: id }),
+  };
   const id = item.kind === "folder" ? item.id : item.request.id;
   const name = item.kind === "folder" ? item.name : item.request.name;
   const rename = renaming && (
@@ -58,6 +68,7 @@ function TreeItem({
               type="button"
               className="flex min-w-0 flex-1 gap-2 text-left"
               onClick={() => openSavedRequest(collection.id, item.request)}
+              {...dragSource({ collectionId: collection.id, itemId: id })}
             >
               <span className="w-10 shrink-0 font-mono text-[11px] font-semibold text-accent-text">
                 {requestBadge(item.request)}
@@ -73,6 +84,7 @@ function TreeItem({
                 label: "Duplicate",
                 onSelect: () => duplicateRequest(collection.id, item.request, parentId),
               },
+              moveTo,
               {
                 label: "Delete",
                 danger: true,
@@ -87,13 +99,14 @@ function TreeItem({
 
   return (
     <li>
-      <div className={ROW} style={indent}>
+      <div className={`${ROW} ${dropHighlight(drop["data-drop-target"])}`} style={indent} {...drop}>
         {rename || (
           <button
             type="button"
             aria-expanded={open}
             className="flex min-w-0 flex-1 gap-1 text-left"
             onClick={() => setOpen(!open)}
+            {...dragSource({ collectionId: collection.id, itemId: id })}
           >
             <span className="w-3 text-muted">{open ? "▾" : "▸"}</span>
             <span className="truncate font-semibold">{name}</span>
@@ -112,6 +125,7 @@ function TreeItem({
                   .show({ kind: "runner", collectionId: collection.id, folderId: id }),
             },
             { label: "Rename", onSelect: () => setRenaming(true) },
+            moveTo,
             {
               label: "Delete",
               danger: true,
