@@ -7,6 +7,28 @@ A free, local-first, Postman-compatible API client (Tauri desktop app). Collecti
 plain Postman v2.1 JSON files, stored in a folder you choose and optionally synced to your own
 Google Drive. See [STRATEGY.md](STRATEGY.md) for the plan and roadmap.
 
+## Install
+
+Download the installer for your computer from the
+[latest release](https://github.com/gokul-kulkarni/narada/releases/latest):
+
+| Computer            | File                                                    |
+| ------------------- | ------------------------------------------------------- |
+| Mac with Apple chip | `Narada_<version>_aarch64.dmg`                          |
+| Mac with Intel chip | `Narada_<version>_x64.dmg`                              |
+| Windows             | `Narada_<version>_x64-setup.exe` (or the `.msi`)        |
+| Linux               | `.AppImage`, `.deb` (Debian, Ubuntu) or `.rpm` (Fedora) |
+
+**macOS:** open the `.dmg` and drag Narada to Applications. The app isn't notarized by Apple
+yet, so the first time macOS says it can't check it for malware. Open **System Settings →
+Privacy & Security**, scroll to Narada and choose **Open Anyway**, or run
+`xattr -dr com.apple.quarantine /Applications/Narada.app` once.
+
+**Windows:** SmartScreen may say it protected your PC, because the installer isn't signed yet:
+choose **More info → Run anyway**.
+
+To build it yourself instead, see [Development](#development).
+
 ## Features
 
 - **Requests**: GET/POST/PUT/PATCH/DELETE/HEAD/OPTIONS, query params, headers, raw (JSON, text,
