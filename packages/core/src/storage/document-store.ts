@@ -4,7 +4,8 @@ export type LocalFile =
   | "globals.json"
   | "sync-state.json"
   | "mcp-trust.json"
-  | "assist.json";
+  | "assist.json"
+  | "mcp-server.json";
 
 export interface StoredDocument {
   readonly fileName: string;

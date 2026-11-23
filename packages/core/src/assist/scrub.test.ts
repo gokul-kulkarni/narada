@@ -40,6 +40,11 @@ describe("maskValue", () => {
     expect(maskValue("{{user}}:{{pass}}")).toBe("{{user}}:{{pass}}");
   });
 
+  it("leaves values that are already hidden as they are", () => {
+    expect(maskValue("[secret:token]")).toBe("[secret:token]");
+    expect(maskValue("Bearer [redacted]")).toBe("Bearer [redacted]");
+  });
+
   it("hides a placeholder mixed with a literal secret", () => {
     expect(maskValue("{{prefix}}abc123")).toBe(REDACTED);
   });

@@ -1,6 +1,8 @@
 import { useEffect } from "react";
 import type { HistoryEntry } from "@narada/core/model";
 import { useHistoryStore } from "../state/history-store";
+import { installMcpBridge } from "../features/mcp-server/bridge";
+import { useMcpServerStore } from "../state/mcp-server-store";
 import { useMcpStore } from "../state/mcp-store";
 import { getServices } from "../state/services";
 import { useTabsStore } from "../state/tabs-store";
@@ -41,6 +43,8 @@ export function useBootstrap(): void {
 
     void useWorkspaceStore.getState().load();
     void useMcpStore.getState().load();
+    // Answer agents' tool calls, then start the MCP server if the user left it on.
+    void installMcpBridge().then(() => useMcpServerStore.getState().load());
     // A little after start, so the check never competes with loading the workspace.
     const updateTimer = setTimeout(() => void useUpdateStore.getState().checkOnStartup(), 3000);
     void documents.readLocal("history.json").then((content) => {

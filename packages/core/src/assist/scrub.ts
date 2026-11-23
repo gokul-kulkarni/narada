@@ -11,7 +11,8 @@ const SENSITIVE_PART =
   /password|passwd|secret|token(?!s|url|type|endpoint)|apikey|authorization|cookie|credential|privatekey|signature|sessionid/;
 const SENSITIVE_EXACT = new Set(["auth", "xauth", "session", "sid", "pwd", "pass"]);
 
-const PLACEHOLDER = /\{\{[^{}]+\}\}/g;
+// Variables, and values already hidden by an earlier pass, show how a value is wired up.
+const PLACEHOLDER = /\{\{[^{}]+\}\}|\[secret:[^\]]+\]|\[redacted\]/g;
 /** What may surround placeholders and still be safe: "Bearer {{token}}", "{{user}}:{{pass}}". */
 const PLACEHOLDER_FRAME = /^(bearer|basic|token)?[\s:]*$/i;
 
@@ -25,7 +26,7 @@ export function isSensitiveName(name: string): boolean {
   return SENSITIVE_EXACT.has(normalized) || SENSITIVE_PART.test(normalized);
 }
 
-/** Hides a value unless it is empty or only `{{placeholders}}`, which show how auth is wired up. */
+/** Hides a value unless it is empty or only placeholders (`{{name}}`, or already hidden). */
 export function maskValue(value: string): string {
   if (value === "") return value;
   const hasPlaceholder = value.match(PLACEHOLDER) !== null;

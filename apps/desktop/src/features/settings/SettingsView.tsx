@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { Page, PAGE_TITLE } from "../../components/page";
 import { AgentSettings } from "./AgentSettings";
 import { DriveSettings } from "./DriveSettings";
+import { McpServerSettings } from "./McpServerSettings";
 import { ShortcutSettings } from "./ShortcutSettings";
 import { StorageSettings } from "./StorageSettings";
 import { ThemeSettings } from "./ThemeSettings";
@@ -15,6 +16,7 @@ export function SettingsView({ extra }: { extra?: ReactNode }) {
       <StorageSettings />
       <DriveSettings />
       <AgentSettings />
+      <McpServerSettings />
       <ShortcutSettings />
       <TlsSettings />
       <UpdateSettings />

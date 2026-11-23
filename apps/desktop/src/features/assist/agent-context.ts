@@ -1,7 +1,7 @@
 import { buildAgentContext, type AgentResultInput } from "@narada/core/assist/context";
 import { renderPrompt } from "@narada/core/assist/prompt";
 import { isSensitiveName } from "@narada/core/assist/scrub";
-import type { SecretValue } from "@narada/core/assist/types";
+import type { AgentContext, SecretValue } from "@narada/core/assist/types";
 import type { Collection, Environment, KeyValue } from "@narada/core/model";
 import type { RequestTab } from "../../state/tabs-store";
 
@@ -49,18 +49,18 @@ function resultOf(tab: RequestTab): AgentResultInput | null {
   return tab.error !== null ? { error: tab.error } : null;
 }
 
-/** The redacted prompt about the tab's latest delivery, or null if nothing was sent yet. */
-export function promptForTab(
+/** What an agent is told about the tab's latest delivery, redacted; null if nothing was sent. */
+export function contextForTab(
   tab: RequestTab,
   workspace: WorkspaceSnapshot,
   question: string | null = null,
-): string | null {
+): AgentContext | null {
   const result = resultOf(tab);
   if (!result) return null;
   const collection = workspace.collections.find((c) => c.id === tab.source?.collectionId);
   const environment = workspace.environments.find((e) => e.id === workspace.activeEnvironmentId);
   const scopes = [workspace.globals, collection?.variables ?? [], environment?.variables ?? []];
-  const context = buildAgentContext({
+  return buildAgentContext({
     request: tab.request,
     result,
     tests: tab.tests,
@@ -69,5 +69,14 @@ export function promptForTab(
     secrets: secretsForTab(tab, workspace),
     question,
   });
-  return renderPrompt(context);
+}
+
+/** The redacted prompt about the tab's latest delivery, or null if nothing was sent yet. */
+export function promptForTab(
+  tab: RequestTab,
+  workspace: WorkspaceSnapshot,
+  question: string | null = null,
+): string | null {
+  const context = contextForTab(tab, workspace, question);
+  return context ? renderPrompt(context) : null;
 }

@@ -6,6 +6,8 @@ import {
 import { setAssistClient } from "../lib/assist/client";
 import { setMcpClient } from "../lib/mcp/client";
 import { resetAssistStore } from "../state/assist-store";
+import { resetMcpServerStore } from "../state/mcp-server-store";
+import { setNaradaMcpClient } from "../lib/narada-mcp/client";
 import { useHistoryStore } from "../state/history-store";
 import { useMcpStore } from "../state/mcp-store";
 import { setServices } from "../state/services";
@@ -42,5 +44,7 @@ export function resetStores(): DocumentStore {
   setMcpClient(null);
   setAssistClient(undefined);
   resetAssistStore();
+  setNaradaMcpClient(undefined);
+  resetMcpServerStore();
   return documents;
 }
