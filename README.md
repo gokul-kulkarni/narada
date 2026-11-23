@@ -22,8 +22,8 @@ Download the installer for your computer from the
 **macOS:** the easiest way is Homebrew, which also gets past the warning below:
 
 ```sh
-brew trust gokul-kulkarni/narada
-brew install --cask gokul-kulkarni/narada/narada
+brew trust gokul-kulkarni/tap
+brew install --cask gokul-kulkarni/tap/narada
 ```
 
 Or open the `.dmg` and drag Narada to Applications. The app isn't notarized by Apple yet, so
