@@ -1,8 +1,12 @@
 # Plan: Agent assist (local agent CLIs + Narada MCP server)
 
-Status (2026-11-23): phases 0, 1a, 1b (Claude Code and Codex) and 2a done; 2b (create
-requests) next. Phase 2a was checked end to end: the real Claude Code connected to the running
-app through a temporary `--mcp-config` and called all five tools.
+Status (2026-11-23): phases 0, 1a, 1b (Claude Code and Codex), 2a and 2b done; 2c
+(send_request, update_request) next. Both 2a and 2b were checked end to end with the real
+Claude Code against the running app. Found that way and fixed: a keychain read at startup froze
+the window (the token is now read only when the server is on, and keychain commands run off the
+main thread); Claude Code gives up on a tool call after about a minute, so a call it abandons is
+withdrawn from the approval queue; on stateless HTTP the agent is named from its User-Agent;
+React StrictMode installed the bridge twice.
 
 Agent limits, each checked on a real run (opt-in tests `real_claude*`, `real_codex*`):
 
