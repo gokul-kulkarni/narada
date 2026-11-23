@@ -2,7 +2,12 @@ import type { CreatePlan } from "@narada/core/mcp-server/create";
 import { Modal } from "../../components/Modal";
 import { Button } from "../../components/ui";
 import type { UpdatePlan } from "@narada/core/mcp-server/update";
-import { useMcpApprovalStore, type ApprovalSubject } from "../../state/mcp-approval-store";
+import { useEffect, useState } from "react";
+import {
+  useMcpApprovalStore,
+  type ApprovalSubject,
+  type PendingApproval,
+} from "../../state/mcp-approval-store";
 import { ChangeList } from "../assist/ChangeList";
 
 function New() {
@@ -159,10 +164,16 @@ function sessionLabel(subject: ApprovalSubject): string | null {
   return null;
 }
 
-/** Asks the user before an agent adds, changes or sends anything; one request at a time. */
-export function ApprovalDialog() {
-  const pending = useMcpApprovalStore((s) => s.queue[0]);
-  if (!pending) return null;
+/** Buttons stay inactive this long after a request appears, so a click meant for the previous
+ * one (the dialog swaps in place) can't approve this one. */
+export const ARM_DELAY_MS = 500;
+
+function Approval({ pending, waiting }: { pending: PendingApproval; waiting: number }) {
+  const [armed, setArmed] = useState(false);
+  useEffect(() => {
+    const timer = setTimeout(() => setArmed(true), ARM_DELAY_MS);
+    return () => clearTimeout(timer);
+  }, []);
   const { subject } = pending;
   const decide = useMcpApprovalStore.getState().decide;
   const who = pending.client ?? "A coding agent";
@@ -174,19 +185,37 @@ export function ApprovalDialog() {
         {subject.kind === "create" && <CreateBody plan={subject.plan} />}
         {subject.kind === "update" && <UpdateBody plan={subject.plan} />}
         {subject.kind === "send" && <SendBody subject={subject} />}
-        <p className="text-xs text-muted">The agent waits about a minute for your answer.</p>
+        <p className="text-xs text-muted">
+          The agent waits about a minute for your answer.
+          {waiting > 0 && ` ${waiting} more waiting after this.`}
+        </p>
         <div className="flex flex-wrap justify-end gap-2">
-          <Button onClick={() => decide(pending.id, "cancel")}>Cancel</Button>
+          <Button disabled={!armed} onClick={() => decide(pending.id, "cancel")}>
+            Cancel
+          </Button>
           {session && (
-            <Button variant="ghost" onClick={() => decide(pending.id, "allow-session")}>
+            <Button
+              variant="ghost"
+              disabled={!armed}
+              onClick={() => decide(pending.id, "allow-session")}
+            >
               {session}
             </Button>
           )}
-          <Button variant="primary" onClick={() => decide(pending.id, "approve")}>
+          <Button variant="primary" disabled={!armed} onClick={() => decide(pending.id, "approve")}>
             {APPROVE[subject.kind]}
           </Button>
         </div>
       </div>
     </Modal>
   );
+}
+
+/** Asks the user before an agent adds, changes or sends anything; one request at a time. */
+export function ApprovalDialog() {
+  const queue = useMcpApprovalStore((s) => s.queue);
+  const [pending] = queue;
+  if (!pending) return null;
+  // Keyed by request, so each one starts with its buttons inactive.
+  return <Approval key={pending.id} pending={pending} waiting={queue.length - 1} />;
 }

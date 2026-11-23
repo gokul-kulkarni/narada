@@ -74,7 +74,8 @@ describe("installMcpBridge", () => {
     expect(useMcpApprovalStore.getState().queue).toEqual([]);
     await vi.waitFor(() =>
       expect(client.reply).toHaveBeenCalledWith("c9", {
-        error: "The user declined, so nothing was added.",
+        error:
+          "You stopped waiting before the user answered, so nothing was added. Make one change at a time and wait for its result.",
       }),
     );
     expect(useWorkspaceStore.getState().collections).toEqual([]);

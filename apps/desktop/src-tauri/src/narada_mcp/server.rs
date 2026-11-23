@@ -21,10 +21,13 @@ use std::sync::Arc;
 
 const INSTRUCTIONS: &str = "Narada is the user's API client (a free Postman alternative). \
 Use these tools to see their saved requests, environments and recent deliveries while you work \
-on the code behind an API, and to add requests for the routes you find. Secret values are \
-replaced with [redacted] or [secret:name]; `{{name}}` is a Narada variable filled in when a \
-request is sent. Creating asks the user to approve in Narada first, and only ever adds: \
-existing requests are never changed.";
+on the code behind an API, to add requests for the routes you find, to fix a request, and to \
+send one to check a change. Secret values are replaced with [redacted] or [secret:name]; \
+`{{name}}` is a Narada variable filled in when a request is sent. Creating, changing and \
+sending each wait for the user to approve in Narada, one at a time: make one such call, wait \
+for its result, then make the next. Calls made together queue up, and you may stop waiting \
+before the user reaches them. Creating only ever adds; existing requests change only through \
+update_request.";
 
 #[derive(Deserialize, Serialize, schemars::JsonSchema)]
 #[serde(rename_all = "camelCase")]

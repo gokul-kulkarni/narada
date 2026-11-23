@@ -20,7 +20,7 @@ import { applyUpdate, planUpdate, type UpdateResult } from "@narada/core/mcp-ser
 import { resolveTemplate } from "@narada/core/variables";
 import { dispatchTab } from "../../protocols/registry";
 import { useHistoryStore } from "../../state/history-store";
-import { useMcpApprovalStore } from "../../state/mcp-approval-store";
+import { useMcpApprovalStore, type Outcome } from "../../state/mcp-approval-store";
 import { selectActiveTab, useTabsStore } from "../../state/tabs-store";
 import { useUiStore } from "../../state/ui-store";
 import { selectActiveEnvironment, useWorkspaceStore } from "../../state/workspace-store";
@@ -55,6 +55,14 @@ function summary(plan: CreatePlan): string {
   return `Added ${count} request${count === 1 ? "" : "s"} to ${where}.`;
 }
 
+/** Why nothing happened: the user said no, or the agent stopped waiting before they answered. */
+const notDone = (outcome: Outcome, what: string): ToolResult => ({
+  error:
+    outcome === "withdrawn"
+      ? `You stopped waiting before the user answered, so ${what}. Make one change at a time and wait for its result.`
+      : `The user declined, so ${what}.`,
+});
+
 /** Asks the user to approve the plan, then adds it to the workspace as it is by then. */
 async function create(
   planned: PlanResult,
@@ -63,10 +71,10 @@ async function create(
 ): Promise<ToolResult> {
   if ("error" in planned) return planned;
   const { plan } = planned;
-  const approved = await useMcpApprovalStore
+  const outcome = await useMcpApprovalStore
     .getState()
     .request(client, { kind: "create", plan }, callId);
-  if (!approved) return { error: "The user declined, so nothing was added." };
+  if (outcome !== "approved") return notDone(outcome, "nothing was added");
 
   const store = useWorkspaceStore.getState();
   const applied = applyCreatePlan(store.collections, plan);
@@ -94,10 +102,10 @@ async function update(
 ): Promise<ToolResult> {
   if ("error" in planned) return planned;
   const { plan } = planned;
-  const approved = await useMcpApprovalStore
+  const outcome = await useMcpApprovalStore
     .getState()
     .request(client, { kind: "update", plan }, callId);
-  if (!approved) return { error: "The user declined, so nothing changed." };
+  if (outcome !== "approved") return notDone(outcome, "nothing changed");
 
   await useWorkspaceStore
     .getState()
@@ -139,8 +147,8 @@ async function send(
     environment,
     saved: target.kind === "saved",
   };
-  const approved = await useMcpApprovalStore.getState().request(client, subject, callId);
-  if (!approved) return { error: "The user declined, so nothing was sent." };
+  const outcome = await useMcpApprovalStore.getState().request(client, subject, callId);
+  if (outcome !== "approved") return notDone(outcome, "nothing was sent");
 
   const tabId = useTabsStore.getState().openRequest(target.request, source);
   const tab = useTabsStore.getState().tabs.find((t) => t.id === tabId);

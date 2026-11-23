@@ -34,23 +34,25 @@ export interface PendingApproval {
  */
 export type Decision = "approve" | "cancel" | "allow-session";
 
+/** How an approval request ended. */
+export type Outcome = "approved" | "declined" | "withdrawn";
+
 interface ApprovalState {
   readonly queue: readonly PendingApproval[];
   readonly allowedForSession: boolean;
   readonly allowedHosts: ReadonlySet<string>;
-  /** Resolves true when the user approves. */
   request: (
     client: string | null,
     subject: ApprovalSubject,
     callId?: string | null,
-  ) => Promise<boolean>;
+  ) => Promise<Outcome>;
   decide: (id: string, decision: Decision) => void;
   /** The agent gave up on the call, so a late approval must not do anything. */
   withdraw: (callId: string) => void;
 }
 
 /** Resolvers of waiting requests, by id; kept out of the store's plain state. */
-const waiting = new Map<string, (approved: boolean) => void>();
+const waiting = new Map<string, (outcome: Outcome) => void>();
 
 function preApproved(subject: ApprovalSubject, state: ApprovalState): boolean {
   if (subject.kind === "create") return state.allowedForSession;
@@ -58,8 +60,8 @@ function preApproved(subject: ApprovalSubject, state: ApprovalState): boolean {
   return false;
 }
 
-const settle = (id: string, approved: boolean) => {
-  waiting.get(id)?.(approved);
+const settle = (id: string, outcome: Outcome) => {
+  waiting.get(id)?.(outcome);
   waiting.delete(id);
 };
 
@@ -69,7 +71,7 @@ export const useMcpApprovalStore = create<ApprovalState>()((set, get) => ({
   allowedHosts: new Set(),
 
   request: (client, subject, callId = null) => {
-    if (preApproved(subject, get())) return Promise.resolve(true);
+    if (preApproved(subject, get())) return Promise.resolve("approved");
     const id = newId();
     set((s) => ({ queue: [...s.queue, { id, client, subject, callId }] }));
     return new Promise((resolve) => waiting.set(id, resolve));
@@ -86,21 +88,21 @@ export const useMcpApprovalStore = create<ApprovalState>()((set, get) => ({
       const host = subject.host;
       set((s) => ({ allowedHosts: new Set([...s.allowedHosts, host]) }));
     }
-    settle(id, decision !== "cancel");
+    settle(id, decision === "cancel" ? "declined" : "approved");
     // Anything else now allowed for the session goes ahead too.
     const state = get();
     const [ready, still] = [
       state.queue.filter((p) => p.id !== id && preApproved(p.subject, state)),
       state.queue.filter((p) => p.id !== id && !preApproved(p.subject, state)),
     ];
-    ready.forEach((p) => settle(p.id, true));
+    ready.forEach((p) => settle(p.id, "approved"));
     set({ queue: still });
   },
 
   withdraw: (callId) => {
     const item = get().queue.find((pending) => pending.callId === callId);
     if (!item) return;
-    settle(item.id, false);
+    settle(item.id, "withdrawn");
     set((s) => ({ queue: s.queue.filter((pending) => pending.id !== item.id) }));
     const what =
       item.subject.kind === "send"
@@ -114,7 +116,7 @@ export const useMcpApprovalStore = create<ApprovalState>()((set, get) => ({
 
 /** Back to a fresh state, for tests. */
 export function resetMcpApprovals(): void {
-  waiting.forEach((resolve) => resolve(false));
+  waiting.forEach((resolve) => resolve("withdrawn"));
   waiting.clear();
   useMcpApprovalStore.setState({ queue: [], allowedForSession: false, allowedHosts: new Set() });
 }

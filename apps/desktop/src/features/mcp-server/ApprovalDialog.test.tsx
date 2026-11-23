@@ -1,10 +1,16 @@
-import { act, fireEvent, render, screen, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it } from "vitest";
 import { newRequest } from "@narada/core/factories";
 import type { CreatePlan } from "@narada/core/mcp-server/create";
 import { useMcpApprovalStore } from "../../state/mcp-approval-store";
 import { resetStores } from "../../test/reset-stores";
 import { ApprovalDialog } from "./ApprovalDialog";
+
+/** Buttons start inactive for a moment, so a click meant for the previous request can't land. */
+async function armed(button: HTMLElement): Promise<HTMLElement> {
+  await waitFor(() => expect(button).toBeEnabled());
+  return button;
+}
 
 const plan: CreatePlan = {
   kind: "requests",
@@ -40,7 +46,7 @@ describe("ApprovalDialog", () => {
 
   it("shows exactly what will be added and adds it on approval", async () => {
     render(<ApprovalDialog />);
-    let approved: Promise<boolean> = Promise.resolve(false);
+    let approved: Promise<string> = Promise.resolve("declined");
     act(() => {
       approved = useMcpApprovalStore.getState().request("Claude Code", { kind: "create", plan });
     });
@@ -52,33 +58,33 @@ describe("ApprovalDialog", () => {
     expect(within(tree).getByText(/renamed from "Void invoice"/)).toBeInTheDocument();
     expect(within(dialog).getByText(/You'll need to set: token/)).toBeInTheDocument();
     expect(within(dialog).getByText(/Not defined yet: id/)).toBeInTheDocument();
-    fireEvent.click(within(dialog).getByRole("button", { name: "Add" }));
-    expect(await approved).toBe(true);
+    fireEvent.click(await armed(within(dialog).getByRole("button", { name: "Add" })));
+    expect(await approved).toBe("approved");
     expect(screen.queryByRole("dialog")).toBeNull();
   });
 
   it("declines, and can allow the rest of the session", async () => {
     render(<ApprovalDialog />);
-    let first: Promise<boolean> = Promise.resolve(true);
-    let second: Promise<boolean> = Promise.resolve(false);
+    let first: Promise<string> = Promise.resolve("approved");
+    let second: Promise<string> = Promise.resolve("declined");
     act(() => {
       first = useMcpApprovalStore.getState().request(null, { kind: "create", plan });
       second = useMcpApprovalStore.getState().request(null, { kind: "create", plan });
     });
-    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
-    expect(await first).toBe(false);
+    fireEvent.click(await armed(screen.getByRole("button", { name: "Cancel" })));
+    expect(await first).toBe("declined");
     expect(
       screen.getByRole("dialog", { name: "A coding agent wants to add to Narada" }),
     ).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Allow for this session" }));
-    expect(await second).toBe(true);
+    fireEvent.click(await armed(screen.getByRole("button", { name: "Allow for this session" })));
+    expect(await second).toBe("approved");
     expect(useMcpApprovalStore.getState().allowedForSession).toBe(true);
   });
 
   it("shows a change to a saved request as a diff, with no session-wide option", async () => {
     render(<ApprovalDialog />);
     const before = newRequest({ name: "Create order", method: "GET" });
-    let approved: Promise<boolean> = Promise.resolve(false);
+    let approved: Promise<string> = Promise.resolve("declined");
     act(() => {
       approved = useMcpApprovalStore.getState().request("Codex", {
         kind: "update",
@@ -101,13 +107,13 @@ describe("ApprovalDialog", () => {
     expect(within(dialog).getByText("POST")).toBeInTheDocument();
     expect(within(dialog).getByText(/You'll need to set: token/)).toBeInTheDocument();
     expect(within(dialog).queryByRole("button", { name: /Allow/ })).toBeNull();
-    fireEvent.click(within(dialog).getByRole("button", { name: "Apply" }));
-    expect(await approved).toBe(true);
+    fireEvent.click(await armed(within(dialog).getByRole("button", { name: "Apply" })));
+    expect(await approved).toBe("approved");
   });
 
   it("shows where a request will be sent, and can allow that host for the session", async () => {
     render(<ApprovalDialog />);
-    let approved: Promise<boolean> = Promise.resolve(false);
+    let approved: Promise<string> = Promise.resolve("declined");
     act(() => {
       approved = useMcpApprovalStore.getState().request("Claude Code", {
         kind: "send",
@@ -122,9 +128,29 @@ describe("ApprovalDialog", () => {
     expect(within(dialog).getByText(/^to shop.dev/)).toBeInTheDocument();
     expect(within(dialog).getByText(/"dev"/)).toBeInTheDocument();
     fireEvent.click(
-      within(dialog).getByRole("button", { name: "Allow sending to shop.dev this session" }),
+      await armed(
+        within(dialog).getByRole("button", { name: "Allow sending to shop.dev this session" }),
+      ),
     );
-    expect(await approved).toBe(true);
+    expect(await approved).toBe("approved");
     expect(useMcpApprovalStore.getState().allowedHosts.has("shop.dev")).toBe(true);
+  });
+
+  it("ignores a click that lands just as the next request appears, and counts what waits", async () => {
+    render(<ApprovalDialog />);
+    let first: Promise<string> = Promise.resolve("declined");
+    let second: Promise<string> = Promise.resolve("approved");
+    act(() => {
+      first = useMcpApprovalStore.getState().request(null, { kind: "create", plan });
+      second = useMcpApprovalStore.getState().request(null, { kind: "create", plan });
+    });
+    expect(screen.getByText(/1 more waiting after this/)).toBeInTheDocument();
+    fireEvent.click(await armed(screen.getByRole("button", { name: "Add" })));
+    expect(await first).toBe("approved");
+    // The same spot now holds the next request's button, inactive for a moment.
+    fireEvent.click(screen.getByRole("button", { name: "Add" }));
+    expect(useMcpApprovalStore.getState().queue).toHaveLength(1);
+    fireEvent.click(await armed(screen.getByRole("button", { name: "Cancel" })));
+    expect(await second).toBe("declined");
   });
 });

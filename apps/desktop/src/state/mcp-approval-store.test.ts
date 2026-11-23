@@ -24,9 +24,9 @@ describe("useMcpApprovalStore", () => {
     const queue = useMcpApprovalStore.getState().queue;
     expect(queue.map((q) => q.client)).toEqual(["Claude Code", "Codex"]);
     useMcpApprovalStore.getState().decide(queue[0]?.id ?? "", "approve");
-    expect(await first).toBe(true);
+    expect(await first).toBe("approved");
     useMcpApprovalStore.getState().decide(queue[1]?.id ?? "", "cancel");
-    expect(await second).toBe(false);
+    expect(await second).toBe("declined");
     expect(useMcpApprovalStore.getState().queue).toEqual([]);
   });
 
@@ -35,9 +35,11 @@ describe("useMcpApprovalStore", () => {
     const pending = useMcpApprovalStore.getState().request(null, { kind: "create", plan });
     const id = useMcpApprovalStore.getState().queue[0]?.id ?? "";
     useMcpApprovalStore.getState().decide(id, "allow-session");
-    expect(await first).toBe(true);
-    expect(await pending).toBe(true);
-    expect(await useMcpApprovalStore.getState().request(null, { kind: "create", plan })).toBe(true);
+    expect(await first).toBe("approved");
+    expect(await pending).toBe("approved");
+    expect(await useMcpApprovalStore.getState().request(null, { kind: "create", plan })).toBe(
+      "approved",
+    );
     expect(useMcpApprovalStore.getState().queue).toEqual([]);
   });
 
@@ -51,7 +53,7 @@ describe("useMcpApprovalStore", () => {
       .getState()
       .request("Claude Code", { kind: "create", plan }, "call-1");
     useMcpApprovalStore.getState().withdraw("call-1");
-    expect(await answer).toBe(false);
+    expect(await answer).toBe("withdrawn");
     expect(useMcpApprovalStore.getState().queue).toEqual([]);
     expect(useUiStore.getState().notice).toBe("Claude Code stopped waiting, so nothing was added.");
     useMcpApprovalStore.getState().withdraw("unknown");
@@ -70,16 +72,16 @@ describe("useMcpApprovalStore", () => {
     const otherHost = useMcpApprovalStore.getState().request(null, send("evil.dev"));
     const id = useMcpApprovalStore.getState().queue[0]?.id ?? "";
     useMcpApprovalStore.getState().decide(id, "allow-session");
-    expect(await first).toBe(true);
-    expect(await sameHost).toBe(true);
+    expect(await first).toBe("approved");
+    expect(await sameHost).toBe("approved");
     expect(
       useMcpApprovalStore.getState().queue.map((p) => p.subject.kind === "send" && p.subject.host),
     ).toEqual(["evil.dev"]);
-    expect(await useMcpApprovalStore.getState().request(null, send("shop.dev"))).toBe(true);
+    expect(await useMcpApprovalStore.getState().request(null, send("shop.dev"))).toBe("approved");
     expect(useMcpApprovalStore.getState().allowedForSession).toBe(false);
     useMcpApprovalStore
       .getState()
       .decide(useMcpApprovalStore.getState().queue[0]?.id ?? "", "cancel");
-    expect(await otherHost).toBe(false);
+    expect(await otherHost).toBe("declined");
   });
 });
