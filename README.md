@@ -70,6 +70,13 @@ To build it yourself instead, see [Development](#development).
   requests, and MCP requests save into collections. Import servers by pasting the `mcpServers`
   config used by Claude Desktop, Cursor and others. A local command must be confirmed on each
   computer before it first runs (and again if it changes), since server files can arrive by sync.
+- **Ask an agent**: when a request fails (not delivered, 4xx/5xx, an MCP tool error or a failed
+  test), "Ask Claude Code" sends a description of the request and response to the Claude Code you
+  already have installed and signed in to, and streams its answer beside the response. Narada
+  holds no AI account or key. Secret variables, credential headers, auth values and tokens are
+  replaced with `[redacted]` first, and the first time you see exactly what will be sent. Claude
+  Code runs read-only: it gets only its Read, Grep and Glob tools (no edits, commands or web
+  access), in plan mode with `--restricted`.
 - **Keyboard**: the shortcuts you know from VS Code and browsers. ⌘P goes to any saved request,
   ⌘⇧P lists every command, ⌘↵ sends, ⌘T / ⌘W / ⌘⇧T open, close and reopen tabs, ⌃Tab and ⌘1–9
   switch tabs, ⌘L jumps to the URL, ⌘B hides the sidebar, ⌘J opens History, ⌘, opens Settings (Ctrl on Windows and
@@ -173,6 +180,9 @@ apps/desktop/             the Tauri desktop app
 - Only these HTTP methods are supported; custom methods are imported as GET.
 - OAuth 2.0 supports the client-credentials grant only.
 - Scripts can make network calls (`fetch`) from their Worker; only run scripts you trust.
+- Asking an agent: Claude Code only for now, and only in the desktop app. Redaction is
+  best-effort: a token pasted into a body as plain text, with no telling name, may not be caught,
+  which is what the preview is for.
 - MCP: no OAuth sign-in for remote servers yet (use a header token), no sampling, roots or
   elicitation, and the collection runner skips MCP requests. The browser build (`pnpm dev`)
   supports remote servers only, and only those that allow CORS.

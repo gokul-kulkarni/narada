@@ -3,6 +3,7 @@ import { CodeDialog } from "../codegen/CodeDialog";
 import { SaveRequestDialog } from "../collections/SaveRequestDialog";
 import { ImportDialog } from "../import/ImportDialog";
 import { TrustDialog } from "../mcp/TrustDialog";
+import { AssistPreviewDialog } from "../assist/AssistPreviewDialog";
 
 export function Dialogs() {
   const dialog = useUiStore((s) => s.dialog);
@@ -17,5 +18,7 @@ export function Dialogs() {
       return <CodeDialog tabId={dialog.tabId} onClose={close} />;
     case "mcp-trust":
       return <TrustDialog serverId={dialog.serverId} onClose={close} />;
+    case "assist-preview":
+      return <AssistPreviewDialog tabId={dialog.tabId} agentId={dialog.agentId} onClose={close} />;
   }
 }

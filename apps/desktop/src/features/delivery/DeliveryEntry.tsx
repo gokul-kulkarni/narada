@@ -50,12 +50,15 @@ export function CurrentDelivery({
   environment,
   delivery,
   error,
+  actions,
   children,
 }: {
   request: RequestDef;
   environment: string | null;
   delivery: Delivery | null;
   error: string | null;
+  /** Buttons shown before the status, e.g. "Ask Claude Code". */
+  actions?: ReactNode;
   children?: ReactNode;
 }) {
   const summary = delivery ? deliverySummary(delivery) : NOT_DELIVERED;
@@ -64,6 +67,7 @@ export function CurrentDelivery({
       <Header>
         <Destination request={request} environment={environment} />
         <span className="ml-auto flex shrink-0 items-center gap-2">
+          {actions}
           <StatusPill tone={summary.tone} testId="response-status">
             {summary.label}
             {summary.detail && ` · ${summary.detail}`}

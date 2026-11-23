@@ -3,7 +3,9 @@ import {
   createMemorySecretStore,
   type DocumentStore,
 } from "@narada/core/storage/document-store";
+import { setAssistClient } from "../lib/assist/client";
 import { setMcpClient } from "../lib/mcp/client";
+import { resetAssistStore } from "../state/assist-store";
 import { useHistoryStore } from "../state/history-store";
 import { useMcpStore } from "../state/mcp-store";
 import { setServices } from "../state/services";
@@ -38,5 +40,7 @@ export function resetStores(): DocumentStore {
   });
   useMcpStore.setState({ servers: [], connections: {}, logs: {}, trusted: [], loadErrors: [] });
   setMcpClient(null);
+  setAssistClient(undefined);
+  resetAssistStore();
   return documents;
 }

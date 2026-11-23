@@ -10,6 +10,7 @@ pub const LOCAL_FILES: &[&str] = &[
     "globals.json",
     "sync-state.json",
     "mcp-trust.json",
+    "assist.json",
 ];
 
 pub fn kind_dir(kind: &str) -> Result<&'static str, String> {

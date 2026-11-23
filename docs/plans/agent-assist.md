@@ -1,6 +1,6 @@
 # Plan: Agent assist (local agent CLIs + Narada MCP server)
 
-Status: draft, 2026-11-23. Covers option 1 (Narada calls the user's agent CLI) and
+Status: phase 0 and 1a done (2026-11-23); 1b next. Covers option 1 (Narada calls the user's agent CLI) and
 option 2 (the user's agent connects to Narada over MCP).
 
 ## Goals and non-goals
@@ -287,6 +287,9 @@ updates in each phase.
 - **CLI flag churn:** agent CLIs change their flags and output formats. Keep the
   adapters data-driven, test them against recorded fixtures, and show the raw stderr
   when parsing fails.
+- **Prompt injection from responses:** a response body is untrusted text sent to the agent.
+  So Claude Code gets only Read, Grep and Glob (`--tools`): no WebSearch, WebFetch or
+  commands, so it has no way to send data off the machine. Keep any new agent to the same rule.
 - **Redaction is best-effort** for secrets that aren't marked (e.g. a token pasted
   straight into a body). The preview modal is the backstop, and the docs should say so.
 - **Port conflicts / multiple windows** for the MCP server: fall back to "port in

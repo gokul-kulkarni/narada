@@ -36,6 +36,7 @@ Named after Narada Muni, the wandering sage who carries messages between the wor
 
 - **Requests:** HTTP methods GET/POST/PUT/PATCH/DELETE/HEAD/OPTIONS; params, headers, raw / urlencoded / form-data bodies; tabs; history; shared cookie jar; live streaming with Stop, SSE/JSON-lines Events view, joined LLM text with time to first text.
 - **MCP client:** stdio and Streamable HTTP servers; browse and call tools, resources and prompts; schema-built forms; MCP requests save into collections. A local command must be confirmed per computer before it first runs.
+- **Agent assist:** "Ask Claude Code" on a failed delivery runs the user's installed Claude Code CLI read-only on a redacted description of the request and response and streams its answer beside the response; no Narada account or AI key. Previewed before the first send.
 - **Auth:** Basic, Bearer, API key, OAuth 2.0 client credentials; inheritance from folder/collection.
 - **Variables:** `{{variable}}` with Postman precedence (local > data > environment > collection > global).
 - **Scripts:** Postman-compatible `pm.*` pre-request and test scripts in a Web Worker, 5-second limit.

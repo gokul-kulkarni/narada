@@ -4,6 +4,7 @@ import { deliveriesFor } from "@narada/core/delivery";
 import { useHistoryStore } from "../../state/history-store";
 import type { RequestTab } from "../../state/tabs-store";
 import { useUiStore } from "../../state/ui-store";
+import { AskAgentButton } from "../assist/AskAgentButton";
 import { CurrentDelivery, PendingDelivery } from "./DeliveryEntry";
 
 interface Props {
@@ -44,6 +45,7 @@ export function DeliveryLog({ tab, environment, responseView, liveView, onStop }
         environment={sentTo}
         delivery={tab.delivery}
         error={tab.error}
+        actions={<AskAgentButton tab={tab} />}
       >
         {tab.delivery && responseView}
       </CurrentDelivery>

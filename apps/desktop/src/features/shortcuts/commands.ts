@@ -2,6 +2,7 @@ import { dispatchTab } from "../../protocols/registry";
 import { selectActiveTab, useTabsStore } from "../../state/tabs-store";
 import { useUiStore } from "../../state/ui-store";
 import { stopDelivery } from "../request/in-flight";
+import { askAgent } from "../assist/ask";
 import { saveTab } from "../workspace/save-tab";
 import { isMac, type KeySpec } from "./keys";
 
@@ -90,6 +91,13 @@ export const COMMANDS: readonly Command[] = [
     group: "Request",
     keys: ["mod+s"],
     run: withVisibleTab((tab) => void saveTab(tab)),
+  },
+  {
+    id: "request.askAgent",
+    title: "Ask an agent about the response",
+    group: "Request",
+    keys: [],
+    run: withVisibleTab((tab) => void askAgent(tab.id)),
   },
   {
     id: "request.focusUrl",
