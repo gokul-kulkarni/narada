@@ -3,10 +3,10 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { newRequest } from "@narada/core/factories";
 import type { Delivery, HistoryEntry, HttpResponse } from "@narada/core/model";
 import { useHistoryStore } from "../../state/history-store";
-import { useTabsStore, type RequestTab } from "../../state/tabs-store";
+import type { RequestTab } from "../../state/tabs-store";
 import { resetStores } from "../../test/reset-stores";
-import { DeliveryLog, PAST_DELIVERY_LIMIT } from "./DeliveryLog";
-import { asHttp } from "../../test/http";
+import { DeliveryLog } from "./DeliveryLog";
+import { useUiStore } from "../../state/ui-store";
 
 const request = { ...newRequest(), id: "req-1", url: "{{baseUrl}}/pets" };
 
@@ -88,7 +88,7 @@ describe("DeliveryLog", () => {
     expect(screen.getByRole("article", { name: "Latest delivery" })).toHaveTextContent("Stopped.");
   });
 
-  it("expands the latest delivery with where it went and the response view", () => {
+  it("shows only the latest delivery, with where it went and the response view", () => {
     useHistoryStore.setState({ entries: [entry("1", 201, "prod"), entry("2", 404, "local")] });
     render(
       <DeliveryLog
@@ -104,9 +104,8 @@ describe("DeliveryLog", () => {
     );
     expect(within(latest).getByText("response body")).toBeInTheDocument();
 
-    const log = screen.getByRole("list", { name: "Delivery log" });
-    expect(within(log).getAllByRole("listitem")).toHaveLength(2);
-    expect(within(log).getByRole("button")).toHaveTextContent("Returned · 404 · 10 ms");
+    // Earlier deliveries are in the History panel, not here.
+    expect(screen.queryByText(/404/)).toBeNull();
   });
 
   it("reports a request that never arrived", () => {
@@ -115,20 +114,11 @@ describe("DeliveryLog", () => {
     expect(screen.getByTestId("response-status")).toHaveTextContent("Not delivered");
   });
 
-  it("opens an earlier delivery in a new tab", () => {
-    useHistoryStore.setState({ entries: [entry("1", null)] });
+  it("points to the history when the request was sent before", () => {
+    useHistoryStore.setState({ entries: [entry("1", 200), entry("2", 404)] });
     render(<DeliveryLog tab={tab()} environment={null} />);
-    fireEvent.click(screen.getByRole("button", { name: /Not delivered/ }));
-    const [opened] = useTabsStore.getState().tabs;
-    expect(asHttp(opened.request).url).toBe("{{baseUrl}}/pets");
-    expect(opened.request.id).not.toBe("req-1");
-  });
-
-  it("caps earlier deliveries and says how many are hidden", () => {
-    const entries = Array.from({ length: PAST_DELIVERY_LIMIT + 2 }, (_, i) => entry(`${i}`, 200));
-    useHistoryStore.setState({ entries });
-    render(<DeliveryLog tab={tab()} environment={null} />);
-    expect(screen.getAllByRole("button")).toHaveLength(PAST_DELIVERY_LIMIT);
-    expect(screen.getByText("2 earlier deliveries in Recent deliveries")).toBeInTheDocument();
+    expect(screen.getByText(/Sent 2 times before/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Show history" }));
+    expect(useUiStore.getState().historyOpen).toBe(true);
   });
 });

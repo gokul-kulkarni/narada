@@ -1,11 +1,10 @@
 import type { ReactNode } from "react";
+import { Button } from "../../components/ui";
 import { deliveriesFor } from "@narada/core/delivery";
-import { newId } from "@narada/core/ids";
 import { useHistoryStore } from "../../state/history-store";
-import { useTabsStore, type RequestTab } from "../../state/tabs-store";
-import { CurrentDelivery, PastDelivery, PendingDelivery } from "./DeliveryEntry";
-
-export const PAST_DELIVERY_LIMIT = 8;
+import type { RequestTab } from "../../state/tabs-store";
+import { useUiStore } from "../../state/ui-store";
+import { CurrentDelivery, PendingDelivery } from "./DeliveryEntry";
 
 interface Props {
   readonly tab: RequestTab;
@@ -18,59 +17,55 @@ interface Props {
   readonly onStop?: () => void;
 }
 
-/** Every time the open request was sent, newest first, on a timeline. */
+/** The open request's latest delivery. Earlier ones are in the History panel. */
 export function DeliveryLog({ tab, environment, responseView, liveView, onStop }: Props) {
   const entries = useHistoryStore((s) => s.entries);
   const hasCurrent = !tab.loading && (tab.delivery !== null || tab.error !== null);
-  // When a response is showing, the newest history entry is that same delivery.
   const all = deliveriesFor(entries, tab.request.id);
-  const past = all.slice(hasCurrent ? 1 : 0);
   // The newest entry remembers where it went, even if the environment was switched since.
   const sentTo = hasCurrent && all[0] ? (all[0].environment ?? null) : environment;
-  const shown = past.slice(0, PAST_DELIVERY_LIMIT);
-  const hidden = past.length - shown.length;
-  const reopen = (index: number) =>
-    useTabsStore.getState().openRequest({ ...shown[index].request, id: newId() }, null);
 
-  if (!tab.loading && !hasCurrent && past.length === 0) {
+  if (tab.loading) {
     return (
-      <p className="rounded-2xl border border-dashed border-line p-6 text-center text-sm text-muted">
-        Nothing dispatched yet. Every time you send this request, the delivery and its reply are
-        logged here.
-      </p>
+      <PendingDelivery
+        request={tab.request}
+        environment={environment}
+        partial={tab.partial}
+        onStop={onStop}
+      >
+        {tab.partial && liveView}
+      </PendingDelivery>
     );
   }
-
+  if (hasCurrent) {
+    return (
+      <CurrentDelivery
+        request={tab.request}
+        environment={sentTo}
+        delivery={tab.delivery}
+        error={tab.error}
+      >
+        {tab.delivery && responseView}
+      </CurrentDelivery>
+    );
+  }
   return (
-    <ol aria-label="Delivery log" className="ml-3 flex flex-col gap-4 border-l-2 border-line pl-6">
-      {tab.loading && (
-        <PendingDelivery
-          request={tab.request}
-          environment={environment}
-          partial={tab.partial}
-          onStop={onStop}
+    <div className="m-auto flex max-w-sm flex-col items-center gap-3 p-6 text-center text-sm text-muted">
+      <p>
+        {all.length > 0
+          ? `Sent ${all.length === 1 ? "once" : `${all.length} times`} before. Dispatch it to see a response here.`
+          : "Nothing dispatched yet. Dispatch the request to see its response here."}
+      </p>
+      {all.length > 0 && (
+        <Button
+          variant="ghost"
+          onClick={() => {
+            if (!useUiStore.getState().historyOpen) useUiStore.getState().toggleHistory();
+          }}
         >
-          {tab.partial && liveView}
-        </PendingDelivery>
+          Show history
+        </Button>
       )}
-      {hasCurrent && (
-        <CurrentDelivery
-          request={tab.request}
-          environment={sentTo}
-          delivery={tab.delivery}
-          error={tab.error}
-        >
-          {tab.delivery && responseView}
-        </CurrentDelivery>
-      )}
-      {shown.map((entry, index) => (
-        <PastDelivery key={entry.id} entry={entry} onOpen={() => reopen(index)} />
-      ))}
-      {hidden > 0 && (
-        <li className="text-xs text-muted">
-          {hidden} earlier {hidden === 1 ? "delivery" : "deliveries"} in Recent deliveries
-        </li>
-      )}
-    </ol>
+    </div>
   );
 }

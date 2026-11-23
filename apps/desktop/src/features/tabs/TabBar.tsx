@@ -27,6 +27,13 @@ export function TabBar() {
         return (
           <div
             key={tab.id}
+            // Middle-click closes, as in browsers and VS Code.
+            onMouseDown={(e) => e.button === 1 && e.preventDefault()}
+            onAuxClick={(e) => {
+              if (e.button !== 1) return;
+              e.preventDefault();
+              close(tab.id);
+            }}
             className={`group flex items-center gap-2 border-r border-b-2 border-r-line-soft px-4 py-2 ${
               current
                 ? "border-b-accent font-semibold text-ink"

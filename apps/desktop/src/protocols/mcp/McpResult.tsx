@@ -7,7 +7,7 @@ import { ContentBlocks } from "./ContentBlocks";
 type View = "content" | "structured" | "raw";
 
 const PRE =
-  "max-h-96 overflow-auto rounded-lg bg-surface-2 p-3 font-mono text-[13px] whitespace-pre-wrap break-all";
+  "min-h-0 flex-1 overflow-auto rounded-lg bg-surface-2 p-3 font-mono text-[13px] whitespace-pre-wrap break-all";
 
 function Content({ delivery }: { delivery: McpDelivery }) {
   switch (delivery.operation) {
@@ -47,9 +47,13 @@ export function McpResult({ delivery }: { delivery: McpDelivery }) {
     { id: "raw", label: "Raw" },
   ];
   return (
-    <section aria-label="Response" className="flex min-h-0 flex-col gap-2 p-4 pt-2">
+    <section aria-label="Response" className="flex min-h-0 flex-1 flex-col gap-2 px-5 pt-2 pb-4">
       <TabStrip label="Response views" tabs={views} active={view} onChange={setView} />
-      {view === "content" && <Content delivery={delivery} />}
+      {view === "content" && (
+        <div className="min-h-0 flex-1 overflow-y-auto">
+          <Content delivery={delivery} />
+        </div>
+      )}
       {view === "structured" && <pre className={PRE}>{JSON.stringify(structured, null, 2)}</pre>}
       {view === "raw" && (
         <pre aria-label="Raw reply" className={PRE}>

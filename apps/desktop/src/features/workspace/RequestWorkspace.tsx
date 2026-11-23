@@ -1,3 +1,4 @@
+import { SplitPane } from "../../components/SplitPane";
 import { Composer, DeliveryView } from "../../protocols/registry";
 import { selectActiveTab, useTabsStore } from "../../state/tabs-store";
 import { selectActiveEnvironment, useWorkspaceStore } from "../../state/workspace-store";
@@ -5,7 +6,7 @@ import { DeliveryLog } from "../delivery/DeliveryLog";
 import { RecentDeliveries } from "../delivery/RecentDeliveries";
 import { stopDelivery } from "../request/in-flight";
 
-/** The open request of any protocol: its composer, then the log of its deliveries. */
+/** The open request of any protocol: its composer above, its latest delivery below. */
 export function RequestWorkspace() {
   const tab = useTabsStore(selectActiveTab);
   const environment = useWorkspaceStore((s) => selectActiveEnvironment(s)?.name ?? null);
@@ -15,9 +16,9 @@ export function RequestWorkspace() {
   }
 
   return (
-    <div className="min-h-0 flex-1 overflow-y-auto">
-      <div className="flex flex-col gap-6 px-8 py-6">
-        <Composer tab={tab} />
+    <SplitPane
+      top={<Composer tab={tab} />}
+      bottom={
         <DeliveryLog
           tab={tab}
           environment={environment}
@@ -25,7 +26,7 @@ export function RequestWorkspace() {
           liveView={tab.partial && <DeliveryView tab={tab} delivery={tab.partial} live />}
           responseView={tab.delivery && <DeliveryView tab={tab} delivery={tab.delivery} />}
         />
-      </div>
-    </div>
+      }
+    />
   );
 }

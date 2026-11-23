@@ -22,6 +22,7 @@ export function resetStores(): DocumentStore {
     view: { kind: "requests" },
     palette: null,
     sidebarHidden: false,
+    historyOpen: false,
     dialog: null,
     notice: null,
     revealed: new Set(),

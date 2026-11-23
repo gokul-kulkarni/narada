@@ -164,6 +164,13 @@ export const COMMANDS: readonly Command[] = [
     run: () => ui().toggleSidebar(),
   },
   {
+    id: "view.history",
+    title: "Show or hide history",
+    group: "View",
+    keys: ["mod+j"],
+    run: () => ui().toggleHistory(),
+  },
+  {
     id: "view.settings",
     title: "Open Settings",
     group: "View",

@@ -24,6 +24,17 @@ describe("TabBar and HistoryList", () => {
     expect(useTabsStore.getState().tabs.map((t) => t.request.name)).toEqual(["B"]);
   });
 
+  it("closes a tab with a middle click", () => {
+    useTabsStore.getState().openRequest(newRequest({ name: "A" }), null);
+    useTabsStore.getState().openRequest(newRequest({ name: "B" }), null);
+    render(<TabBar />);
+    fireEvent(
+      screen.getByRole("tab", { name: /A/ }),
+      new MouseEvent("auxclick", { bubbles: true, button: 1 }),
+    );
+    expect(useTabsStore.getState().tabs.map((t) => t.request.name)).toEqual(["B"]);
+  });
+
   it("leads back to the request from Settings", () => {
     const a = useTabsStore.getState().openRequest(newRequest({ name: "A" }), null);
     useUiStore.getState().show({ kind: "settings" });

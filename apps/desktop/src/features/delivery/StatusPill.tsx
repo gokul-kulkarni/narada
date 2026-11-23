@@ -29,22 +29,3 @@ export function StatusPill({
     </span>
   );
 }
-
-const DOTS: Record<DeliveryTone | "pending", string> = {
-  ok: "bg-ok",
-  err: "bg-err",
-  pending: "bg-accent animate-pulse",
-};
-
-/** The marker on the delivery log's timeline line. */
-export function TimelineDot({ tone }: { tone: DeliveryTone | "pending" }) {
-  return (
-    <span
-      aria-hidden="true"
-      className={join(
-        "absolute top-4 -left-[33px] size-3.5 rounded-full border-[3px] border-canvas",
-        DOTS[tone],
-      )}
-    />
-  );
-}

@@ -72,7 +72,7 @@ To build it yourself instead, see [Development](#development).
   computer before it first runs (and again if it changes), since server files can arrive by sync.
 - **Keyboard**: the shortcuts you know from VS Code and browsers. ⌘P goes to any saved request,
   ⌘⇧P lists every command, ⌘↵ sends, ⌘T / ⌘W / ⌘⇧T open, close and reopen tabs, ⌃Tab and ⌘1–9
-  switch tabs, ⌘L jumps to the URL, ⌘B hides the sidebar, ⌘, opens Settings (Ctrl on Windows and
+  switch tabs, ⌘L jumps to the URL, ⌘B hides the sidebar, ⌘J opens History, ⌘, opens Settings (Ctrl on Windows and
   Linux). Settings lists them all.
 - **Code**: generate cURL, JavaScript `fetch` and Python `requests`. Import cURL commands.
 - **Google Drive sync**: two-way sync with a `narada` folder in your Drive.

@@ -18,10 +18,10 @@ export function StreamEvents({ messages, timeline }: Props) {
   const shown = messages.slice(0, EVENT_ROW_LIMIT);
   const hidden = messages.length - shown.length;
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex min-h-0 flex-1 flex-col gap-2">
       <ol
         aria-label="Stream events"
-        className="max-h-96 overflow-y-auto rounded-lg bg-surface-2 font-mono text-xs"
+        className="min-h-0 flex-1 overflow-y-auto rounded-lg bg-surface-2 font-mono text-xs"
       >
         {shown.map((message, index) => {
           const at = arrivalMs(timeline, message.end);

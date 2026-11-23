@@ -23,6 +23,8 @@ interface UiState {
   readonly view: MainView;
   readonly palette: PaletteMode | null;
   readonly sidebarHidden: boolean;
+  /** The History panel above the status bar. */
+  readonly historyOpen: boolean;
   readonly dialog: Dialog | null;
   readonly notice: string | null;
   /** Collections to show expanded when they first appear in the sidebar (e.g. just imported). */
@@ -31,6 +33,7 @@ interface UiState {
   openPalette: (mode: PaletteMode) => void;
   closePalette: () => void;
   toggleSidebar: () => void;
+  toggleHistory: () => void;
   openDialog: (dialog: Dialog) => void;
   closeDialog: () => void;
   notify: (notice: string | null) => void;
@@ -41,6 +44,7 @@ export const useUiStore = create<UiState>()((set) => ({
   view: { kind: "requests" },
   palette: null,
   sidebarHidden: false,
+  historyOpen: false,
   dialog: null,
   notice: null,
   revealed: new Set(),
@@ -48,6 +52,7 @@ export const useUiStore = create<UiState>()((set) => ({
   openPalette: (palette) => set({ palette }),
   closePalette: () => set({ palette: null }),
   toggleSidebar: () => set((s) => ({ sidebarHidden: !s.sidebarHidden })),
+  toggleHistory: () => set((s) => ({ historyOpen: !s.historyOpen })),
   openDialog: (dialog) => set({ dialog }),
   closeDialog: () => set({ dialog: null }),
   notify: (notice) => set({ notice }),

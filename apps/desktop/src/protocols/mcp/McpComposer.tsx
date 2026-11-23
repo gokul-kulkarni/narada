@@ -81,10 +81,7 @@ export function McpComposer({ tab, request, onSend }: Props) {
   const description = describe(operation, connection);
 
   return (
-    <section
-      aria-label="Compose request"
-      className="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-4 shadow-[0_8px_28px_rgb(31_27_46/0.06)]"
-    >
+    <section aria-label="Compose request" className="flex flex-col gap-3 px-5 py-4">
       <div className="flex items-center gap-2">
         <TextInput
           aria-label="Request name"

@@ -1,3 +1,4 @@
+import { HistoryPanel } from "./features/history/HistoryPanel";
 import { CommandPalette } from "./features/shortcuts/CommandPalette";
 import { useShortcuts } from "./features/shortcuts/use-shortcuts";
 import { Dialogs } from "./features/workspace/Dialogs";
@@ -37,6 +38,7 @@ function App() {
           <MainView />
         </main>
       </div>
+      <HistoryPanel />
       <StatusBar />
       <Dialogs />
       <CommandPalette />
