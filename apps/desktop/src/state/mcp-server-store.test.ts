@@ -15,6 +15,7 @@ function fakeClient(start: NaradaMcpClient["start"] = async (port) => port): Nar
     stop: vi.fn(async () => {}),
     reply: vi.fn(),
     onToolCall: vi.fn(async () => () => {}),
+    onToolCancelled: vi.fn(async () => () => {}),
   };
 }
 

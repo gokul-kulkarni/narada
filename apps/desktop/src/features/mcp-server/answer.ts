@@ -51,10 +51,14 @@ function summary(plan: CreatePlan): string {
 }
 
 /** Asks the user to approve the plan, then adds it to the workspace as it is by then. */
-async function create(planned: PlanResult, client: string | null): Promise<ToolResult> {
+async function create(
+  planned: PlanResult,
+  client: string | null,
+  callId: string | null,
+): Promise<ToolResult> {
   if ("error" in planned) return planned;
   const { plan } = planned;
-  const approved = await useMcpApprovalStore.getState().request(client, plan);
+  const approved = await useMcpApprovalStore.getState().request(client, plan, callId);
   if (!approved) return { error: "The user declined, so nothing was added." };
 
   const store = useWorkspaceStore.getState();
@@ -80,6 +84,7 @@ export async function answerToolCall(
   tool: string,
   args: unknown,
   client: string | null = null,
+  callId: string | null = null,
 ): Promise<ToolResult> {
   switch (tool) {
     case "list_collections":
@@ -93,11 +98,11 @@ export async function answerToolCall(
     case "list_history":
       return listHistory(workspace(), args);
     case "create_request":
-      return create(planCreateRequests(workspace(), args), client);
+      return create(planCreateRequests(workspace(), args), client, callId);
     case "create_folder":
-      return create(planCreateFolder(workspace(), args), client);
+      return create(planCreateFolder(workspace(), args), client, callId);
     case "create_collection":
-      return create(planCreateCollection(workspace(), args), client);
+      return create(planCreateCollection(workspace(), args), client, callId);
     default:
       return { error: `Narada has no tool "${tool}".` };
   }

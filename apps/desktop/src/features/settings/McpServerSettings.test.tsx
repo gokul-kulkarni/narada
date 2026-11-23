@@ -13,6 +13,7 @@ function install(start: NaradaMcpClient["start"] = async (port) => port) {
     stop: vi.fn(async () => {}),
     reply: vi.fn(),
     onToolCall: vi.fn(async () => () => {}),
+    onToolCancelled: vi.fn(async () => () => {}),
   };
   setNaradaMcpClient(client);
   return client;

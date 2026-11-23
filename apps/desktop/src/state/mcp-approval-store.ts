@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import type { CreatePlan } from "@narada/core/mcp-server/create";
 import { newId } from "@narada/core/ids";
+import { useUiStore } from "./ui-store";
 
 /** A change a connected agent wants to make, waiting for the user. */
 export interface PendingApproval {
@@ -8,6 +9,8 @@ export interface PendingApproval {
   /** The agent's name as it introduced itself; null if it didn't. */
   readonly client: string | null;
   readonly plan: CreatePlan;
+  /** The tool call it answers, so it can be withdrawn if the agent stops waiting. */
+  readonly callId: string | null;
 }
 
 export type Decision = "add" | "cancel" | "allow-session";
@@ -17,8 +20,10 @@ interface ApprovalState {
   /** The user chose "Allow for this session": additions go ahead until Narada restarts. */
   readonly allowedForSession: boolean;
   /** Resolves true when the user approves `plan`. */
-  request: (client: string | null, plan: CreatePlan) => Promise<boolean>;
+  request: (client: string | null, plan: CreatePlan, callId?: string | null) => Promise<boolean>;
   decide: (id: string, decision: Decision) => void;
+  /** The agent gave up on the call, so a late approval must not add anything. */
+  withdraw: (callId: string) => void;
 }
 
 /** Resolvers of waiting requests, by id; kept out of the store's plain state. */
@@ -28,10 +33,10 @@ export const useMcpApprovalStore = create<ApprovalState>()((set, get) => ({
   queue: [],
   allowedForSession: false,
 
-  request: (client, plan) => {
+  request: (client, plan, callId = null) => {
     if (get().allowedForSession) return Promise.resolve(true);
     const id = newId();
-    set((s) => ({ queue: [...s.queue, { id, client, plan }] }));
+    set((s) => ({ queue: [...s.queue, { id, client, plan, callId }] }));
     return new Promise((resolve) => waiting.set(id, resolve));
   },
 
@@ -47,6 +52,17 @@ export const useMcpApprovalStore = create<ApprovalState>()((set, get) => ({
     waiting.get(id)?.(decision === "add");
     waiting.delete(id);
     set((s) => ({ queue: s.queue.filter((item) => item.id !== id) }));
+  },
+
+  withdraw: (callId) => {
+    const item = get().queue.find((pending) => pending.callId === callId);
+    if (!item) return;
+    waiting.get(item.id)?.(false);
+    waiting.delete(item.id);
+    set((s) => ({ queue: s.queue.filter((pending) => pending.id !== item.id) }));
+    useUiStore
+      .getState()
+      .notify(`${item.client ?? "The agent"} stopped waiting, so nothing was added.`);
   },
 }));
 

@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import type { CreatePlan } from "@narada/core/mcp-server/create";
 import { resetMcpApprovals, useMcpApprovalStore } from "./mcp-approval-store";
+import { useUiStore } from "./ui-store";
 
 const plan: CreatePlan = {
   kind: "folder",
@@ -42,5 +43,14 @@ describe("useMcpApprovalStore", () => {
   it("ignores a decision for something no longer waiting", () => {
     useMcpApprovalStore.getState().decide("gone", "add");
     expect(useMcpApprovalStore.getState().queue).toEqual([]);
+  });
+
+  it("withdraws a request the agent stopped waiting for, and says so", async () => {
+    const answer = useMcpApprovalStore.getState().request("Claude Code", plan, "call-1");
+    useMcpApprovalStore.getState().withdraw("call-1");
+    expect(await answer).toBe(false);
+    expect(useMcpApprovalStore.getState().queue).toEqual([]);
+    expect(useUiStore.getState().notice).toBe("Claude Code stopped waiting, so nothing was added.");
+    useMcpApprovalStore.getState().withdraw("unknown");
   });
 });

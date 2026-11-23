@@ -4,6 +4,7 @@ use crate::mcp::{ListKind, Operation, ServerTransport, Sink, connect, list, run}
 use serde_json::{Value, json};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
+use tokio_util::sync::CancellationToken;
 
 const TOKEN: &str = "test-token-0123456789abcdef0123456789abcdef";
 
@@ -15,7 +16,13 @@ struct StaticBridge {
 }
 
 impl ToolBridge for StaticBridge {
-    fn call(&self, tool: &str, arguments: Value, client: Option<String>) -> BridgeFuture<'_> {
+    fn call(
+        &self,
+        tool: &str,
+        arguments: Value,
+        client: Option<String>,
+        _cancelled: CancellationToken,
+    ) -> BridgeFuture<'_> {
         self.clients.lock().unwrap().push(client);
         self.calls
             .lock()
@@ -308,6 +315,88 @@ mod timeouts {
         assert_eq!(
             answer_timeout("create_collection"),
             Duration::from_secs(300)
+        );
+    }
+}
+
+mod client_names {
+    use super::super::server::agent_from_user_agent;
+
+    #[test]
+    fn names_agents_from_their_user_agent() {
+        assert_eq!(
+            agent_from_user_agent("claude-code/2.1.330 (sdk-cli)").as_deref(),
+            Some("Claude Code")
+        );
+        assert_eq!(
+            agent_from_user_agent("codex_cli_rs/0.171.0 (Mac OS)").as_deref(),
+            Some("Codex")
+        );
+        assert_eq!(
+            agent_from_user_agent("Cursor/1.2").as_deref(),
+            Some("Cursor")
+        );
+        assert_eq!(
+            agent_from_user_agent("my-agent/0.1").as_deref(),
+            Some("my-agent")
+        );
+        // Generic HTTP libraries say nothing about which agent it is.
+        for generic in [
+            "node",
+            "undici",
+            "python-httpx/0.27",
+            "reqwest/0.12",
+            "",
+            "   ",
+        ] {
+            assert_eq!(agent_from_user_agent(generic), None, "{generic}");
+        }
+    }
+}
+
+mod waiting {
+    use super::super::bridge::{Waited, wait_for_answer};
+    use serde_json::json;
+    use std::time::Duration;
+    use tokio::sync::oneshot;
+    use tokio_util::sync::CancellationToken;
+
+    const LONG: Duration = Duration::from_secs(60);
+
+    #[tokio::test]
+    async fn returns_the_app_answer() {
+        let (send, reply) = oneshot::channel();
+        send.send(Ok(json!(1))).unwrap();
+        let waited = wait_for_answer(reply, LONG, CancellationToken::new()).await;
+        assert_eq!(waited, Waited::Answer(Ok(json!(1))));
+    }
+
+    #[tokio::test]
+    async fn stops_waiting_when_the_agent_gives_up() {
+        let (_send, reply) = oneshot::channel();
+        let cancelled = CancellationToken::new();
+        let waiting = tokio::spawn(wait_for_answer(reply, LONG, cancelled.clone()));
+        cancelled.cancel();
+        let outcome = tokio::time::timeout(Duration::from_secs(2), waiting)
+            .await
+            .unwrap()
+            .unwrap();
+        assert_eq!(outcome, Waited::Cancelled);
+    }
+
+    #[tokio::test]
+    async fn times_out_and_notices_a_closed_app() {
+        let (_send, reply) = oneshot::channel();
+        let quick = Duration::from_millis(20);
+        assert_eq!(
+            wait_for_answer(reply, quick, CancellationToken::new()).await,
+            Waited::TimedOut
+        );
+        let (send, reply) = oneshot::channel::<Result<serde_json::Value, String>>();
+        drop(send);
+        assert_eq!(
+            wait_for_answer(reply, LONG, CancellationToken::new()).await,
+            Waited::Closed
         );
     }
 }

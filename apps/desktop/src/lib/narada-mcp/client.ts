@@ -18,6 +18,8 @@ export interface NaradaMcpClient {
   reply(callId: string, answer: ToolResult): Promise<void>;
   /** Calls `handler` for each tool call; resolves to a function that stops listening. */
   onToolCall(handler: (call: ToolCall) => void): Promise<() => void>;
+  /** Calls `handler` with the id of each call the agent stopped waiting for. */
+  onToolCancelled(handler: (callId: string) => void): Promise<() => void>;
 }
 
 const tauriClient: NaradaMcpClient = {
@@ -30,6 +32,10 @@ const tauriClient: NaradaMcpClient = {
     }),
   onToolCall: (handler) =>
     listen<ToolCall>("narada-mcp://tool-call", (event) => handler(event.payload)),
+  onToolCancelled: (handler) =>
+    listen<{ callId: string }>("narada-mcp://tool-cancelled", (event) =>
+      handler(event.payload.callId),
+    ),
 };
 
 let override: NaradaMcpClient | null | undefined;

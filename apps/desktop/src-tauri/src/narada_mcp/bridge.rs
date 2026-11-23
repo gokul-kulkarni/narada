@@ -10,14 +10,22 @@ use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use tauri::{AppHandle, Emitter};
 use tokio::sync::oneshot;
+use tokio_util::sync::CancellationToken;
 
 pub type BridgeResult = Result<Value, String>;
 pub type BridgeFuture<'a> = Pin<Box<dyn Future<Output = BridgeResult> + Send + 'a>>;
 
 /// Answers one MCP tool call with JSON, or an error message for the agent. `client` is the
 /// connected agent's name, for asking the user to approve changes and for the activity log.
+/// `cancelled` fires when the agent gives up on the call (its own timeout, or it went away).
 pub trait ToolBridge: Send + Sync + 'static {
-    fn call(&self, tool: &str, arguments: Value, client: Option<String>) -> BridgeFuture<'_>;
+    fn call(
+        &self,
+        tool: &str,
+        arguments: Value,
+        client: Option<String>,
+        cancelled: CancellationToken,
+    ) -> BridgeFuture<'_>;
 }
 
 /// Tool calls waiting for the UI's answer, by call id.
@@ -55,6 +63,8 @@ impl Pending {
 }
 
 pub const TOOL_CALL_EVENT: &str = "narada-mcp://tool-call";
+/// The agent stopped waiting for a call, so the app withdraws it (e.g. a pending approval).
+pub const TOOL_CANCELLED_EVENT: &str = "narada-mcp://tool-cancelled";
 const READ_TIMEOUT: Duration = Duration::from_secs(30);
 /// Changes wait for the user to approve them in Narada.
 const APPROVAL_TIMEOUT: Duration = Duration::from_secs(5 * 60);
@@ -66,6 +76,38 @@ pub fn answer_timeout(tool: &str) -> Duration {
     } else {
         READ_TIMEOUT
     }
+}
+
+/// How waiting for the app's answer ended.
+#[derive(Debug, PartialEq)]
+pub enum Waited {
+    Answer(BridgeResult),
+    /// The app went away before answering.
+    Closed,
+    TimedOut,
+    /// The agent gave up first.
+    Cancelled,
+}
+
+pub async fn wait_for_answer(
+    reply: oneshot::Receiver<BridgeResult>,
+    limit: Duration,
+    cancelled: CancellationToken,
+) -> Waited {
+    tokio::select! {
+        answer = tokio::time::timeout(limit, reply) => match answer {
+            Ok(Ok(result)) => Waited::Answer(result),
+            Ok(Err(_)) => Waited::Closed,
+            Err(_) => Waited::TimedOut,
+        },
+        () = cancelled.cancelled() => Waited::Cancelled,
+    }
+}
+
+#[derive(Serialize, Clone)]
+#[serde(rename_all = "camelCase")]
+struct Cancelled<'a> {
+    call_id: &'a str,
 }
 
 #[derive(Serialize, Clone)]
@@ -89,7 +131,13 @@ impl TauriBridge {
 }
 
 impl ToolBridge for TauriBridge {
-    fn call(&self, tool: &str, arguments: Value, client: Option<String>) -> BridgeFuture<'_> {
+    fn call(
+        &self,
+        tool: &str,
+        arguments: Value,
+        client: Option<String>,
+        cancelled: CancellationToken,
+    ) -> BridgeFuture<'_> {
         let tool = tool.to_owned();
         Box::pin(async move {
             let (id, reply) = self.pending.open();
@@ -103,12 +151,17 @@ impl ToolBridge for TauriBridge {
                 self.pending.forget(&id);
                 return Err(format!("Narada could not take the call: {e}"));
             }
-            match tokio::time::timeout(answer_timeout(&tool), reply).await {
-                Ok(Ok(result)) => result,
-                Ok(Err(_)) => Err("Narada closed before answering.".into()),
-                Err(_) => {
+            match wait_for_answer(reply, answer_timeout(&tool), cancelled).await {
+                Waited::Answer(result) => result,
+                Waited::Closed => Err("Narada closed before answering.".into()),
+                Waited::TimedOut | Waited::Cancelled => {
                     self.pending.forget(&id);
-                    Err("Narada didn't answer in time: the user may not have seen the request, or its window is closed.".into())
+                    // Withdraw it in the app, so a late approval can't add what the agent
+                    // was told failed.
+                    let _ = self
+                        .app
+                        .emit(TOOL_CANCELLED_EVENT, Cancelled { call_id: &id });
+                    Err("Narada didn't answer in time: the user may not have seen the request, so nothing was added.".into())
                 }
             }
         })

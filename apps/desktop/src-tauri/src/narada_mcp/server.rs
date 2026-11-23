@@ -125,11 +125,52 @@ pub struct NaradaServer {
     prompt_router: PromptRouter<Self>,
 }
 
+/// The name rmcp gives a client that never introduced itself (`Implementation::from_build_env`),
+/// which is every client on stateless Streamable HTTP.
+const RMCP_DEFAULT_NAME: &str = "rmcp";
+
+/// Generic HTTP stacks, whose User-Agent says nothing about which agent is calling.
+const GENERIC_AGENTS: &[&str] = &[
+    "node",
+    "undici",
+    "python-httpx",
+    "python-requests",
+    "reqwest",
+    "axios",
+    "curl",
+    "go-http-client",
+];
+
+/// "claude-code/2.1.330 (sdk-cli)" → "Claude Code"; another product name as it is; None if generic.
+pub fn agent_from_user_agent(user_agent: &str) -> Option<String> {
+    let product = user_agent.split(['/', ' ']).next()?.trim();
+    let name = match product.to_ascii_lowercase().as_str() {
+        "" => return None,
+        generic if GENERIC_AGENTS.contains(&generic) => return None,
+        "claude-code" => "Claude Code",
+        "codex" | "codex_cli_rs" | "codex-cli" => "Codex",
+        "cursor" => "Cursor",
+        _ => product,
+    };
+    Some(name.to_owned())
+}
+
+/// Which agent is calling: the name it introduced itself with, else its HTTP User-Agent.
 fn client_name(context: &RequestContext<RoleServer>) -> Option<String> {
-    context
+    let introduced = context
         .peer
         .peer_info()
         .map(|info| info.client_info.name.clone())
+        .filter(|name| !name.is_empty() && name != RMCP_DEFAULT_NAME);
+    introduced.or_else(|| {
+        let parts = context.extensions.get::<axum::http::request::Parts>()?;
+        let user_agent = parts
+            .headers
+            .get(axum::http::header::USER_AGENT)?
+            .to_str()
+            .ok()?;
+        agent_from_user_agent(user_agent)
+    })
 }
 
 impl NaradaServer {
@@ -150,7 +191,7 @@ impl NaradaServer {
         Ok(
             match self
                 .bridge
-                .call(tool, arguments, client_name(context))
+                .call(tool, arguments, client_name(context), context.ct.clone())
                 .await
             {
                 Ok(value) => {

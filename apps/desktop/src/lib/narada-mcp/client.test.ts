@@ -47,4 +47,12 @@ describe("the desktop MCP server client", () => {
     tauri.isTauri.mockReturnValueOnce(false);
     expect(getNaradaMcpClient()).toBeNull();
   });
+
+  it("hands each cancelled call id to the handler", async () => {
+    const ids: string[] = [];
+    await getNaradaMcpClient()?.onToolCancelled((id) => ids.push(id));
+    expect(events.listen).toHaveBeenCalledWith("narada-mcp://tool-cancelled", expect.any(Function));
+    events.handler?.({ payload: { callId: "c7" } });
+    expect(ids).toEqual(["c7"]);
+  });
 });

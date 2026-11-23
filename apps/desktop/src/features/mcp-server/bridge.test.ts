@@ -5,11 +5,14 @@ import {
   type ToolCall,
 } from "../../lib/narada-mcp/client";
 import { useMcpActivityStore } from "../../state/mcp-activity-store";
+import { useMcpApprovalStore } from "../../state/mcp-approval-store";
+import { useWorkspaceStore } from "../../state/workspace-store";
 import { resetStores } from "../../test/reset-stores";
 import { installMcpBridge, uninstallMcpBridge } from "./bridge";
 
 function fakeClient() {
   let handler: ((call: ToolCall) => void) | null = null;
+  let cancelled: ((callId: string) => void) | null = null;
   const client: NaradaMcpClient = {
     start: vi.fn(),
     stop: vi.fn(),
@@ -18,8 +21,12 @@ function fakeClient() {
       handler = h;
       return () => {};
     }),
+    onToolCancelled: vi.fn(async (h) => {
+      cancelled = h;
+      return () => {};
+    }),
   };
-  return { client, call: (c: ToolCall) => handler?.(c) };
+  return { client, call: (c: ToolCall) => handler?.(c), cancel: (id: string) => cancelled?.(id) };
 }
 
 describe("installMcpBridge", () => {
@@ -49,5 +56,26 @@ describe("installMcpBridge", () => {
   it("does nothing in the browser build", async () => {
     setNaradaMcpClient(null);
     await expect(installMcpBridge()).resolves.toBeUndefined();
+  });
+
+  it("withdraws an approval when the agent stops waiting", async () => {
+    const { client, call, cancel } = fakeClient();
+    setNaradaMcpClient(client);
+    await installMcpBridge();
+    call({
+      callId: "c9",
+      tool: "create_collection",
+      arguments: { name: "Billing" },
+      client: "Claude Code",
+    });
+    await vi.waitFor(() => expect(useMcpApprovalStore.getState().queue).toHaveLength(1));
+    cancel("c9");
+    expect(useMcpApprovalStore.getState().queue).toEqual([]);
+    await vi.waitFor(() =>
+      expect(client.reply).toHaveBeenCalledWith("c9", {
+        error: "The user declined, so nothing was added.",
+      }),
+    );
+    expect(useWorkspaceStore.getState().collections).toEqual([]);
   });
 });

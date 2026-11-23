@@ -81,7 +81,7 @@ export function ApprovalDialog() {
       <div className="flex flex-col gap-4 text-sm">
         <p>
           Nothing that exists changes; this only adds. It is saved to your collection files like any
-          other change.
+          other change. The agent waits about a minute for your answer.
         </p>
         <PlanTree plan={plan} />
         {plan.replacedSecrets.length > 0 && (
