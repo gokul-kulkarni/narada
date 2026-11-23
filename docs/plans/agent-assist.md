@@ -13,8 +13,12 @@ Agent limits, each checked on a real run (opt-in tests `real_claude*`, `real_cod
   never be used (legacy sandbox reads the whole disk and replaces the profile), so Narada refuses
   folders with a `.codex/config.toml`; `exec resume` takes no `-C`, so the process folder is the
   workspace.
-- Gemini CLI: not installed; its stream-json shapes and what `--approval-mode plan` allows
-  headless are undocumented. Verify on a real run before adding it. Covers option 1 (Narada calls the user's agent CLI) and
+- Gemini CLI 0.70.0: on hold. Personal Google sign-in now fails ("This client is no longer
+  supported for Gemini Code Assist for individuals", pointing to Antigravity), so it works only
+  with a paid `GEMINI_API_KEY`. Found so far: `--approval-mode plan` is silently overridden to
+  `default` in untrusted folders unless `--skip-trust` is passed, and personal skills from
+  `~/.agents/skills` and `~/.gemini/skills` load even headless. Its stream-json shapes, tool
+  limits and `--resume` are still unverified. Covers option 1 (Narada calls the user's agent CLI) and
   option 2 (the user's agent connects to Narada over MCP).
 
 ## Goals and non-goals
