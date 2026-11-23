@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Card } from "../../components/page";
 import { Button, TextInput } from "../../components/ui";
 import { getNaradaMcpClient } from "../../lib/narada-mcp/client";
+import { useMcpActivityStore } from "../../state/mcp-activity-store";
 import { useMcpServerStore } from "../../state/mcp-server-store";
 import { useUiStore } from "../../state/ui-store";
 import { serverUrl, setupSnippets } from "../mcp-server/snippets";
@@ -72,6 +73,33 @@ function Setup({ port, token }: { port: number; token: string }) {
   );
 }
 
+const SHOWN_ACTIVITY = 10;
+
+/** What connected agents asked for since Narada started, newest first. */
+function Activity() {
+  const entries = useMcpActivityStore((s) => s.entries);
+  if (entries.length === 0) return null;
+  return (
+    <div className="flex flex-col gap-1">
+      <h4 className="text-sm font-semibold">Recent activity</h4>
+      <ul aria-label="Recent MCP activity" className="flex flex-col gap-0.5 text-xs">
+        {entries.slice(0, SHOWN_ACTIVITY).map((entry, index) => (
+          <li key={`${entry.at}-${index}`} className="flex flex-wrap gap-2">
+            <span className="text-muted">
+              {new Date(entry.at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+            </span>
+            <span>{entry.client ?? "An agent"}</span>
+            <code className="font-mono">{entry.tool}</code>
+            <span className={entry.outcome === "ok" ? "text-ok" : "text-err"}>
+              {entry.outcome === "ok" ? "answered" : entry.detail}
+            </span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 /** Lets coding agents (Claude Code, Codex, Cursor, …) connect to Narada over MCP. */
 export function McpServerSettings() {
   const available = getNaradaMcpClient() !== null;
@@ -132,6 +160,7 @@ export function McpServerSettings() {
           <Setup port={runningPort ?? settings.port} token={token} />
         </>
       )}
+      <Activity />
     </Card>
   );
 }

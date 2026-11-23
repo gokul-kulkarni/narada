@@ -7,6 +7,8 @@ export interface ToolCall {
   readonly callId: string;
   readonly tool: string;
   readonly arguments: unknown;
+  /** The agent's name as it introduced itself, if it did. */
+  readonly client: string | null;
 }
 
 export interface NaradaMcpClient {

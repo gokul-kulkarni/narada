@@ -22,6 +22,8 @@ interface WorkspaceState {
 
   load: () => Promise<void>;
   createCollection: (name?: string) => Collection;
+  /** Adds a whole collection (e.g. one an agent built) and saves it. */
+  addCollection: (collection: Collection) => Promise<void>;
   updateCollection: (id: string, update: (collection: Collection) => Collection) => Promise<void>;
   deleteCollection: (id: string) => Promise<void>;
   importCollection: (json: unknown) => Promise<Collection>;
@@ -120,6 +122,11 @@ export const useWorkspaceStore = create<WorkspaceState>()((set, get) => {
       set((s) => ({ collections: [...s.collections, collection] }));
       void persistCollection(collection);
       return collection;
+    },
+
+    addCollection: async (collection) => {
+      set((s) => ({ collections: [...s.collections, collection] }));
+      await persistCollection(collection);
     },
 
     updateCollection: async (id, update) => {

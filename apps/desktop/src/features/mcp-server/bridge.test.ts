@@ -4,6 +4,7 @@ import {
   type NaradaMcpClient,
   type ToolCall,
 } from "../../lib/narada-mcp/client";
+import { useMcpActivityStore } from "../../state/mcp-activity-store";
 import { resetStores } from "../../test/reset-stores";
 import { installMcpBridge, uninstallMcpBridge } from "./bridge";
 
@@ -33,8 +34,16 @@ describe("installMcpBridge", () => {
     await installMcpBridge();
     await installMcpBridge();
     expect(client.onToolCall).toHaveBeenCalledTimes(1);
-    call({ callId: "c1", tool: "list_environments", arguments: {} });
-    expect(client.reply).toHaveBeenCalledWith("c1", { result: [] });
+    call({ callId: "c1", tool: "list_environments", arguments: {}, client: "Claude Code" });
+    await vi.waitFor(() => expect(client.reply).toHaveBeenCalledWith("c1", { result: [] }));
+    call({ callId: "c2", tool: "nope", arguments: {}, client: null });
+    await vi.waitFor(() => expect(client.reply).toHaveBeenCalledTimes(2));
+    expect(
+      useMcpActivityStore.getState().entries.map((e) => [e.client, e.tool, e.outcome]),
+    ).toEqual([
+      [null, "nope", "error"],
+      ["Claude Code", "list_environments", "ok"],
+    ]);
   });
 
   it("does nothing in the browser build", async () => {
