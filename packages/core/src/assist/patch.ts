@@ -35,25 +35,29 @@ const RAW_LANGUAGES = ["json", "text", "xml", "html", "javascript"] as const;
 type RawBodyLanguage = (typeof RAW_LANGUAGES)[number];
 
 const MAX_TEXT = 1_000_000;
-const pair = z.object({ key: z.string().min(1).max(256), value: z.string().max(8192) });
+export const pairSchema = z.object({
+  key: z.string().min(1).max(256),
+  value: z.string().max(8192),
+});
+
+/** A request body an agent may write: none, raw text, or url-encoded/form fields. */
+export const bodySchema = z.discriminatedUnion("mode", [
+  z.object({ mode: z.literal("none") }),
+  z.object({
+    mode: z.literal("raw"),
+    language: z.enum(RAW_LANGUAGES).default("json"),
+    raw: z.string().max(MAX_TEXT),
+  }),
+  z.object({ mode: z.enum(["urlencoded", "formdata"]), fields: z.array(pairSchema).max(200) }),
+]);
 
 // Unknown fields (auth, scripts, …) are dropped by zod's default object parsing.
 const patchSchema = z.object({
   method: z.enum(HTTP_METHODS).optional(),
   url: z.string().min(1).max(8192).optional(),
-  headers: z.array(pair).max(50).optional(),
+  headers: z.array(pairSchema).max(50).optional(),
   removeHeaders: z.array(z.string().min(1).max(256)).max(50).optional(),
-  body: z
-    .discriminatedUnion("mode", [
-      z.object({ mode: z.literal("none") }),
-      z.object({
-        mode: z.literal("raw"),
-        language: z.enum(RAW_LANGUAGES).default("json"),
-        raw: z.string().max(MAX_TEXT),
-      }),
-      z.object({ mode: z.enum(["urlencoded", "formdata"]), fields: z.array(pair).max(200) }),
-    ])
-    .optional(),
+  body: bodySchema.optional(),
 });
 
 const BLOCK = /```narada-patch[ \t]*\r?\n([\s\S]*?)\r?\n```/g;
