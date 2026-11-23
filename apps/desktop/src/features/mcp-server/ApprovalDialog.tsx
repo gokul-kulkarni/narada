@@ -3,6 +3,7 @@ import { Modal } from "../../components/Modal";
 import { Button } from "../../components/ui";
 import type { UpdatePlan } from "@narada/core/mcp-server/update";
 import { useEffect, useState } from "react";
+import { drawAttention } from "../../lib/window-attention";
 import {
   useMcpApprovalStore,
   type ApprovalSubject,
@@ -171,6 +172,7 @@ export const ARM_DELAY_MS = 500;
 function Approval({ pending, waiting }: { pending: PendingApproval; waiting: number }) {
   const [armed, setArmed] = useState(false);
   useEffect(() => {
+    void drawAttention();
     const timer = setTimeout(() => setArmed(true), ARM_DELAY_MS);
     return () => clearTimeout(timer);
   }, []);

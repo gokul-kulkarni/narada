@@ -1,10 +1,13 @@
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { newRequest } from "@narada/core/factories";
 import type { CreatePlan } from "@narada/core/mcp-server/create";
 import { useMcpApprovalStore } from "../../state/mcp-approval-store";
 import { resetStores } from "../../test/reset-stores";
 import { ApprovalDialog } from "./ApprovalDialog";
+
+const attention = vi.hoisted(() => ({ drawAttention: vi.fn(async () => {}) }));
+vi.mock("../../lib/window-attention", () => attention);
 
 /** Buttons start inactive for a moment, so a click meant for the previous request can't land. */
 async function armed(button: HTMLElement): Promise<HTMLElement> {
@@ -51,6 +54,7 @@ describe("ApprovalDialog", () => {
       approved = useMcpApprovalStore.getState().request("Claude Code", { kind: "create", plan });
     });
     const dialog = screen.getByRole("dialog", { name: "Claude Code wants to add to Narada" });
+    expect(attention.drawAttention).toHaveBeenCalled();
     const tree = within(dialog).getByRole("tree", { name: "What will be added" });
     expect(within(tree).getByText("Billing")).toBeInTheDocument();
     expect(within(tree).getAllByText("new")).toHaveLength(2); // the collection and the "admin" folder
