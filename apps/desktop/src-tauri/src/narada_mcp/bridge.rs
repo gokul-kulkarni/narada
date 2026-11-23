@@ -14,9 +14,10 @@ use tokio::sync::oneshot;
 pub type BridgeResult = Result<Value, String>;
 pub type BridgeFuture<'a> = Pin<Box<dyn Future<Output = BridgeResult> + Send + 'a>>;
 
-/// Answers one MCP tool call with JSON, or an error message for the agent.
+/// Answers one MCP tool call with JSON, or an error message for the agent. `client` is the
+/// connected agent's name, for asking the user to approve changes and for the activity log.
 pub trait ToolBridge: Send + Sync + 'static {
-    fn call(&self, tool: &str, arguments: Value) -> BridgeFuture<'_>;
+    fn call(&self, tool: &str, arguments: Value, client: Option<String>) -> BridgeFuture<'_>;
 }
 
 /// Tool calls waiting for the UI's answer, by call id.
@@ -54,7 +55,18 @@ impl Pending {
 }
 
 pub const TOOL_CALL_EVENT: &str = "narada-mcp://tool-call";
-const ANSWER_TIMEOUT: Duration = Duration::from_secs(30);
+const READ_TIMEOUT: Duration = Duration::from_secs(30);
+/// Changes wait for the user to approve them in Narada.
+const APPROVAL_TIMEOUT: Duration = Duration::from_secs(5 * 60);
+
+/// How long a tool call may wait for the app's answer.
+pub fn answer_timeout(tool: &str) -> Duration {
+    if tool.starts_with("create_") {
+        APPROVAL_TIMEOUT
+    } else {
+        READ_TIMEOUT
+    }
+}
 
 #[derive(Serialize, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -62,6 +74,7 @@ struct ToolCall<'a> {
     call_id: &'a str,
     tool: &'a str,
     arguments: Value,
+    client: Option<String>,
 }
 
 pub struct TauriBridge {
@@ -76,7 +89,7 @@ impl TauriBridge {
 }
 
 impl ToolBridge for TauriBridge {
-    fn call(&self, tool: &str, arguments: Value) -> BridgeFuture<'_> {
+    fn call(&self, tool: &str, arguments: Value, client: Option<String>) -> BridgeFuture<'_> {
         let tool = tool.to_owned();
         Box::pin(async move {
             let (id, reply) = self.pending.open();
@@ -84,17 +97,18 @@ impl ToolBridge for TauriBridge {
                 call_id: &id,
                 tool: &tool,
                 arguments,
+                client,
             };
             if let Err(e) = self.app.emit(TOOL_CALL_EVENT, event) {
                 self.pending.forget(&id);
                 return Err(format!("Narada could not take the call: {e}"));
             }
-            match tokio::time::timeout(ANSWER_TIMEOUT, reply).await {
+            match tokio::time::timeout(answer_timeout(&tool), reply).await {
                 Ok(Ok(result)) => result,
                 Ok(Err(_)) => Err("Narada closed before answering.".into()),
                 Err(_) => {
                     self.pending.forget(&id);
-                    Err("Narada didn't answer in time. Is its window open?".into())
+                    Err("Narada didn't answer in time: the user may not have seen the request, or its window is closed.".into())
                 }
             }
         })

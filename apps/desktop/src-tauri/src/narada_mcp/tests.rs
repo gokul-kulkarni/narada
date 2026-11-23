@@ -11,10 +11,12 @@ const TOKEN: &str = "test-token-0123456789abcdef0123456789abcdef";
 #[derive(Default)]
 struct StaticBridge {
     calls: Mutex<Vec<(String, Value)>>,
+    clients: Mutex<Vec<Option<String>>>,
 }
 
 impl ToolBridge for StaticBridge {
-    fn call(&self, tool: &str, arguments: Value) -> BridgeFuture<'_> {
+    fn call(&self, tool: &str, arguments: Value, client: Option<String>) -> BridgeFuture<'_> {
+        self.clients.lock().unwrap().push(client);
         self.calls
             .lock()
             .unwrap()
@@ -116,6 +118,9 @@ async fn lists_its_tools_and_forwards_calls_to_the_app() {
     assert_eq!(
         names,
         [
+            "create_collection",
+            "create_folder",
+            "create_request",
             "get_last_delivery",
             "get_request",
             "list_collections",
@@ -169,6 +174,66 @@ async fn lists_its_tools_and_forwards_calls_to_the_app() {
         ("get_request".to_owned(), json!({ "requestId": "nope" }))
     );
     assert_eq!(calls[2], ("list_history".to_owned(), json!({ "limit": 3 })));
+
+    let request = json!({
+        "collection": "Shop",
+        "folder": "orders",
+        "requests": [{
+            "name": "Create order",
+            "method": "POST",
+            "url": "{{baseUrl}}/orders",
+            "headers": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "language": "json", "raw": "{}" }
+        }]
+    });
+    let timeout = Duration::from_secs(5);
+    run(&session, call("create_request", request.clone()), timeout)
+        .await
+        .unwrap();
+    run(
+        &session,
+        call("create_collection", json!({ "name": "Billing" })),
+        timeout,
+    )
+    .await
+    .unwrap();
+    let calls = bridge.calls.lock().unwrap().clone();
+    assert_eq!(calls[3], ("create_request".to_owned(), request));
+    assert_eq!(
+        calls[4],
+        ("create_collection".to_owned(), json!({ "name": "Billing" }))
+    );
+    // The app names the agent when it asks the user to approve a change.
+    let clients = bridge.clients.lock().unwrap().clone();
+    assert!(
+        clients.iter().all(|c| c.as_deref() == Some("Narada")),
+        "{clients:?}"
+    );
+
+    let prompts = list(&session, ListKind::Prompts).await.unwrap();
+    assert_eq!(prompts[0]["name"], "requests_from_code");
+    let arguments = json!({ "collection": "Shop API" })
+        .as_object()
+        .unwrap()
+        .clone();
+    let prompt = run(
+        &session,
+        Operation::Prompt {
+            name: "requests_from_code".into(),
+            arguments,
+        },
+        timeout,
+    )
+    .await
+    .unwrap();
+    let prompt = serde_json::to_value(prompt).unwrap();
+    let text = prompt["result"]["messages"][0]["content"]["text"]
+        .as_str()
+        .unwrap();
+    assert!(
+        text.contains("create_request") && text.contains("\"Shop API\""),
+        "{text}"
+    );
     running.stop();
 }
 
@@ -229,5 +294,20 @@ mod pending_calls {
             "a call is answered once"
         );
         assert!(!pending.answer("unknown", Ok(json!(3))));
+    }
+}
+
+mod timeouts {
+    use super::super::bridge::answer_timeout;
+    use std::time::Duration;
+
+    #[test]
+    fn waits_longer_for_changes_the_user_must_approve() {
+        assert_eq!(answer_timeout("list_collections"), Duration::from_secs(30));
+        assert_eq!(answer_timeout("create_request"), Duration::from_secs(300));
+        assert_eq!(
+            answer_timeout("create_collection"),
+            Duration::from_secs(300)
+        );
     }
 }
