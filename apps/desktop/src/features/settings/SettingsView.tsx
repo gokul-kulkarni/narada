@@ -4,6 +4,7 @@ import { DriveSettings } from "./DriveSettings";
 import { StorageSettings } from "./StorageSettings";
 import { ThemeSettings } from "./ThemeSettings";
 import { TlsSettings } from "./TlsSettings";
+import { UpdateSettings } from "./UpdateSettings";
 
 export function SettingsView({ extra }: { extra?: ReactNode }) {
   return (
@@ -12,6 +13,7 @@ export function SettingsView({ extra }: { extra?: ReactNode }) {
       <StorageSettings />
       <DriveSettings />
       <TlsSettings />
+      <UpdateSettings />
       {extra}
     </Page>
   );

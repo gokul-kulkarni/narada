@@ -2,6 +2,7 @@ import { useDriveStatus } from "../../hooks/use-drive-status";
 import { driveAvailable } from "../../lib/drive-api";
 import { useUiStore } from "../../state/ui-store";
 import { syncNow } from "../settings/sync-now";
+import { UpdateNotice } from "./UpdateNotice";
 
 const LINK = "font-semibold text-accent-text hover:underline";
 
@@ -37,6 +38,7 @@ export function StatusBar() {
     <footer className="flex h-8 shrink-0 items-center gap-5 border-t border-line bg-surface px-5 text-xs text-muted">
       <DriveState />
       {driveAvailable() && <span>Secrets stay in your system keychain</span>}
+      <UpdateNotice />
     </footer>
   );
 }

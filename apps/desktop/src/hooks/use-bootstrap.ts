@@ -5,6 +5,7 @@ import { useMcpStore } from "../state/mcp-store";
 import { getServices } from "../state/services";
 import { useTabsStore } from "../state/tabs-store";
 import { useUiStore } from "../state/ui-store";
+import { useUpdateStore } from "../state/update-store";
 import { useWorkspaceStore } from "../state/workspace-store";
 
 const HISTORY_SAVE_DELAY_MS = 500;
@@ -40,6 +41,8 @@ export function useBootstrap(): void {
 
     void useWorkspaceStore.getState().load();
     void useMcpStore.getState().load();
+    // A little after start, so the check never competes with loading the workspace.
+    const updateTimer = setTimeout(() => void useUpdateStore.getState().checkOnStartup(), 3000);
     void documents.readLocal("history.json").then((content) => {
       if (!cancelled) useHistoryStore.getState().replaceAll(parseHistory(content));
     });
@@ -64,6 +67,7 @@ export function useBootstrap(): void {
     return () => {
       cancelled = true;
       clearTimeout(timer);
+      clearTimeout(updateTimer);
       unsubscribe();
       unsubscribeTabs();
     };

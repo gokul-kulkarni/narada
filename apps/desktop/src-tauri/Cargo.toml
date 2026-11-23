@@ -1,6 +1,6 @@
 [package]
 name = "narada"
-version = "0.2.1"
+version = "0.2.2"
 description = "A free, local-first API client"
 authors = ["Gokul Kulkarni"]
 edition = "2024"
@@ -48,3 +48,7 @@ tokio-rustls = { version = "0.26", default-features = false, features = ["aws_lc
 rmcp = { version = "3.8", features = ["server", "macros", "transport-streamable-http-server"] }
 tempfile = "3.27.0"
 tokio = { version = "1.54.1", features = ["macros", "rt-multi-thread"] }
+
+[target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
+tauri-plugin-process = "2"
+tauri-plugin-updater = "2"

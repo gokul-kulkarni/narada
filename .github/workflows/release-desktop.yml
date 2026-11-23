@@ -4,6 +4,10 @@
 #
 # The tag must match "version" in apps/desktop/src-tauri/tauri.conf.json.
 #
+# In-app updates: each release also gets signed update bundles and latest.json, which the app
+# reads from the latest release. Signing needs the TAURI_SIGNING_PRIVATE_KEY and
+# TAURI_SIGNING_PRIVATE_KEY_PASSWORD secrets (the key made by `tauri signer generate`).
+#
 # macOS builds are signed ad hoc (bundle.macOS.signingIdentity "-" in tauri.conf.json), so
 # macOS offers "Open Anyway". They are not notarized unless these repository secrets are set (an Apple
 # Developer ID): APPLE_CERTIFICATE, APPLE_CERTIFICATE_PASSWORD, APPLE_SIGNING_IDENTITY, APPLE_ID,
@@ -76,10 +80,14 @@ jobs:
       - uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Signs the update bundles; the app checks them against plugins.updater.pubkey.
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
           projectPath: apps/desktop
           tauriScript: pnpm tauri
-          args: ${{ matrix.target && format('--target {0}', matrix.target) || '' }}
+          # The release config turns on update bundles (and latest.json), which need the key.
+          args: --config src-tauri/tauri.release.conf.json ${{ matrix.target && format('--target {0}', matrix.target) || '' }}
           tagName: ${{ github.ref_name }}
           releaseName: Narada ${{ github.ref_name }}
           releaseBody: |
