@@ -59,9 +59,13 @@ export const useMcpServerStore = create<McpServerState>()((set, get) => {
     await getServices().documents.writeLocal(SETTINGS_FILE, JSON.stringify(settings));
   };
 
+  /** The token, read from the keychain only now that the server is wanted; made if missing. */
   const ensureToken = async (): Promise<string> => {
-    const existing = get().token;
-    if (existing) return existing;
+    const existing = get().token ?? (await getServices().secrets.get(TOKEN_SECRET));
+    if (existing) {
+      set({ token: existing });
+      return existing;
+    }
     const token = newToken();
     await getServices().secrets.set(TOKEN_SECRET, token);
     set({ token });
@@ -93,12 +97,9 @@ export const useMcpServerStore = create<McpServerState>()((set, get) => {
 
     load: async () => {
       if (get().loaded) return;
-      const { documents, secrets } = getServices();
-      const [content, token] = await Promise.all([
-        documents.readLocal(SETTINGS_FILE),
-        secrets.get(TOKEN_SECRET),
-      ]);
-      set({ settings: parseServerSettings(content), token, loaded: true });
+      // Not the token: reading the keychain can make macOS ask the user, so only when needed.
+      const content = await getServices().documents.readLocal(SETTINGS_FILE);
+      set({ settings: parseServerSettings(content), loaded: true });
       if (get().settings.enabled) await start();
     },
 

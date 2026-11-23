@@ -39,12 +39,24 @@ describe("useMcpServerStore", () => {
     resetStores();
   });
 
-  it("stays off at startup until the user turns it on", async () => {
+  it("stays off at startup until the user turns it on, without touching the keychain", async () => {
     const client = fakeClient();
     setNaradaMcpClient(client);
+    // A keychain read can make macOS ask the user, so it must wait until the server is wanted.
+    const keychain = vi.spyOn(getServices().secrets, "get");
     await useMcpServerStore.getState().load();
+    expect(keychain).not.toHaveBeenCalled();
     expect(client.start).not.toHaveBeenCalled();
     expect(useMcpServerStore.getState()).toMatchObject({ loaded: true, runningPort: null });
+  });
+
+  it("reuses the token already in the keychain when turned on", async () => {
+    const client = fakeClient();
+    setNaradaMcpClient(client);
+    await getServices().secrets.set(TOKEN_SECRET, "k".repeat(43));
+    await useMcpServerStore.getState().load();
+    await useMcpServerStore.getState().setEnabled(true);
+    expect(client.start).toHaveBeenCalledWith(DEFAULT_PORT, "k".repeat(43));
   });
 
   it("turns on with a new token kept in the keychain, and off again", async () => {
